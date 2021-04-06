@@ -6,6 +6,7 @@ stereoGT_traj = VisualTraj("stereoGT", stereoGT_traj_filepath)
 
 imu_data = {
             'from_gt': "./trajs/mandala0_imu.txt",
+            'noisy': "./trajs/mandala0_imu_noisy.txt",
             }
 
 imu_traj = ImuTraj(filepath=imu_data['from_gt'],

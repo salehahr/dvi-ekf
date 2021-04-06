@@ -1,3 +1,4 @@
+import os
 import math
 import numpy as np
 import quaternion
@@ -195,15 +196,12 @@ class ImuTraj(Trajectory):
         return ImuMeasurement(t, acc, om)
 
     def generate_data(self, vis_data):
-        len_t = len(vis_data.t)
+        self._gen_unnoised_imu(vis_data)
+        self._gen_noised_imu()
 
-        self._gen_unnoised_imu(vis_data, len_t)
-        self._interpolate_imu(vis_data.t, len_t)
-
-        self._write_to_file()
-
-    def _gen_unnoised_imu(self, vis_data, len_t):
+    def _gen_unnoised_imu(self, vis_data):
         t = vis_data.t
+        len_t = len(t)
         dt = t[1] - t[0]
 
         self.ax = self._get_acceleration_from_vpos(vis_data.x, dt)
@@ -214,6 +212,9 @@ class ImuTraj(Trajectory):
         self.gx = np.gradient(rx, dt)
         self.gy = np.gradient(ry, dt)
         self.gz = np.gradient(rz, dt)
+
+        self._interpolate_imu(vis_data.t, len_t)
+        self._write_to_file()
 
     def _interpolate_imu(self, t, num_cam_datapoints):
         tmin = t[0]
@@ -228,6 +229,24 @@ class ImuTraj(Trajectory):
 
             exec(f"f = interp1d(t, self.{label}, kind='linear')")
             exec(f"self.{label} = f(self.t)")
+
+    def _gen_noised_imu(self):
+        filename, ext = os.path.splitext(self.filepath)
+        filename_noisy = filename + '_noisy' + ext
+
+        cov_ax = 0.004
+        cov_ay = 0.003
+        cov_az = 0.002
+        cov_gx = 0.07
+        cov_gy = 0.005
+        cov_gz = 0.07
+
+        for label in self.labels:
+            if label == 't':
+                continue
+            exec(f"self.{label} += np.random.normal(loc=0., scale=cov_{label}, size=len(self.t))")
+
+        self._write_to_file(filename_noisy)
 
     def _get_acceleration_from_vpos(self, data, dt):
         diff = np.gradient(data, dt)
