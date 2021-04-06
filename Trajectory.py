@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from Measurement import VisualMeasurement, ImuMeasurement
 import matplotlib.pyplot as plt
@@ -65,17 +66,21 @@ class Trajectory(object):
         self.qw.append(data[6])
 
     def plot(self, axes=None, min_t=None, max_t=None):
+        num_labels = len(self.labels) - 1
+        num_rows = math.ceil( num_labels / 2 )
+        offset = num_labels % 2 # 0 if even, 1 if odd number of labels
+
         if axes is None:
-            fig, axes = plt.subplots(4, 2)
+            fig, axes = plt.subplots(num_rows, 2)
             fig.tight_layout()
 
         for i, label in enumerate(self.labels):
             # skip time data
             if label == 't':
-                ai = i + 1
-                continue      
+                ai = i + offset
+                continue                
 
-            row, col = self._get_plot_rc(ai)
+            row, col = self._get_plot_rc(ai, num_rows)
             exec(f"{label} = axes[{row}][{col}].plot(self.t, self.{label}, label=self.name)")
 
             latex_label = self._get_latex_label(label)
@@ -90,12 +95,12 @@ class Trajectory(object):
 
         return axes
 
-    def _get_plot_rc(self, ai):
-        if ai <= 3:
+    def _get_plot_rc(self, ai, num_rows):
+        if ai <= (num_rows - 1):
             row = ai
             col = 0
         else:
-            row = ai - 4
+            row = ai - num_rows
             col = 1
 
         return row, col
