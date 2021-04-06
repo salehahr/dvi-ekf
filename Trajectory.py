@@ -200,12 +200,7 @@ class ImuTraj(Trajectory):
         self._gen_unnoised_imu(vis_data, len_t)
         self._interpolate_imu(vis_data.t, len_t)
 
-        with open(self.filepath, 'w+') as f:
-            for i, t in enumerate(self.t):
-                a_str = f"{self.ax[i]:.9f} {self.ay[i]:.9f} {self.az[i]:.9f} "
-                g_str = f"{self.gx[i]:.9f} {self.gy[i]:.9f} {self.gz[i]:.9f}"
-                data_str = f"{t:.6f} " + a_str + g_str
-                f.write(data_str + '\n')
+        self._write_to_file()
 
     def _gen_unnoised_imu(self, vis_data, len_t):
         t = vis_data.t
@@ -253,3 +248,14 @@ class ImuTraj(Trajectory):
             rx[i], ry[i], rz[i] = quaternion.as_euler_angles(quat)
 
         return rx, ry, rz
+
+    def _write_to_file(self, filename=None):
+        if filename == None:
+            filename = self.filepath
+
+        with open(filename, 'w+') as f:
+            for i, t in enumerate(self.t):
+                a_str = f"{self.ax[i]:.9f} {self.ay[i]:.9f} {self.az[i]:.9f} "
+                g_str = f"{self.gx[i]:.9f} {self.gy[i]:.9f} {self.gz[i]:.9f}"
+                data_str = f"{t:.6f} " + a_str + g_str
+                f.write(data_str + '\n')
