@@ -1,7 +1,10 @@
 import math
 import numpy as np
-from Measurement import VisualMeasurement, ImuMeasurement
+import quaternion
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+
+from Measurement import VisualMeasurement, ImuMeasurement
 
 class Trajectory(object):
     def __init__(self, name, labels, filepath=None):
@@ -14,14 +17,8 @@ class Trajectory(object):
             for label in self.labels:
                 exec(f"self.{label} = data[\'{label}\']")
         else:
-            self.t = []
-            self.x = []
-            self.y = []
-            self.z = []
-            self.qx = []
-            self.qy = []
-            self.qz = []
-            self.qw = []
+            for label in self.labels:
+                exec(f"self.{label} = []")
 
     def parse(self, filepath, data_labels):
         data_containers = {}
@@ -132,13 +129,28 @@ class VisualTraj(Trajectory):
 
         return VisualMeasurement(t, pos, rot)
 
-class ImuTraj(object):
-    def __init__(self, name, filepath):
+class ImuTraj(Trajectory):
+    def __init__(self, name="", filepath=None, vis_data=None, num_imu_between_frames=0):
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
-        super().__init__(name, labels, filepath)
+
+        self.name = name
+        self.labels = labels
+        self.filepath = filepath
+        self.num_imu_between_frames = num_imu_between_frames
+
+        if vis_data:
+            self._init_from_visualtraj(vis_data)
+        else:
+            self._init_from_filepath()
 
         self.next_frame_index = 0
         self.queue_first_ts = 0
+
+    def _init_from_filepath(self):
+        super().__init__(self.name, self.labels, self.filepath)
+
+    def _init_from_visualtraj(self, VisualTraj):
+        self.generate_data(VisualTraj)
 
     def get_next_frame_index(self, cam_t):
         return max([i for i, t in enumerate(self.t) if t <= cam_t])
@@ -181,3 +193,63 @@ class ImuTraj(object):
         om = np.array([gx, gy, gz])
 
         return ImuMeasurement(t, acc, om)
+
+    def generate_data(self, vis_data):
+        len_t = len(vis_data.t)
+
+        self._gen_unnoised_imu(vis_data, len_t)
+        self._interpolate_imu(vis_data.t, len_t)
+
+        with open(self.filepath, 'w+') as f:
+            for i, t in enumerate(self.t):
+                a_str = f"{self.ax[i]:.9f} {self.ay[i]:.9f} {self.az[i]:.9f} "
+                g_str = f"{self.gx[i]:.9f} {self.gy[i]:.9f} {self.gz[i]:.9f}"
+                data_str = f"{t:.6f} " + a_str + g_str
+                f.write(data_str + '\n')
+
+    def _gen_unnoised_imu(self, vis_data, len_t):
+        t = vis_data.t
+        dt = t[1] - t[0]
+
+        self.ax = self._get_acceleration_from_vpos(vis_data.x, dt)
+        self.ay = self._get_acceleration_from_vpos(vis_data.y, dt)
+        self.az = self._get_acceleration_from_vpos(vis_data.z, dt)
+
+        rx, ry, rz = self._get_angles_from_vquats(vis_data, len_t)
+        self.gx = np.gradient(rx, dt)
+        self.gy = np.gradient(ry, dt)
+        self.gz = np.gradient(rz, dt)
+
+    def _interpolate_imu(self, t, num_cam_datapoints):
+        tmin = t[0]
+        tmax = t[-1]
+
+        num_imu_datapoints = (num_cam_datapoints - 1) * self.num_imu_between_frames + 1
+        self.t = np.linspace(tmin, tmax, num=num_imu_datapoints)
+
+        for label in self.labels:
+            if label == 't':
+                continue
+
+            exec(f"f = interp1d(t, self.{label}, kind='linear')")
+            exec(f"self.{label} = f(self.t)")
+
+    def _get_acceleration_from_vpos(self, data, dt):
+        diff = np.gradient(data, dt)
+        return np.gradient(diff, dt)
+
+    def _get_angles_from_vquats(self, data, len_t):
+        rx = np.zeros((len_t,))
+        ry = np.zeros((len_t,))
+        rz = np.zeros((len_t,))
+
+        for i in range(len_t):
+            x = data.qx[i]
+            y = data.qy[i]
+            z = data.qz[i]
+            w = data.qw[i]
+
+            quat = np.quaternion(w, x, y, z)
+            rx[i], ry[i], rz[i] = quaternion.as_euler_angles(quat)
+
+        return rx, ry, rz
