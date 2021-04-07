@@ -36,10 +36,11 @@ class ImuMeasurement(Measurement):
         self.gy = om[1]
         self.gz = om[2]
         
+        self._is_queue = False
+
     def at_index(self, index):
         if self.t.ndim == 0:
             return self
-    
         t = self.t[index]
         
         ax = self.ax[index]
@@ -51,5 +52,13 @@ class ImuMeasurement(Measurement):
         gy = self.gy[index]
         gz = self.gz[index]
         om = np.array([gx, gy, gz])
-        
+
         return ImuMeasurement(t, acc, om)
+
+    @property
+    def is_queue(self):
+        return self._is_queue
+        
+    @is_queue.setter
+    def is_queue(self, bval):
+        self._is_queue = bval

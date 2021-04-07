@@ -51,17 +51,12 @@ class Trajectory(object):
 
         return data_containers
 
-    def append_data(self, t, data):
-        self.t.append(t)
+    def append_from_state(self, t, state):
+        x, y, z = state.p
+        qw, qx, qy, qz = quaternion.as_float_array(state.q)
 
-        self.x.append(data[0])
-        self.y.append(data[1])
-        self.z.append(data[2])
-
-        self.qx.append(data[3])
-        self.qy.append(data[4])
-        self.qz.append(data[5])
-        self.qw.append(data[6])
+        for label in self.labels:
+            exec(f"self.{label}.append({label})")
 
     def plot(self, axes=None, min_t=None, max_t=None):
         num_labels = len(self.labels) - 1
@@ -79,7 +74,7 @@ class Trajectory(object):
                 continue                
 
             row, col = self._get_plot_rc(ai, num_rows)
-            exec(f"{label} = axes[{row}][{col}].plot(self.t, self.{label}, label=self.name)")
+            eval(f"axes[{row}][{col}].plot(self.t, self.{label}, label=self.name)")
 
             latex_label = self._get_latex_label(label)
             axes[row][col].set_title(latex_label)
@@ -153,31 +148,35 @@ class ImuTraj(Trajectory):
     def _init_from_visualtraj(self, VisualTraj):
         self.generate_data(VisualTraj)
 
-    def get_next_frame_index(self, cam_t):
+    def _get_next_frame_index(self, cam_t):
+        """ Get index for which IMU time matches current camera time """
         return max([i for i, t in enumerate(self.t) if t <= cam_t])
 
-    def get_imu_queue(self, cam_t):
+    def get_queue(self, old_t, current_cam_t):
         start_index = self.next_frame_index
-        next_index = self.get_next_frame_index(cam_t)
-
-        if start_index == next_index:
-            queue = self.at_index(start_index)
-        else:
-            t = self.t[start_index:next_index+1]
-
-            ax = self.ax[start_index:next_index+1]
-            ay = self.ay[start_index:next_index+1]
-            az = self.az[start_index:next_index+1]
-            acc = np.vstack((ax, ay, az))
-
-            gx = self.gx[start_index:next_index+1]
-            gy = self.gy[start_index:next_index+1]
-            gz = self.gz[start_index:next_index+1]
-            om = np.vstack((gx, gy, gz))
-
-            queue = ImuMeasurement(t, acc, om)
-
+        prev_index = self._get_next_frame_index(old_t)
+        next_index = self._get_next_frame_index(current_cam_t)
         self.next_frame_index = next_index + 1
+
+        if (start_index <= prev_index) and \
+            not (start_index == next_index):
+            start_index = prev_index + 1
+
+        t = self.t[start_index:next_index+1]
+
+        ax = self.ax[start_index:next_index+1]
+        ay = self.ay[start_index:next_index+1]
+        az = self.az[start_index:next_index+1]
+        acc = np.vstack((ax, ay, az))
+
+        gx = self.gx[start_index:next_index+1]
+        gy = self.gy[start_index:next_index+1]
+        gz = self.gz[start_index:next_index+1]
+        om = np.vstack((gx, gy, gz))
+
+        queue = ImuMeasurement(t, acc, om)
+        queue.is_queue = True
+
         return queue
 
     def at_index(self, index):
