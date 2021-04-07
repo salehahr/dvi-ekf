@@ -278,3 +278,21 @@ class ImuTraj(Trajectory):
                 g_str = f"{self.gx[i]:.9f} {self.gy[i]:.9f} {self.gz[i]:.9f}"
                 data_str = f"{t:.6f} " + a_str + g_str
                 f.write(data_str + '\n')
+
+    def plot(self, axes=None, min_t=None, max_t=None):
+        axes = super().plot(axes, min_t, max_t)
+
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
+
+        return axes
+
+    def _set_plot_line_style(self, line):
+        label = line.get_label()
+        if 'noisy' in label:
+            line.set_color('darkgrey')
+            line.set_linewidth(0.2)
+        elif 'gt' in label:
+            line.set_color('black')
+            line.set_linewidth(1)
