@@ -1,9 +1,10 @@
 import numpy as np
 np.set_printoptions(precision=1, linewidth=150)
 import quaternion
+import matplotlib.pyplot as plt
 
 from Filter import States, Filter
-from Trajectory import VisualTraj, ImuTraj
+from Trajectory import Trajectory, VisualTraj, ImuTraj
 
 # load data
 vis_traj = VisualTraj("mono", "./trajs/offline_mandala0_mono.txt")
@@ -45,8 +46,8 @@ stdevs0 = np.hstack((stdev_p, stdev_v, stdev_q, \
 t_start = vis_traj.t[0]
 t_end = vis_traj.t[-1]
 
+traj = Trajectory("kf", vis_traj.labels)
 for i, t in enumerate(vis_traj.t):
-    print(f"i: {i}, camera time: {t}")
     current_vis = vis_traj.at_index(i)
 
     # initialisation
@@ -72,18 +73,24 @@ for i, t in enumerate(vis_traj.t):
         
         continue
 
+    # propagate
     imu_queue = imu_traj.get_queue(old_t, t)
-
     if imu_queue:
         for ii, ti in enumerate(imu_queue.t):
-            print(f"--- imu time: {ti}")
             current_imu = imu_queue.at_index(ii)
             kf.dt = ti - old_ti
 
             kf.propagate_states(current_imu)
-            old_ti = ti
-            input()
+            traj.append_from_state(ti, kf.states)
 
-    input()
+            old_ti = ti
 
     old_t = t
+
+# plot
+axes = None
+axes = vis_traj.plot(axes)
+axes = traj.plot(axes, min_t=vis_traj.t[0], max_t=vis_traj.t[-1])
+
+plt.legend()
+plt.show()
