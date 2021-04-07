@@ -62,6 +62,10 @@ for i, t in enumerate(vis_traj.t):
         kf.set_states(x0)
         kf.set_covariance(cov0)
 
+        current_imu = imu_traj.at_index(i)
+        kf.om_old = current_imu.om
+        kf.acc_old = current_imu.acc
+
         old_t = t
 
         continue

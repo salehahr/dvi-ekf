@@ -1,4 +1,5 @@
 import numpy as np
+import quaternion
 
 def skew(x):
     return np.array([[0,    -x[2], x[1]],
@@ -42,6 +43,10 @@ class Filter(object):
         self.p_offset = None
         self.q_offset = None
 
+        # imu
+        self.om_old = None
+        self.acc_old = None
+
         # covariance
         self.p = None
 
@@ -59,3 +64,33 @@ class Filter(object):
 
     def set_covariance(self, cov_matr):
         self.P = cov_matr
+
+    def propagate_states(self, imu):
+        v_old = self.v
+        R_WB_old = quaternion.as_rotation_matrix(self.q)
+
+        om = imu.om - self.bw
+        om_q = np.quaternion(0., om[0], om[1], om[2])
+
+        self.q += self.dt / 2. * om_q * self.q # quat multiplication
+        self.q = self.q.normalized()
+        R_WB = quaternion.as_rotation_matrix(self.q)
+
+        self.v += self.dt / 2. * ( \
+            R_WB_old @ (self.acc_old - self.ba) \
+            + R_WB @ (imu.acc - self.ba) )
+        self.p += self.dt / 2. * (v_old + self.v)
+
+        self._update_states()
+        self.om_old = imu.om
+        self.acc_old = imu.acc
+
+    def _update_states(self):
+        self.states.p = self.p
+        self.states.v = self.v
+        self.states.q = self.q
+        self.states.bw = self.bw
+        self.states.ba = self.ba
+        self.states.scale = self.scale
+        self.states.p_offset = self.p_offset
+        self.states.q_offset = self.q_offset
