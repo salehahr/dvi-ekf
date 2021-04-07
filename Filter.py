@@ -1,3 +1,4 @@
+from math import factorial
 import numpy as np
 import quaternion
 
@@ -84,6 +85,130 @@ class Filter(object):
         self._update_states()
         self.om_old = imu.om
         self.acc_old = imu.acc
+
+    def propagate_covariance(self, imu):
+        om = imu.om - self.bw
+        acc = imu.acc - self.ba
+
+        Qda, Qdb, Qdc, Fda, Fdb = self._calculate_Qd(om, acc)
+
+        P = self.P
+        PC = P[0:9, 0:9]
+        PD = P[0:9, 9:15]
+        PE = P[0:9, 15:]
+        PG = P[9:15, 9:15]
+        PH = P[9:15, -7:]
+
+        # PC
+        P[0:9, 0:9] = Fda@PC@Fda.T + Fdb@PD.T@Fda.T + Fda@PD@Fdb.T \
+                + Fdb@PG@Fdb.T + Qda
+
+        # PD
+        PD = Fda@PD + Fdb@PG + Qdb
+        P[0:9, 9:15] = PD
+        P[9:15, 0:9] = PD.T
+
+        # PE
+        P[0:9, 15:] = Fda@PE + Fdb@PH
+        P[0:9, 15:] = PE
+        P[-7:, 0:9] = PE.T
+
+        # PG
+        P[9:15, 9:15] += Qdc
+
+        self.P = P
+        # self.P = self.Fd @ self.P @ self.Fd.T + Qd
+
+    def _calculate_Fd(self, om, acc):
+        Fd = np.eye(self.num_error_states, self.num_error_states)
+        R_WB = quaternion.as_rotation_matrix(self.q)
+
+        dt = self.dt * np.eye(3, 3)
+        delt2 = self.dt**2/2 * np.eye(3, 3)
+        delt3 = self.dt**3/factorial(3) * np.eye(3, 3)
+        delt4 = self.dt**4/factorial(4) * np.eye(3, 3)
+        delt5 = self.dt**5/factorial(5) * np.eye(3, 3)
+
+        acc_sk = skew(acc)
+        om_sk = skew(om)
+        om_sk_sq = om_sk @ om_sk
+
+        A = -R_WB @ acc_sk @ ( delt2 - delt3 * om_sk + delt4 * om_sk_sq )
+        B = -R_WB @ acc_sk @ ( delt3 + delt4 * om_sk - delt5 * om_sk_sq )
+        C = -R_WB @ acc_sk @ ( dt    - delt2 * om_sk + delt3 * om_sk_sq )
+        D = -A
+        E = np.eye(3, 3) - dt * om_sk + delt2 * om_sk_sq
+        F = -dt + delt2 * om_sk - delt3 * om_sk_sq
+
+        Fd[0:3, 3:6] = dt
+        Fd[0:3, 6:9] = A
+        Fd[0:3, 9:12] = B
+        Fd[0:3, 12:15] = -R_WB @ delt2
+
+        Fd[3:6, 6:9] = C
+        Fd[3:6, 9:12] = D
+        Fd[3:6, 12:15] = -R_WB @ dt
+
+        Fd[6:9, 6:9] = E
+        Fd[6:9, 9:12] = F
+
+        self.Fd = Fd
+
+        return Fd
+
+    def _calculate_Gc(self):
+        Gc = np.zeros((self.num_states, self.num_control))
+        R_WB = quaternion.as_rotation_matrix(self.q)
+
+        Gc[3:6, 0:3] = -R_WB
+        Gc[6:9, 6:9] = -np.eye(3, 3)
+        Gc[9:12, -3:] = +np.eye(3, 3)
+        Gc[12:15, 3:6] = +np.eye(3, 3)
+
+        return Gc
+
+    def _calculate_Qd(self, om, acc):
+        stdev_na = [0.1, 0.1, 0.1]
+        stdev_nba = [0.1, 0.1, 0.1]
+        stdev_nw = [0.05, 0.05, 0.05]
+        stdev_nbw = [0.1, 0.1, 0.1]
+        stdevs = np.hstack((stdev_na, stdev_nba, \
+                    stdev_nw, stdev_nbw))
+        Qc = np.square(np.diag(stdevs))
+
+        Nce = np.zeros((9, 9))
+        Nch = np.zeros((6, 6))
+
+        Nce[3:6, 3:6] = np.square(np.diag(stdev_na))
+        Nce[6:9, 6:9] = np.square(np.diag(stdev_nw))
+
+        Nch[0:3, 0:3] = np.square(np.diag(stdev_nbw))
+        Nch[3:6, 3:6] = np.square(np.diag(stdev_nba))
+
+        Fd = self._calculate_Fd(om, acc)
+        Gc = self._calculate_Gc()
+
+        Fda = Fd[0:9, 0:9]
+        Fdb = Fd[0:9, 9:15]
+
+        Qda = self.dt / 2. * (Fda @ Nce @ Fda.T + Fdb @ Nch @ Fdb.T + Nce)
+        Qdb = self.dt / 2. * (Fdb @ Nch)
+        Qdc = self.dt * Nch
+
+        Qd_theirs_top = np.hstack((Qda, Qdb))
+        Qd_theirs_bottom = np.hstack((Qdb.T, Qdc))
+        Qd_theirs = np.vstack((Qd_theirs_top, Qd_theirs_bottom))
+
+        # Qd_mine = self.dt * Fd @ Gc @ Qc @ Gc.T @ Fd.T
+
+        # print(Qda)
+        # print(Qd_mine[0:9, 0:9])
+        # input()
+
+        # Qd = Qd_mine
+        Qd = Qd_theirs
+
+        return Qda, Qdb, Qdc, Fda, Fdb
 
     def _update_states(self):
         self.states.p = self.p

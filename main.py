@@ -81,6 +81,8 @@ for i, t in enumerate(vis_traj.t):
             kf.dt = ti - old_ti
 
             kf.propagate_states(current_imu)
+            kf.propagate_covariance(current_imu)
+            
             traj.append_from_state(ti, kf.states)
 
             old_ti = ti
