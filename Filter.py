@@ -122,7 +122,7 @@ class Filter(object):
         self.P = P
         # self.P = self.Fd @ self.P @ self.Fd.T + Qd
 
-    def update(self, camera):
+    def update(self, camera, R):
         p_VC = camera.pos
         q_VC = camera.qrot
 
@@ -179,6 +179,16 @@ class Filter(object):
             2*r_q_float[3],
         ))
 
+        # calculate Kalman gain
+        S = H @ self.P @ H.T + R
+        K = self.P @ H.T @ np.linalg.inv(S)
+        x_error = K @ r
+        
+        # apply Kalman gain
+        self.apply_correction(x_error)
+        
+    def apply_correction(self, x_error):
+        pass
 
     def _calculate_Fd(self, om, acc):
         Fd = np.eye(self.num_error_states, self.num_error_states)

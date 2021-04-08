@@ -87,6 +87,9 @@ for i, t in enumerate(vis_traj.t):
 
             old_ti = ti
 
+    # update
+    kf.update(current_vis, R)
+
     old_t = t
 
 # plot
