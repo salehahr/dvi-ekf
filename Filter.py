@@ -128,6 +128,7 @@ class Filter(object):
 
         R_VW = quaternion.as_rotation_matrix(self.q_VW)
         R_WB = quaternion.as_rotation_matrix(self.q)
+        R_BC = quaternion.as_rotation_matrix(self.q_offset)
 
         h_scale = R_VW @ (R_WB @ self.p_offset + self.p)
         h_scale = np.reshape(h_scale, (h_scale.shape[0], -1))
@@ -146,6 +147,21 @@ class Filter(object):
             # -R_VW @ skew( self.p_offset + R_WB @ self.p_offset ) \
                 # * self.scale
         ))
+
+        Hq = np.hstack((
+            zero3,
+            zero3,
+            R_BC,
+            zero3,
+            zero3,
+            np.zeros((3, 1)),
+            zero3,
+            np.eye(3, 3),
+            # zero3,
+            # C_q_c_i*C_q_i_w;
+        ))
+
+        H = np.vstack((Hp, Hq))
 
     def _calculate_Fd(self, om, acc):
         Fd = np.eye(self.num_error_states, self.num_error_states)
