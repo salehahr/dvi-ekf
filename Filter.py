@@ -44,6 +44,9 @@ class Filter(object):
         self.p_offset = None
         self.q_offset = None
 
+        self.p_VW = np.asarray([0., 0., 0.])
+        self.q_VW = np.quaternion(1., 0., 0., 0.)
+
         # imu
         self.om_old = None
         self.acc_old = None
@@ -118,6 +121,31 @@ class Filter(object):
 
         self.P = P
         # self.P = self.Fd @ self.P @ self.Fd.T + Qd
+
+    def update(self, camera):
+        p_VC = camera.pos
+        q_VC = camera.qrot
+
+        R_VW = quaternion.as_rotation_matrix(self.q_VW)
+        R_WB = quaternion.as_rotation_matrix(self.q)
+
+        h_scale = R_VW @ (R_WB @ self.p_offset + self.p)
+        h_scale = np.reshape(h_scale, (h_scale.shape[0], -1))
+
+        zero3 = np.zeros((3, 3))
+        Hp = np.hstack((
+            R_VW * self.scale,
+            zero3,
+            -R_VW @ R_WB @ skew(self.p_offset) * self.scale,
+            zero3,
+            zero3,
+            h_scale,
+            R_VW @ R_WB * self.scale,
+            zero3,
+            # np.eye(3, 3) * self.scale,
+            # -R_VW @ skew( self.p_offset + R_WB @ self.p_offset ) \
+                # * self.scale
+        ))
 
     def _calculate_Fd(self, om, acc):
         Fd = np.eye(self.num_error_states, self.num_error_states)
