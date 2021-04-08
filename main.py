@@ -59,6 +59,7 @@ for i, t in enumerate(vis_traj.t):
         num_control = len(u0)
 
         kf = Filter(num_states, num_meas, num_control)
+        kf.dt = 0.
         kf.set_states(x0)
         kf.set_covariance(cov0)
 
@@ -67,7 +68,22 @@ for i, t in enumerate(vis_traj.t):
         kf.acc_old = current_imu.acc
 
         old_t = t
-
+        old_ti = t
+        
         continue
+
+    imu_queue = imu_traj.get_queue(old_t, t)
+
+    if imu_queue:
+        for ii, ti in enumerate(imu_queue.t):
+            print(f"--- imu time: {ti}")
+            current_imu = imu_queue.at_index(ii)
+            kf.dt = ti - old_ti
+
+            kf.propagate_states(current_imu)
+            old_ti = ti
+            input()
+
+    input()
 
     old_t = t
