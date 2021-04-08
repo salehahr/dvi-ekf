@@ -163,6 +163,23 @@ class Filter(object):
 
         H = np.vstack((Hp, Hq))
 
+        # residual
+    # def _calculate_residual(self, p_vc):
+        z_est = ( R_VW @ (self.p + R_WB @ self.p_offset) + self.p_VW ) * self.scale
+        r_p = p_VC - z_est;
+
+        zq = self.q_offset * self.q * self.q_VW
+        r_q = (q_VC * ( zq ).conjugate() ).conjugate()
+        r_q_float = quaternion.as_float_array(r_q)
+
+        r = np.hstack((
+            r_p,
+            2*r_q_float[1],
+            2*r_q_float[2],
+            2*r_q_float[3],
+        ))
+
+
     def _calculate_Fd(self, om, acc):
         Fd = np.eye(self.num_error_states, self.num_error_states)
         R_WB = quaternion.as_rotation_matrix(self.q)
