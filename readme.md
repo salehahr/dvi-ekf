@@ -12,6 +12,13 @@ python3 plot_traj.py
 ```
 python3 plot_imu.py
 ```
-To improve: replace hard coded stdev values, add bias.
+
+To improve: replace hard coded stdev values, add bias, incorporate effects of gravity.
+
 ![](img/offline_noisyimu.PNG)
 
+## Kalman filter
+### Propagation only
+Using initial pose from monocular trajectory and propagating using IMU values.
+
+![](img/traj_only_prop.PNG)
