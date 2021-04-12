@@ -42,6 +42,11 @@ stdev_q_BC = [0.05, 0.04, 0.025]
 stdevs0 = np.hstack((stdev_p, stdev_v, stdev_q, \
         stdev_bw, stdev_ba, stdev_scale, stdev_p_BC, stdev_q_BC))
 
+# measurement noise
+R_p = [0.01*0.01 for i in range(3)]
+R_q = [0.01 for i in range(3)]
+R = np.diag(np.hstack((R_p, R_q)))
+
 # filter main loop
 t_start = vis_traj.t[0]
 t_end = vis_traj.t[-1]
