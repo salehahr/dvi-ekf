@@ -209,8 +209,21 @@ class Filter(object):
         # apply Kalman gain
         self.apply_correction(x_error)
 
-    def apply_correction(self, x_error):
-        pass
+    def apply_correction(self, err):
+        self.p += err.dp
+        self.v += err.dv
+        self.q = err.dq * self.q
+        self.q.normalized()
+
+        self.bw += err.dbw
+        self.ba += err.dba
+        self.scale += err.dscale
+
+        self.p_offset += err.dp_offset
+        self.q_offset = err.dq_offset * self.q_offset
+        self.q_offset.normalized()
+
+        self._update_states()
 
     def _calculate_Fd(self, om, acc):
         Fd = np.eye(self.num_error_states, self.num_error_states)
