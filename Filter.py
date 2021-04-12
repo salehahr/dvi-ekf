@@ -18,7 +18,7 @@ class States(object):
         self.scale = scale
 
         self.p_offset = np.asarray(p_offset)
-        self.q_offset = np.asarray(q_offset.normalized())
+        self.q_offset = q_offset.normalized()
 
         self.size = len(p) + len(v) + 4 \
                 + len(bw) + len(ba) + 1 \
