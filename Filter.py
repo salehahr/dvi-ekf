@@ -24,6 +24,28 @@ class States(object):
                 + len(bw) + len(ba) + 1 \
                 + len(p_offset) + 4
 
+class ErrorStates(object):
+    def __init__(self, vec):
+        p = vec[0:3]
+        v = vec[3:6]
+        theta = vec[6:9]
+        bw = vec[9:12]
+        ba = vec[12:15]
+        scale = vec[15]
+        p_offset = vec[16:19]
+        theta_offset = vec[19:]
+
+        self.dp = np.asarray(p)
+        self.dv = np.asarray(v)
+        self.dq = np.quaternion(1, theta[0]/2, theta[1]/2, theta[2]/2)
+
+        self.dbw = np.asarray(bw)
+        self.dba = np.asarray(ba)
+        self.dscale = scale
+
+        self.dp_offset = np.asarray(p_offset)
+        self.dq_offset = np.quaternion(1, theta_offset[0]/2, theta_offset[1]/2, theta_offset[2]/2)
+
 class Filter(object):
     def __init__(self, num_states, num_meas, num_control):
         self.num_states = num_states
@@ -182,11 +204,11 @@ class Filter(object):
         # calculate Kalman gain
         S = H @ self.P @ H.T + R
         K = self.P @ H.T @ np.linalg.inv(S)
-        x_error = K @ r
-        
+        x_error = ErrorStates(K @ r)
+
         # apply Kalman gain
         self.apply_correction(x_error)
-        
+
     def apply_correction(self, x_error):
         pass
 
