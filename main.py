@@ -100,8 +100,8 @@ for i, t in enumerate(vis_traj.t):
 
 # plot
 axes = None
-axes = vis_traj.plot(axes)
 axes = gt_traj.plot(axes)
+axes = vis_traj.plot(axes)
 axes = traj.plot(axes, min_t=vis_traj.t[0], max_t=vis_traj.t[-1])
 
 plt.legend()
