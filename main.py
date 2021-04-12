@@ -8,6 +8,7 @@ from Trajectory import Trajectory, VisualTraj, ImuTraj
 
 # load data
 vis_traj = VisualTraj("mono", "./trajs/offline_mandala0_mono.txt")
+gt_traj = VisualTraj("gt", "./trajs/offline_mandala0_gt.txt")
 imu_traj = ImuTraj(filepath="./trajs/mandala0_imu.txt",
         vis_data=vis_traj, num_imu_between_frames=100)
 
@@ -100,6 +101,7 @@ for i, t in enumerate(vis_traj.t):
 # plot
 axes = None
 axes = vis_traj.plot(axes)
+axes = gt_traj.plot(axes)
 axes = traj.plot(axes, min_t=vis_traj.t[0], max_t=vis_traj.t[-1])
 
 plt.legend()
