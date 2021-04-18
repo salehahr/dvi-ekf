@@ -13,43 +13,20 @@ class Trajectory(object):
         self.labels = labels
         self.filepath = filepath
 
+        for label in self.labels:
+            exec(f"self.{label} = []")
+
         if filepath:
-            data = self.parse(self.filepath, self.labels)
-            for label in self.labels:
-                exec(f"self.{label} = data[\'{label}\']")
-        else:
-            for label in self.labels:
-                exec(f"self.{label} = []")
+            self._parse()
 
-    def parse(self, filepath, data_labels):
-        data_containers = {}
-        num_labels = len(data_labels)
-
-        for label in data_labels:
-            data_containers[label] = []
-
-        with open(filepath, 'r') as f:
+    def _parse(self):
+        with open(self.filepath, 'r') as f:
             for i, line in enumerate(f):
                 data = line.split()
-                ts = float(data[0])
 
-                for j, label in enumerate(data_labels):
-                    if label == 't':
-                        data_containers['t'].append(ts)
-                        continue
-
-                    if j == (num_labels - 1):
-                        meas = float(data[j].rstrip())
-                    else:
-                        meas = float(data[j])
-
-                    data_containers[label].append(meas)
-
-        # Convert list to numpy array
-        for label in data_labels:
-            data_containers[label] = np.asarray(data_containers[label])
-
-        return data_containers
+                for j, label in enumerate(self.labels):
+                    meas = float(data[j])
+                    exec(f"self.{label}.append(meas)")
 
     def append_from_state(self, t, state):
         x, y, z = state.p
