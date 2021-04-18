@@ -232,10 +232,12 @@ class ImuTraj(Trajectory):
 
     def get_queue(self, old_t, current_cam_t):
         start_index = self.next_frame_index
-        prev_index = self._get_next_frame_index(old_t)
-        next_index = self._get_next_frame_index(current_cam_t)
-        self.next_frame_index = next_index + 1
 
+        prev_index = self._get_next_frame_index(old_t) # end of old imu queue
+        next_index = self._get_next_frame_index(current_cam_t)
+        assert(prev_index <= next_index)
+
+        # update start index, if outdated (less than prev_index)
         if (start_index <= prev_index) and \
             not (start_index == next_index):
             start_index = prev_index + 1
@@ -252,10 +254,9 @@ class ImuTraj(Trajectory):
         gz = self.gz[start_index:next_index+1]
         om = np.vstack((gx, gy, gz))
 
-        queue = ImuMeasurement(t, acc, om)
-        queue.is_queue = True
+        self.next_frame_index = next_index + 1
 
-        return queue
+        return ImuMeasurement(t, acc, om)
 
     def _get_next_frame_index(self, cam_t):
         """ Get index for which IMU time matches current camera time """
