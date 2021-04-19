@@ -108,10 +108,13 @@ class VisualTraj(Trajectory):
             exec(f"self.{label}.append({label})")
 
 class ImuTraj(Trajectory):
-    def __init__(self, name="imu", filepath=None, vis_data=None, num_imu_between_frames=0):
+    def __init__(self, name="imu", filepath=None, vis_data=None, num_imu_between_frames=0, 
+    covariance = [0.] * 6):
+
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
         self.num_imu_between_frames = num_imu_between_frames
         self._flag_gen_unnoisy_imu = False
+        self.noisy = None
 
         super().__init__(name, labels, filepath)
 
@@ -143,16 +146,27 @@ class ImuTraj(Trajectory):
         self._flag_gen_unnoisy_imu = True
 
     def _gen_noisy_imu(self, covariance):
-        filename, ext = os.path.splitext(self.filepath)
-        filename_noisy = filename + '_noisy' + ext
+        assert(self._flag_gen_unnoisy_imu == True)
 
         cov_ax, cov_ay, cov_az, cov_gx, cov_gy, cov_gz = covariance
 
+        filename, ext = os.path.splitext(self.filepath)
+        filename_noisy = filename + '_noisy' + ext
+
+        noisy = ImuTraj(name="noisy imu",
+            filepath=filename_noisy,
+            num_imu_between_frames=self.num_imu_between_frames,
+            covariance=covariance)
+        noisy.clear()
+
         for label in self.labels:
             if label == 't':
+                noisy.t = self.t
                 continue
-            exec(f"self.{label} += np.random.normal(loc=0., scale=cov_{label}, size=len(self.t))")
 
+            exec(f"noisy.{label} = self.{label} + np.random.normal(loc=0., scale=cov_{label}, size=len(self.t))")
+
+        self.noisy = noisy
         self._write_to_file(filename_noisy)
 
     def _interpolate_imu(self, t):
