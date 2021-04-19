@@ -19,6 +19,10 @@ class Trajectory(object):
         if filepath:
             self._parse()
 
+    def clear(self):
+        for label in self.labels:
+            exec(f"self.{label} = []")
+
     def _parse(self):
         """ Extract data from file."""
         with open(self.filepath, 'r') as f:
@@ -112,6 +116,7 @@ class ImuTraj(Trajectory):
         super().__init__(name, labels, filepath)
 
         if vis_data:
+            self.clear()
             self._generate_from_vis_data(vis_data)
 
         self.next_frame_index = 0
