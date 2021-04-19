@@ -111,6 +111,7 @@ class ImuTraj(Trajectory):
         self.labels = labels
         self.filepath = filepath
         self.num_imu_between_frames = num_imu_between_frames
+        self._flag_gen_unnoisy_imu = False
 
         if vis_data:
             self._init_from_visualtraj(vis_data)
@@ -125,52 +126,6 @@ class ImuTraj(Trajectory):
 
     def _init_from_visualtraj(self, VisualTraj):
         self._generate_from_vis_data(VisualTraj)
-
-    def _get_next_frame_index(self, cam_t):
-        """ Get index for which IMU time matches current camera time """
-        return max([i for i, t in enumerate(self.t) if t <= cam_t])
-
-    def get_queue(self, old_t, current_cam_t):
-        start_index = self.next_frame_index
-        prev_index = self._get_next_frame_index(old_t)
-        next_index = self._get_next_frame_index(current_cam_t)
-        self.next_frame_index = next_index + 1
-
-        if (start_index <= prev_index) and \
-            not (start_index == next_index):
-            start_index = prev_index + 1
-
-        t = self.t[start_index:next_index+1]
-
-        ax = self.ax[start_index:next_index+1]
-        ay = self.ay[start_index:next_index+1]
-        az = self.az[start_index:next_index+1]
-        acc = np.vstack((ax, ay, az))
-
-        gx = self.gx[start_index:next_index+1]
-        gy = self.gy[start_index:next_index+1]
-        gz = self.gz[start_index:next_index+1]
-        om = np.vstack((gx, gy, gz))
-
-        queue = ImuMeasurement(t, acc, om)
-        queue.is_queue = True
-
-        return queue
-
-    def at_index(self, index):
-        t = self.t[index]
-
-        ax = self.ax[index]
-        ay = self.ay[index]
-        az = self.az[index]        
-        acc = np.array([ax, ay, az])
-
-        gx = self.gx[index]
-        gy = self.gy[index]
-        gz = self.gz[index]
-        om = np.array([gx, gy, gz])
-
-        return ImuMeasurement(t, acc, om)
 
     def _generate_from_vis_data(self, vis_data):
         self._gen_unnoisy_imu(vis_data)
@@ -193,6 +148,21 @@ class ImuTraj(Trajectory):
         self._interpolate_imu(vis_data.t, len_t)
         self._write_to_file()
 
+        self._flag_gen_unnoisy_imu = True
+
+    def _gen_noisy_imu(self, covariance):
+        filename, ext = os.path.splitext(self.filepath)
+        filename_noisy = filename + '_noisy' + ext
+
+        cov_ax, cov_ay, cov_az, cov_gx, cov_gy, cov_gz = covariance
+
+        for label in self.labels:
+            if label == 't':
+                continue
+            exec(f"self.{label} += np.random.normal(loc=0., scale=cov_{label}, size=len(self.t))")
+
+        self._write_to_file(filename_noisy)
+
     def _interpolate_imu(self, t, num_cam_datapoints):
         tmin = t[0]
         tmax = t[-1]
@@ -206,24 +176,6 @@ class ImuTraj(Trajectory):
 
             exec(f"f = interp1d(t, self.{label}, kind='linear')")
             exec(f"self.{label} = f(self.t)")
-
-    def _gen_noisy_imu(self):
-        filename, ext = os.path.splitext(self.filepath)
-        filename_noisy = filename + '_noisy' + ext
-
-        cov_ax = 0.004
-        cov_ay = 0.003
-        cov_az = 0.002
-        cov_gx = 0.07
-        cov_gy = 0.005
-        cov_gz = 0.07
-
-        for label in self.labels:
-            if label == 't':
-                continue
-            exec(f"self.{label} += np.random.normal(loc=0., scale=cov_{label}, size=len(self.t))")
-
-        self._write_to_file(filename_noisy)
 
     def _get_acceleration_from_vpos(self, data, dt):
         diff = np.gradient(data, dt)
@@ -255,6 +207,52 @@ class ImuTraj(Trajectory):
                 g_str = f"{self.gx[i]:.9f} {self.gy[i]:.9f} {self.gz[i]:.9f}"
                 data_str = f"{t:.6f} " + a_str + g_str
                 f.write(data_str + '\n')
+
+    def at_index(self, index):
+        t = self.t[index]
+
+        ax = self.ax[index]
+        ay = self.ay[index]
+        az = self.az[index]
+        acc = np.array([ax, ay, az])
+
+        gx = self.gx[index]
+        gy = self.gy[index]
+        gz = self.gz[index]
+        om = np.array([gx, gy, gz])
+
+        return ImuMeasurement(t, acc, om)
+
+    def get_queue(self, old_t, current_cam_t):
+        start_index = self.next_frame_index
+        prev_index = self._get_next_frame_index(old_t)
+        next_index = self._get_next_frame_index(current_cam_t)
+        self.next_frame_index = next_index + 1
+
+        if (start_index <= prev_index) and \
+            not (start_index == next_index):
+            start_index = prev_index + 1
+
+        t = self.t[start_index:next_index+1]
+
+        ax = self.ax[start_index:next_index+1]
+        ay = self.ay[start_index:next_index+1]
+        az = self.az[start_index:next_index+1]
+        acc = np.vstack((ax, ay, az))
+
+        gx = self.gx[start_index:next_index+1]
+        gy = self.gy[start_index:next_index+1]
+        gz = self.gz[start_index:next_index+1]
+        om = np.vstack((gx, gy, gz))
+
+        queue = ImuMeasurement(t, acc, om)
+        queue.is_queue = True
+
+        return queue
+
+    def _get_next_frame_index(self, cam_t):
+        """ Get index for which IMU time matches current camera time """
+        return max([i for i, t in enumerate(self.t) if t <= cam_t])
 
     def plot(self, axes=None, min_t=None, max_t=None):
         axes = super().plot(axes, min_t, max_t)
