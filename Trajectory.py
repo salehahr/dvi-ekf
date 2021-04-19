@@ -20,6 +20,7 @@ class Trajectory(object):
             self._parse()
 
     def _parse(self):
+        """ Extract data from file."""
         with open(self.filepath, 'r') as f:
             for i, line in enumerate(f):
                 data = line.split()
@@ -27,13 +28,6 @@ class Trajectory(object):
                 for j, label in enumerate(self.labels):
                     meas = float(data[j])
                     exec(f"self.{label}.append(meas)")
-
-    def append_from_state(self, t, state):
-        x, y, z = state.p
-        qw, qx, qy, qz = quaternion.as_float_array(state.q)
-
-        for label in self.labels:
-            exec(f"self.{label}.append({label})")
 
     def plot(self, axes=None, min_t=None, max_t=None):
         num_labels = len(self.labels) - 1
@@ -82,7 +76,7 @@ class Trajectory(object):
             return '$' + label[0] + '_' + label[1] + '$'
 
 class VisualTraj(Trajectory):
-    def __init__(self, name, filepath):
+    def __init__(self, name, filepath=None):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
         super().__init__(name, labels, filepath)
 
@@ -101,6 +95,13 @@ class VisualTraj(Trajectory):
         rot = np.array([qx, qy, qz, qw])
 
         return VisualMeasurement(t, pos, rot)
+
+    def append_state(self, t, state):
+        x, y, z = state.p
+        qw, qx, qy, qz = quaternion.as_float_array(state.q)
+
+        for label in self.labels:
+            exec(f"self.{label}.append({label})")
 
 class ImuTraj(Trajectory):
     def __init__(self, name="", filepath=None, vis_data=None, num_imu_between_frames=0):

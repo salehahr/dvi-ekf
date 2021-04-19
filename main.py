@@ -52,7 +52,7 @@ R = np.diag(np.hstack((R_p, R_q)))
 t_start = vis_traj.t[0]
 t_end = vis_traj.t[-1]
 
-traj = Trajectory("kf", vis_traj.labels)
+traj = VisualTraj("kf")
 for i, t in enumerate(vis_traj.t):
     current_vis = vis_traj.at_index(i)
 
@@ -89,7 +89,7 @@ for i, t in enumerate(vis_traj.t):
             kf.propagate_states(current_imu)
             kf.propagate_covariance(current_imu)
             
-            traj.append_from_state(ti, kf.states)
+            traj.append_state(ti, kf.states)
 
             old_ti = ti
 
