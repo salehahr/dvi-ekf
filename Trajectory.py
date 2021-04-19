@@ -117,14 +117,11 @@ class ImuTraj(Trajectory):
 
         if vis_data:
             self.clear()
-            self._generate_from_vis_data(vis_data)
+            self._gen_unnoisy_imu(vis_data)
+            self._gen_noisy_imu(covariance)
 
         self.next_frame_index = 0
         self.queue_first_ts = 0
-
-    def _generate_from_vis_data(self, vis_data):
-        self._gen_unnoisy_imu(vis_data)
-        self._gen_noisy_imu()
 
     def _gen_unnoisy_imu(self, vis_data):
         t = vis_data.t
