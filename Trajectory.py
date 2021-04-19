@@ -145,7 +145,7 @@ class ImuTraj(Trajectory):
         self.gy = np.gradient(ry, dt)
         self.gz = np.gradient(rz, dt)
 
-        self._interpolate_imu(vis_data.t, len_t)
+        self._interpolate_imu(t)
         self._write_to_file()
 
         self._flag_gen_unnoisy_imu = True
@@ -163,9 +163,10 @@ class ImuTraj(Trajectory):
 
         self._write_to_file(filename_noisy)
 
-    def _interpolate_imu(self, t, num_cam_datapoints):
+    def _interpolate_imu(self, t):
         tmin = t[0]
         tmax = t[-1]
+        num_cam_datapoints = len(t)
 
         num_imu_datapoints = (num_cam_datapoints - 1) * self.num_imu_between_frames + 1
         self.t = np.linspace(tmin, tmax, num=num_imu_datapoints)
