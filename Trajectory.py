@@ -38,11 +38,11 @@ class Trajectory(object):
             fig, axes = plt.subplots(num_rows, 2)
             fig.tight_layout()
 
+        ai = offset
         for i, label in enumerate(self.labels):
             # skip time data
             if label == 't':
-                ai = i + offset
-                continue                
+                continue
 
             row, col = self._get_plot_rc(ai, num_rows)
             eval(f"axes[{row}][{col}].plot(self.t, self.{label}, label=self.name)")
