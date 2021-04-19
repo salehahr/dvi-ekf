@@ -104,28 +104,18 @@ class VisualTraj(Trajectory):
             exec(f"self.{label}.append({label})")
 
 class ImuTraj(Trajectory):
-    def __init__(self, name="", filepath=None, vis_data=None, num_imu_between_frames=0):
+    def __init__(self, name="imu", filepath=None, vis_data=None, num_imu_between_frames=0):
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
-
-        self.name = name
-        self.labels = labels
-        self.filepath = filepath
         self.num_imu_between_frames = num_imu_between_frames
         self._flag_gen_unnoisy_imu = False
 
+        super().__init__(name, labels, filepath)
+
         if vis_data:
-            self._init_from_visualtraj(vis_data)
-        else:
-            self._init_from_filepath()
+            self._generate_from_vis_data(vis_data)
 
         self.next_frame_index = 0
         self.queue_first_ts = 0
-
-    def _init_from_filepath(self):
-        super().__init__(self.name, self.labels, self.filepath)
-
-    def _init_from_visualtraj(self, VisualTraj):
-        self._generate_from_vis_data(VisualTraj)
 
     def _generate_from_vis_data(self, vis_data):
         self._gen_unnoisy_imu(vis_data)
