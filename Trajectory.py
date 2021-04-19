@@ -124,7 +124,7 @@ class ImuTraj(Trajectory):
         super().__init__(self.name, self.labels, self.filepath)
 
     def _init_from_visualtraj(self, VisualTraj):
-        self.generate_data(VisualTraj)
+        self._generate_from_vis_data(VisualTraj)
 
     def _get_next_frame_index(self, cam_t):
         """ Get index for which IMU time matches current camera time """
@@ -172,11 +172,11 @@ class ImuTraj(Trajectory):
 
         return ImuMeasurement(t, acc, om)
 
-    def generate_data(self, vis_data):
-        self._gen_unnoised_imu(vis_data)
-        self._gen_noised_imu()
+    def _generate_from_vis_data(self, vis_data):
+        self._gen_unnoisy_imu(vis_data)
+        self._gen_noisy_imu()
 
-    def _gen_unnoised_imu(self, vis_data):
+    def _gen_unnoisy_imu(self, vis_data):
         t = vis_data.t
         len_t = len(t)
         dt = t[1] - t[0]
@@ -207,7 +207,7 @@ class ImuTraj(Trajectory):
             exec(f"f = interp1d(t, self.{label}, kind='linear')")
             exec(f"self.{label} = f(self.t)")
 
-    def _gen_noised_imu(self):
+    def _gen_noisy_imu(self):
         filename, ext = os.path.splitext(self.filepath)
         filename_noisy = filename + '_noisy' + ext
 
