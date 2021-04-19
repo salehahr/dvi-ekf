@@ -8,6 +8,11 @@ from scipy.interpolate import interp1d
 from Measurement import VisualMeasurement, ImuMeasurement
 
 class Trajectory(object):
+    """ Base trajectory class which requires a
+        trajectory name, trajectory labels, and
+        a filepath.
+    """
+
     def __init__(self, name, labels, filepath=None):
         self.name = name
         self.labels = labels
@@ -34,6 +39,8 @@ class Trajectory(object):
                     exec(f"self.{label}.append(meas)")
 
     def plot(self, axes=None, min_t=None, max_t=None):
+        """ Creates a two column plot of the states/data. """
+
         num_labels = len(self.labels) - 1
         num_rows = math.ceil( num_labels / 2 )
         offset = num_labels % 2 # 0 if even, 1 if odd number of labels
@@ -64,6 +71,8 @@ class Trajectory(object):
         return axes
 
     def _get_plot_rc(self, ai, num_rows):
+        """ Returns current row and column for plotting. """
+
         if ai <= (num_rows - 1):
             row = ai
             col = 0
@@ -74,17 +83,23 @@ class Trajectory(object):
         return row, col
 
     def _get_latex_label(self, label):
+        """ Creates string in LaTeX math format. """
+
         if len(label) == 1:
             return '$' + label + '$'
         else:
             return '$' + label[0] + '_' + label[1] + '$'
 
 class VisualTraj(Trajectory):
+    """ Visual trajectory containing time and pose. """
+
     def __init__(self, name, filepath=None):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
         super().__init__(name, labels, filepath)
 
     def at_index(self, index):
+        """ Returns single visual measurement at the given index. """
+
         t = self.t[index]
 
         x = self.x[index]
@@ -101,6 +116,8 @@ class VisualTraj(Trajectory):
         return VisualMeasurement(t, pos, rot)
 
     def append_state(self, t, state):
+        """ Appends new measurement from current state. """
+
         x, y, z = state.p
         qw, qx, qy, qz = quaternion.as_float_array(state.q)
 
@@ -108,6 +125,9 @@ class VisualTraj(Trajectory):
             exec(f"self.{label}.append({label})")
 
 class ImuTraj(Trajectory):
+    """ IMU trajectory containing the acceleration and
+    angular velocity measurements. """
+
     def __init__(self, name="imu", filepath=None, vis_data=None, num_imu_between_frames=0, 
     covariance = [0.] * 6):
 
@@ -127,6 +147,8 @@ class ImuTraj(Trajectory):
         self.queue_first_ts = 0
 
     def _gen_unnoisy_imu(self, vis_data):
+        """ Generates IMU data from visual trajectory, without noise. """
+
         t = vis_data.t
         len_t = len(t)
         dt = t[1] - t[0]
@@ -146,6 +168,8 @@ class ImuTraj(Trajectory):
         self._flag_gen_unnoisy_imu = True
 
     def _gen_noisy_imu(self, covariance):
+        """ Generates IMU data from visual trajectory, with noise. """
+
         assert(self._flag_gen_unnoisy_imu == True)
 
         cov_ax, cov_ay, cov_az, cov_gx, cov_gy, cov_gz = covariance
@@ -170,6 +194,8 @@ class ImuTraj(Trajectory):
         self._write_to_file(filename_noisy)
 
     def _interpolate_imu(self, t):
+        """ Generates IMU data points between frames. """
+
         tmin = t[0]
         tmax = t[-1]
         num_cam_datapoints = len(t)
@@ -185,10 +211,14 @@ class ImuTraj(Trajectory):
             exec(f"self.{label} = f(self.t)")
 
     def _get_acceleration_from_vpos(self, data, dt):
+        """ Returns twice differentiated visual position data. """
+
         diff = np.gradient(data, dt)
         return np.gradient(diff, dt)
 
     def _get_angles_from_vquats(self, data, len_t):
+        """ Converts visual orientation quaternions to Euler angles. """
+
         rx = np.zeros((len_t,))
         ry = np.zeros((len_t,))
         rz = np.zeros((len_t,))
@@ -205,6 +235,8 @@ class ImuTraj(Trajectory):
         return rx, ry, rz
 
     def _write_to_file(self, filename=None):
+        """ Writes IMU trajectory to file. """
+
         if filename == None:
             filename = self.filepath
 
@@ -216,6 +248,8 @@ class ImuTraj(Trajectory):
                 f.write(data_str + '\n')
 
     def at_index(self, index):
+        """ Returns single IMU measurement at the given index. """
+
         t = self.t[index]
 
         ax = self.ax[index]
@@ -231,6 +265,8 @@ class ImuTraj(Trajectory):
         return ImuMeasurement(t, acc, om)
 
     def get_queue(self, old_t, current_cam_t):
+        """ Get IMU queue after old_t and up to current_cam_t. """
+
         start_index = self.next_frame_index
 
         prev_index = self._get_next_frame_index(old_t) # end of old imu queue
@@ -263,6 +299,9 @@ class ImuTraj(Trajectory):
         return max([i for i, t in enumerate(self.t) if t <= cam_t])
 
     def plot(self, axes=None, min_t=None, max_t=None):
+        """ Extends inherited plot functions for late setting
+    of line styles. """
+
         axes = super().plot(axes, min_t, max_t)
 
         for ax in axes.reshape(-1):
@@ -272,6 +311,8 @@ class ImuTraj(Trajectory):
         return axes
 
     def _set_plot_line_style(self, line):
+        """ Defines line styles for IMU plot. """
+
         label = line.get_label()
         if 'noisy' in label:
             line.set_color('darkgrey')
