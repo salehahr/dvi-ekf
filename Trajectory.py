@@ -19,15 +19,18 @@ class Trajectory(object):
         self.filepath = filepath
         self.cap = cap
 
-        for label in self.labels:
-            exec(f"self.{label} = []")
-
+        self.clear()
         if filepath:
             self._parse(cap)
 
+    def __iter__(self):
+        for attr, value in self.__dict__.items():
+            yield attr, value
+
     def clear(self):
+        """ Reinitialises data containers. """
         for label in self.labels:
-            exec(f"self.{label} = []")
+            self.__dict__[label] = []
 
     def _parse(self, cap):
         """ Extract data from file."""
@@ -36,9 +39,10 @@ class Trajectory(object):
             for i, line in enumerate(f):
                 data = line.split()
 
+                # iterate over data containers
                 for j, label in enumerate(self.labels):
                     meas = float(data[j])
-                    exec(f"self.{label}.append(meas)")
+                    self.__dict__[label].append(meas)
 
                 if cap is not None:
                     if i >= cap - 1:
@@ -62,7 +66,8 @@ class Trajectory(object):
                 continue
 
             row, col = self._get_plot_rc(ai, num_rows)
-            eval(f"axes[{row}][{col}].plot(self.t, self.{label}, label=self.name)")
+            axes[row][col].plot(self.t, self.__dict__[label],
+                label=self.name)
 
             latex_label = self._get_latex_label(label)
             axes[row][col].set_title(latex_label)
@@ -126,9 +131,10 @@ class VisualTraj(Trajectory):
 
         x, y, z = state.p
         qw, qx, qy, qz = quaternion.as_float_array(state.q)
+        data = np.hstack((t, x, y, z, qx, qy, qz, qw))
 
-        for label in self.labels:
-            exec(f"self.{label}.append({label})")
+        for i, label in enumerate(self.labels):
+            self.__dict__[label].append(data[i])
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
@@ -179,8 +185,6 @@ class ImuTraj(Trajectory):
 
         assert(self._flag_gen_unnoisy_imu == True)
 
-        cov_ax, cov_ay, cov_az, cov_gx, cov_gy, cov_gz = covariance
-
         filename, ext = os.path.splitext(self.filepath)
         filename_noisy = filename + '_noisy' + ext
 
@@ -190,12 +194,14 @@ class ImuTraj(Trajectory):
             covariance=covariance)
         noisy.clear()
 
-        for label in self.labels:
+        for i, label in enumerate(self.labels):
             if label == 't':
                 noisy.t = self.t
                 continue
 
-            exec(f"noisy.{label} = self.{label} + np.random.normal(loc=0., scale=cov_{label}, size=len(self.t))")
+            noisy.__dict__[label] = self.__dict__[label] \
+                + np.random.normal(loc=0., scale=covariance[i-1],
+                    size=len(self.t))
 
         self.noisy = noisy
         self._write_to_file(filename_noisy)
@@ -214,8 +220,8 @@ class ImuTraj(Trajectory):
             if label == 't':
                 continue
 
-            exec(f"f = interp1d(t, self.{label}, kind='linear')")
-            exec(f"self.{label} = f(self.t)")
+            f = interp1d(t, self.__dict__[label], kind='linear')
+            self.__dict__[label] = f(self.t)
 
     def _get_acceleration_from_vpos(self, data, dt):
         """ Returns twice differentiated visual position data. """
