@@ -13,23 +13,25 @@ class Trajectory(object):
         a filepath.
     """
 
-    def __init__(self, name, labels, filepath=None):
+    def __init__(self, name, labels, filepath=None, cap=None):
         self.name = name
         self.labels = labels
         self.filepath = filepath
+        self.cap = cap
 
         for label in self.labels:
             exec(f"self.{label} = []")
 
         if filepath:
-            self._parse()
+            self._parse(cap)
 
     def clear(self):
         for label in self.labels:
             exec(f"self.{label} = []")
 
-    def _parse(self):
+    def _parse(self, cap):
         """ Extract data from file."""
+
         with open(self.filepath, 'r') as f:
             for i, line in enumerate(f):
                 data = line.split()
@@ -37,6 +39,10 @@ class Trajectory(object):
                 for j, label in enumerate(self.labels):
                     meas = float(data[j])
                     exec(f"self.{label}.append(meas)")
+
+                if cap is not None:
+                    if i >= cap - 1:
+                        break
 
     def plot(self, axes=None, min_t=None, max_t=None):
         """ Creates a two column plot of the states/data. """
@@ -93,9 +99,9 @@ class Trajectory(object):
 class VisualTraj(Trajectory):
     """ Visual trajectory containing time and pose. """
 
-    def __init__(self, name, filepath=None):
+    def __init__(self, name, filepath=None, cap=None):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
-        super().__init__(name, labels, filepath)
+        super().__init__(name, labels, filepath, cap)
 
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
@@ -128,15 +134,16 @@ class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
     angular velocity measurements. """
 
-    def __init__(self, name="imu", filepath=None, vis_data=None, num_imu_between_frames=0, 
-    covariance = [0.] * 6):
+    def __init__(self, name="imu", filepath=None, vis_data=None, cap=None,
+        num_imu_between_frames=0,
+        covariance = [0.] * 6):
 
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
         self.num_imu_between_frames = num_imu_between_frames
         self._flag_gen_unnoisy_imu = False
         self.noisy = None
 
-        super().__init__(name, labels, filepath)
+        super().__init__(name, labels, filepath, cap)
 
         if vis_data:
             self.clear()
