@@ -223,20 +223,24 @@ class ImuTraj(Trajectory):
     def _gen_unnoisy_imu(self, vis_data):
         """ Generates IMU data from visual trajectory, without noise. """
 
-        t = vis_data.t
+        vis_data.interpolate(self.num_imu_between_frames)
+        interpolated = vis_data.interpolated
+        t = interpolated.t
         len_t = len(t)
         dt = t[1] - t[0]
 
-        self.ax = self._get_acceleration_from_vpos(vis_data.x, dt)
-        self.ay = self._get_acceleration_from_vpos(vis_data.y, dt)
-        self.az = self._get_acceleration_from_vpos(vis_data.z, dt)
+        self.ax = self._get_acceleration_from_vpos(interpolated.x, dt)
+        self.ay = self._get_acceleration_from_vpos(interpolated.y, dt)
+        self.az = self._get_acceleration_from_vpos(interpolated.z, dt)
 
-        rx, ry, rz = self._get_angles_from_vquats(vis_data, len_t)
+        rx, ry, rz = self._get_angles_from_vquats(interpolated, len_t)
         self.gx = np.gradient(rx, dt)
         self.gy = np.gradient(ry, dt)
         self.gz = np.gradient(rz, dt)
 
-        self._interpolate_imu(t)
+        self.t = interpolated.t
+
+        # self._interpolate_imu(t)
         self._write_to_file()
 
         self._flag_gen_unnoisy_imu = True
@@ -378,10 +382,10 @@ class ImuTraj(Trajectory):
         label = line.get_label()
         if 'noisy' in label:
             line.set_color('darkgrey')
-            line.set_linewidth(0.5)
+            line.set_linewidth(1)
         elif 'gt' in label:
             line.set_color('black')
-            line.set_linewidth(1)
+            # line.set_linewidth(1)
             line.set_linestyle('')
             line.set_marker('o')
             line.set_markersize(0.5)
