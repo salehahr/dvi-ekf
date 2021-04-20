@@ -4,6 +4,7 @@ import numpy as np
 import quaternion
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, splrep, splev
+from scipy.integrate import cumtrapz
 
 from Measurement import VisualMeasurement, ImuMeasurement
 
@@ -120,6 +121,7 @@ class VisualTraj(Trajectory):
         super().__init__(name, labels, filepath, cap)
 
         self.interpolated = None
+        self.reconstructed = None
 
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
@@ -184,6 +186,10 @@ class VisualTraj(Trajectory):
             line.set_linestyle(':')
             line.set_marker('o')
             line.set_markersize(2)
+        elif 'recon'in label:
+            line.set_linewidth(2)
+            line.set_linestyle('--')
+            line.set_color('tab:red')
         elif 'GT' in label or 'gt' in label:
             line.set_linewidth(1)
             line.set_color('tab:green')
@@ -196,6 +202,48 @@ class VisualTraj(Trajectory):
         else:
             line.set_color('darkgrey')
             line.set_linewidth(0.5)
+
+    def reconstruct_from_imu(self, data):
+        """ Generates trajectory from IMU data using
+        the available initial conditions. """
+
+        reconstructed = VisualTraj(self.name + ' recon', self.filepath)
+
+        t = data.t
+        dt = t[1] - t[0]
+        reconstructed.t = t
+        
+        # initial conditions
+        x0, y0, z0 = self.x[0], self.y[0], self.z[0]
+        vx0, vy0, vz0 = data.vx[0], data.vy[0], data.vz[0]
+        qx0, qy0, qz0, qw0 = self.qx[0], self.qy[0], self.qz[0], self.qw[0]
+
+        # iontegrating for pos
+        vx = cumtrapz(data.ax, t, initial=0) + vx0
+        vy = cumtrapz(data.ay, t, initial=0) + vy0
+        vz = cumtrapz(data.az, t, initial=0) + vz0
+
+        reconstructed.x = cumtrapz(vx, t, initial=0) + x0
+        reconstructed.y = cumtrapz(vy, t, initial=0) + y0
+        reconstructed.z = cumtrapz(vz, t, initial=0) + z0
+        
+        # integrating for orientation
+        quat0 = np.quaternion(qw0, qx0, qy0, qz0)
+        rx0, ry0, rz0 = quaternion.as_euler_angles(quat0)
+        rx = cumtrapz(data.gx, t, initial=0) + rx0
+        ry = cumtrapz(data.gy, t, initial=0) + ry0
+        rz = cumtrapz(data.gz, t, initial=0) + rz0
+
+        quats = quaternion.from_euler_angles(rx, ry, rz)
+        quats_f = quaternion.as_float_array(quats)
+        reconstructed.qw = quats_f[:,0]
+        reconstructed.qx = quats_f[:,1]
+        reconstructed.qy = quats_f[:,2]
+        reconstructed.qz = quats_f[:,3]
+        
+        self.reconstructed = reconstructed
+        
+        return reconstructed
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
@@ -244,9 +292,7 @@ class ImuTraj(Trajectory):
 
         self.t = interpolated.t
 
-        # self._interpolate_imu(t)
         self._write_to_file()
-
         self._flag_gen_unnoisy_imu = True
 
     def _gen_noisy_imu(self, covariance):
@@ -271,6 +317,10 @@ class ImuTraj(Trajectory):
             noisy.__dict__[label] = self.__dict__[label] \
                 + np.random.normal(loc=0., scale=covariance[i-1],
                     size=len(self.t))
+                    
+        noisy.vx = self.vx
+        noisy.vy = self.vy
+        noisy.vz = self.vz
 
         self.noisy = noisy
         self._write_to_file(filename_noisy)
