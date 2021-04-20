@@ -3,7 +3,7 @@ import math
 import numpy as np
 import quaternion
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, splrep, splev
 
 from Measurement import VisualMeasurement, ImuMeasurement
 
@@ -119,6 +119,8 @@ class VisualTraj(Trajectory):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
         super().__init__(name, labels, filepath, cap)
 
+        self.interpolated = None
+
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
 
@@ -146,6 +148,31 @@ class VisualTraj(Trajectory):
 
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
+
+    def interpolate(self, num_imu_between_frames):
+        """ Generates interpolated/fitted data points between frames. """
+
+        interpolated = VisualTraj(self.name + ' interpl', self.filepath)
+
+        tmin = self.t[0]
+        tmax = self.t[-1]
+        num_cam_datapoints = len(self.t)
+
+        num_imu_datapoints = (num_cam_datapoints - 1) \
+            * num_imu_between_frames + 1
+        interpolated.t = np.linspace(tmin, tmax, num=num_imu_datapoints)
+
+        for label in self.labels:
+            if label == 't':
+                continue
+
+            val = self.__dict__[label]
+
+            # interpolating
+            f = splrep(self.t, val, k=5)
+            interpolated.__dict__[label] = splev(interpolated.t, f)
+
+        self.interpolated = interpolated
 
     def _set_plot_line_style(self, line):
         """ Defines line styles for IMU plot. """
