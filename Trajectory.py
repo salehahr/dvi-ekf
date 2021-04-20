@@ -59,6 +59,9 @@ class Trajectory(object):
             fig, axes = plt.subplots(num_rows, 2)
             fig.tight_layout()
 
+        if offset == 1:
+            axes[0,0].set_visible(False)
+
         ai = offset
         for i, label in enumerate(self.labels):
             # skip time data
@@ -78,6 +81,11 @@ class Trajectory(object):
 
         # legend on last plot
         axes[row][col].legend()
+
+        # late setting of line styles
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
 
         return axes
 
@@ -100,6 +108,9 @@ class Trajectory(object):
             return '$' + label + '$'
         else:
             return '$' + label[0] + '_' + label[1] + '$'
+
+    def _set_plot_line_style(line):
+        pass
 
 class VisualTraj(Trajectory):
     """ Visual trajectory containing time and pose. """
@@ -135,6 +146,29 @@ class VisualTraj(Trajectory):
 
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
+
+    def _set_plot_line_style(self, line):
+        """ Defines line styles for IMU plot. """
+
+        label = line.get_label()
+        if 'interpl' in label:
+            line.set_color('black')
+            line.set_linewidth(1)
+            line.set_linestyle(':')
+            line.set_marker('o')
+            line.set_markersize(2)
+        elif 'GT' in label or 'gt' in label:
+            line.set_linewidth(1)
+            line.set_color('tab:green')
+        elif label == 'mono':
+            line.set_linewidth(1)
+            line.set_color('tab:orange')
+        elif label == 'kf':
+            line.set_linewidth(1)
+            line.set_color('tab:blue')
+        else:
+            line.set_color('darkgrey')
+            line.set_linewidth(0.5)
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
@@ -311,25 +345,16 @@ class ImuTraj(Trajectory):
         """ Get index for which IMU time matches current camera time """
         return max([i for i, t in enumerate(self.t) if t <= cam_t])
 
-    def plot(self, axes=None, min_t=None, max_t=None):
-        """ Extends inherited plot functions for late setting
-    of line styles. """
-
-        axes = super().plot(axes, min_t, max_t)
-
-        for ax in axes.reshape(-1):
-            for line in ax.get_lines():
-                self._set_plot_line_style(line)
-
-        return axes
-
     def _set_plot_line_style(self, line):
         """ Defines line styles for IMU plot. """
 
         label = line.get_label()
         if 'noisy' in label:
             line.set_color('darkgrey')
-            line.set_linewidth(0.2)
+            line.set_linewidth(0.5)
         elif 'gt' in label:
             line.set_color('black')
             line.set_linewidth(1)
+            line.set_linestyle('')
+            line.set_marker('o')
+            line.set_markersize(0.5)
