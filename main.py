@@ -8,9 +8,14 @@ from Trajectory import Trajectory, VisualTraj, ImuTraj
 
 # load data
 vis_traj = VisualTraj("mono", "./trajs/offline_mandala0_mono.txt")
-gt_traj = VisualTraj("gt", "./trajs/offline_mandala0_gt.txt")
-imu_traj = ImuTraj(filepath="./trajs/mandala0_imu.txt",
-        vis_data=vis_traj, num_imu_between_frames=100)
+gt_traj = VisualTraj("stereoGT (ref)", "./trajs/offline_mandala0_gt.txt")
+
+imu_covariance = [0.01, 0.01, 0.01, 0.07, 0.005, 0.1]
+imu_traj = ImuTraj(name='imu gt',
+        filepath="./trajs/mandala0_imu.txt",
+        vis_data=gt_traj,
+        num_imu_between_frames=100,
+        covariance=imu_covariance)
 
 # initial states
 p0 = [vis_traj.x[0], vis_traj.y[0], vis_traj.z[0]]
