@@ -292,23 +292,16 @@ class ImuTraj(Trajectory):
             f = interp1d(t, self.__dict__[label], kind='linear')
             self.__dict__[label] = f(self.t)
 
-    def _get_angles_from_vquats(self, data, len_t):
+    def _get_angles_from_vquats(self, interpolated, len_t):
         """ Converts visual orientation quaternions to Euler angles. """
 
-        rx = np.zeros((len_t,))
-        ry = np.zeros((len_t,))
-        rz = np.zeros((len_t,))
+        quats_arr = np.asarray(
+            [np.quaternion(w, interpolated.qx[i],
+                interpolated.qy[i], interpolated.qz[i])
+                for i, w in enumerate(interpolated.qw)])
 
-        for i in range(len_t):
-            x = data.qx[i]
-            y = data.qy[i]
-            z = data.qz[i]
-            w = data.qw[i]
-
-            quat = np.quaternion(w, x, y, z)
-            rx[i], ry[i], rz[i] = quaternion.as_euler_angles(quat)
-
-        return rx, ry, rz
+        euler = quaternion.as_euler_angles(quats_arr)
+        return euler[:,0], euler[:,1], euler[:,2]
 
     def _write_to_file(self, filename=None):
         """ Writes IMU trajectory to file. """
