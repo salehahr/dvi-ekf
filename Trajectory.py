@@ -80,13 +80,13 @@ class Trajectory(object):
 
             ai += 1
 
-        # legend on last plot
-        axes[row][col].legend()
-
         # late setting of line styles
         for ax in axes.reshape(-1):
             for line in ax.get_lines():
                 self._set_plot_line_style(line)
+
+        # legend on last plot
+        axes[row][col].legend()
 
         return axes
 
