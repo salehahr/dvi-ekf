@@ -229,9 +229,13 @@ class ImuTraj(Trajectory):
         len_t = len(t)
         dt = t[1] - t[0]
 
-        self.ax = self._get_acceleration_from_vpos(interpolated.x, dt)
-        self.ay = self._get_acceleration_from_vpos(interpolated.y, dt)
-        self.az = self._get_acceleration_from_vpos(interpolated.z, dt)
+        self.vx = np.gradient(interpolated.x, dt)
+        self.vy = np.gradient(interpolated.y, dt)
+        self.vz = np.gradient(interpolated.z, dt)
+
+        self.ax = np.gradient(self.vx, dt)
+        self.ay = np.gradient(self.vy, dt)
+        self.az = np.gradient(self.vz, dt)
 
         rx, ry, rz = self._get_angles_from_vquats(interpolated, len_t)
         self.gx = np.gradient(rx, dt)
@@ -287,12 +291,6 @@ class ImuTraj(Trajectory):
 
             f = interp1d(t, self.__dict__[label], kind='linear')
             self.__dict__[label] = f(self.t)
-
-    def _get_acceleration_from_vpos(self, data, dt):
-        """ Returns twice differentiated visual position data. """
-
-        diff = np.gradient(data, dt)
-        return np.gradient(diff, dt)
 
     def _get_angles_from_vquats(self, data, len_t):
         """ Converts visual orientation quaternions to Euler angles. """
