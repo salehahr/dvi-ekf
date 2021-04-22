@@ -125,7 +125,6 @@ class VisualTraj(Trajectory):
         super().__init__(name, labels, filepath, cap)
 
         self.interpolated = None
-        self.reconstructed = None
 
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
@@ -207,48 +206,6 @@ class VisualTraj(Trajectory):
             line.set_color('darkgrey')
             line.set_linewidth(0.5)
 
-    def reconstruct_from_imu(self, data):
-        """ Generates trajectory from IMU data using
-        the available initial conditions. """
-
-        reconstructed = VisualTraj(self.name + ' recon', self.filepath)
-
-        t = data.t
-        dt = t[1] - t[0]
-        reconstructed.t = t
-        
-        # initial conditions
-        x0, y0, z0 = self.x[0], self.y[0], self.z[0]
-        vx0, vy0, vz0 = data.vx[0], data.vy[0], data.vz[0]
-        qx0, qy0, qz0, qw0 = self.qx[0], self.qy[0], self.qz[0], self.qw[0]
-
-        # iontegrating for pos
-        vx = cumtrapz(data.ax, t, initial=0) + vx0
-        vy = cumtrapz(data.ay, t, initial=0) + vy0
-        vz = cumtrapz(data.az, t, initial=0) + vz0
-
-        reconstructed.x = cumtrapz(vx, t, initial=0) + x0
-        reconstructed.y = cumtrapz(vy, t, initial=0) + y0
-        reconstructed.z = cumtrapz(vz, t, initial=0) + z0
-        
-        # integrating for orientation
-        quat0 = np.quaternion(qw0, qx0, qy0, qz0)
-        rx0, ry0, rz0 = quaternion.as_euler_angles(quat0)
-        rx = cumtrapz(data.gx, t, initial=0) + rx0
-        ry = cumtrapz(data.gy, t, initial=0) + ry0
-        rz = cumtrapz(data.gz, t, initial=0) + rz0
-
-        quats = quaternion.from_euler_angles(rx, ry, rz)
-        quats_f = quaternion.as_float_array(quats)
-        reconstructed.qw = quats_f[:,0]
-        reconstructed.qx = quats_f[:,1]
-        reconstructed.qy = quats_f[:,2]
-        reconstructed.qz = quats_f[:,3]
-        
-        self.reconstructed = reconstructed
-        
-        return reconstructed
-
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
     angular velocity measurements. """
@@ -260,23 +217,25 @@ class ImuTraj(Trajectory):
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
         self.num_imu_between_frames = num_imu_between_frames
         self._flag_gen_unnoisy_imu = False
+        self.vis_data = vis_data
         self.noisy = None
+        self.reconstructed = None
 
         super().__init__(name, labels, filepath, cap)
 
         if vis_data:
             self.clear()
-            self._gen_unnoisy_imu(vis_data)
+            self._gen_unnoisy_imu()
             self._gen_noisy_imu(covariance)
 
         self.next_frame_index = 0
         self.queue_first_ts = 0
 
-    def _gen_unnoisy_imu(self, vis_data):
+    def _gen_unnoisy_imu(self):
         """ Generates IMU data from visual trajectory, without noise. """
 
-        vis_data.interpolate(self.num_imu_between_frames)
-        interpolated = vis_data.interpolated
+        self.vis_data.interpolate(self.num_imu_between_frames)
+        interpolated = self.vis_data.interpolated
         t = interpolated.t
         len_t = len(t)
         dt = t[1] - t[0]
@@ -321,7 +280,7 @@ class ImuTraj(Trajectory):
             noisy.__dict__[label] = self.__dict__[label] \
                 + np.random.normal(loc=0., scale=covariance[i-1],
                     size=len(self.t))
-                    
+
         noisy.vx = self.vx
         noisy.vy = self.vy
         noisy.vz = self.vz
@@ -421,16 +380,61 @@ class ImuTraj(Trajectory):
         """ Get index for which IMU time matches current camera time """
         return max([i for i, t in enumerate(self.t) if t <= cam_t])
 
+    def reconstruct_vis_traj(self):
+        """ Generates trajectory from IMU data using
+        the available initial conditions. """
+
+        reconstructed = VisualTraj('recon')
+
+        t = self.t
+        dt = t[1] - t[0]
+        reconstructed.t = t
+
+        # initial conditions
+        x0, y0, z0 = self.vis_data.x[0], self.vis_data.y[0], self.vis_data.z[0]
+        vx0, vy0, vz0 = self.vx[0], self.vy[0], self.vz[0]
+        qx0, qy0, qz0, qw0 = self.vis_data.qx[0], self.vis_data.qy[0], self.vis_data.qz[0], self.vis_data.qw[0]
+
+        # iontegrating for pos
+        vx = cumtrapz(self.ax, t, initial=0) + vx0
+        vy = cumtrapz(self.ay, t, initial=0) + vy0
+        vz = cumtrapz(self.az, t, initial=0) + vz0
+
+        reconstructed.x = cumtrapz(vx, t, initial=0) + x0
+        reconstructed.y = cumtrapz(vy, t, initial=0) + y0
+        reconstructed.z = cumtrapz(vz, t, initial=0) + z0
+
+        # integrating for orientation
+        quat0 = np.quaternion(qw0, qx0, qy0, qz0)
+        rx0, ry0, rz0 = quaternion.as_euler_angles(quat0)
+        rx = cumtrapz(self.gx, t, initial=0) + rx0
+        ry = cumtrapz(self.gy, t, initial=0) + ry0
+        rz = cumtrapz(self.gz, t, initial=0) + rz0
+
+        quats = quaternion.from_euler_angles(rx, ry, rz)
+        quats_f = quaternion.as_float_array(quats)
+        reconstructed.qw = quats_f[:,0]
+        reconstructed.qx = quats_f[:,1]
+        reconstructed.qy = quats_f[:,2]
+        reconstructed.qz = quats_f[:,3]
+
+        self.reconstructed = reconstructed
+
+        return reconstructed
+
     def _set_plot_line_style(self, line):
         """ Defines line styles for IMU plot. """
 
+        line.set_linestyle('')
+        line.set_marker('o')
+        line.set_markersize(0.4)
+
         label = line.get_label()
         if 'noisy' in label:
+            line.set_linestyle('-')
             line.set_color('darkgrey')
             line.set_linewidth(1)
         elif 'gt' in label:
             line.set_color('black')
-            # line.set_linewidth(1)
-            line.set_linestyle('')
-            line.set_marker('o')
-            line.set_markersize(0.5)
+        elif 'mono' in label:
+            line.set_color('saddlebrown')

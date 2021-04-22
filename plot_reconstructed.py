@@ -27,7 +27,7 @@ max_t = imu_traj.t[-1]
 # axes = stereoGT_traj.interpolated.plot(axes, min_t=min_t, max_t=max_t)
 
 # sanity check -- plot reconstructed trajectory from imu
-reconstructed = stereoGT_traj.reconstruct_from_imu(imu_traj)
+reconstructed = imu_gt_traj.reconstruct_vis_traj()
 recon_axes = stereoGT_traj.plot(min_t=min_t, max_t=max_t)
 recon_axes = reconstructed.plot(recon_axes, min_t=min_t, max_t=max_t)
 
