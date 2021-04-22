@@ -301,13 +301,13 @@ class ImuTraj(Trajectory):
             f = interp1d(t, self.__dict__[label], kind='linear')
             self.__dict__[label] = f(self.t)
 
-    def _get_angles_from_vquats(self, interpolated, len_t):
-        """ Converts visual orientation quaternions to Euler angles. """
+    def _get_angles_from_vquats(self, vis_data, len_t):
+        """ Converts orientation quaternions to Euler angles. """
 
-        quats_arr = np.asarray(
-            [np.quaternion(w, interpolated.qx[i],
-                interpolated.qy[i], interpolated.qz[i])
-                for i, w in enumerate(interpolated.qw)])
+        quats_arr = [np.quaternion(w, vis_data.qx[i],
+                vis_data.qy[i], vis_data.qz[i])
+                for i, w in enumerate(vis_data.qw)]
+        quats_arr = np.asarray(quats_arr)
 
         euler = quaternion.as_euler_angles(quats_arr)
         return euler[:,0], euler[:,1], euler[:,2]
