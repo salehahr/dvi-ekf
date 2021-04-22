@@ -125,6 +125,10 @@ class VisualTraj(Trajectory):
         super().__init__(name, labels, filepath, cap)
 
         self.interpolated = None
+        self.quats = None
+
+        if self.qx:
+            self.gen_quats_farray()
 
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
@@ -178,6 +182,7 @@ class VisualTraj(Trajectory):
             interpolated.__dict__[label] = splev(interpolated.t, f)
 
         self.interpolated = interpolated
+        self.interpolated.gen_quats_farray()
 
     def _set_plot_line_style(self, line):
         """ Defines line styles for IMU plot. """
@@ -205,6 +210,12 @@ class VisualTraj(Trajectory):
         else:
             line.set_color('darkgrey')
             line.set_linewidth(0.5)
+
+    def gen_quats_farray(self):
+        quats = [np.quaternion(w, self.qx[i],
+                self.qy[i], self.qz[i])
+                for i, w in enumerate(self.qw)]
+        self.quats = np.asarray(quats)
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
@@ -306,12 +317,7 @@ class ImuTraj(Trajectory):
     def _get_angles_from_vquats(self, vis_data, len_t):
         """ Converts orientation quaternions to Euler angles. """
 
-        quats_arr = [np.quaternion(w, vis_data.qx[i],
-                vis_data.qy[i], vis_data.qz[i])
-                for i, w in enumerate(vis_data.qw)]
-        quats_arr = np.asarray(quats_arr)
-
-        euler = quaternion.as_euler_angles(quats_arr)
+        euler = quaternion.as_euler_angles(vis_data.quats)
         return euler[:,0], euler[:,1], euler[:,2]
 
     def _write_to_file(self, filename=None):
