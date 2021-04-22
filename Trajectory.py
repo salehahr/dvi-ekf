@@ -157,7 +157,7 @@ class VisualTraj(Trajectory):
     def interpolate(self, num_imu_between_frames):
         """ Generates interpolated/fitted data points between frames. """
 
-        interpolated = VisualTraj(self.name + ' interpl', self.filepath)
+        interpolated = VisualTraj(self.name + ' interpl')
 
         tmin = self.t[0]
         tmax = self.t[-1]
@@ -280,10 +280,6 @@ class ImuTraj(Trajectory):
             noisy.__dict__[label] = self.__dict__[label] \
                 + np.random.normal(loc=0., scale=covariance[i-1],
                     size=len(self.t))
-
-        noisy.vx = self.vx
-        noisy.vy = self.vy
-        noisy.vz = self.vz
 
         self.noisy = noisy
         self._write_to_file(filename_noisy)
