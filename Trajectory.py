@@ -240,6 +240,7 @@ class ImuTraj(Trajectory):
         len_t = len(t)
         dt = t[1] - t[0]
 
+        # acceleration
         self.vx = np.gradient(interpolated.x, dt)
         self.vy = np.gradient(interpolated.y, dt)
         self.vz = np.gradient(interpolated.z, dt)
@@ -248,6 +249,7 @@ class ImuTraj(Trajectory):
         self.ay = np.gradient(self.vy, dt)
         self.az = np.gradient(self.vz, dt)
 
+        # angular velocity
         rx, ry, rz = self._get_angles_from_vquats(interpolated, len_t)
         self.gx = np.gradient(rx, dt)
         self.gy = np.gradient(ry, dt)
