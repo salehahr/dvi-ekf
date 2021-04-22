@@ -22,7 +22,11 @@ class Trajectory(object):
 
         self.clear()
         if filepath:
-            self._parse(cap)
+            try:
+                self._parse(cap)
+            except FileNotFoundError:
+                file = open(filepath, 'w+')
+                file.close()
 
     def __iter__(self):
         for attr, value in self.__dict__.items():
