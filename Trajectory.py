@@ -247,9 +247,7 @@ class ImuTraj(Trajectory):
 
         self.vis_data.interpolate(self.num_imu_between_frames)
         interpolated = self.vis_data.interpolated
-        t = interpolated.t
-        len_t = len(t)
-        dt = t[1] - t[0]
+        dt = interpolated.t[1] - interpolated.t[0]
 
         # acceleration
         self.vx = np.gradient(interpolated.x, dt)
@@ -261,7 +259,8 @@ class ImuTraj(Trajectory):
         self.az = np.gradient(self.vz, dt)
 
         # angular velocity
-        rx, ry, rz = self._get_angles_from_vquats(interpolated, len_t)
+        euler = quaternion.as_euler_angles(interpolated.quats)
+        rx, ry, rz = euler[:,0], euler[:,1], euler[:,2]
         self.gx = np.gradient(rx, dt)
         self.gy = np.gradient(ry, dt)
         self.gz = np.gradient(rz, dt)
@@ -313,12 +312,6 @@ class ImuTraj(Trajectory):
 
             f = interp1d(t, self.__dict__[label], kind='linear')
             self.__dict__[label] = f(self.t)
-
-    def _get_angles_from_vquats(self, vis_data, len_t):
-        """ Converts orientation quaternions to Euler angles. """
-
-        euler = quaternion.as_euler_angles(vis_data.quats)
-        return euler[:,0], euler[:,1], euler[:,2]
 
     def _write_to_file(self, filename=None):
         """ Writes IMU trajectory to file. """
