@@ -215,7 +215,7 @@ class VisualTraj(Trajectory):
         quats = [np.quaternion(w, self.qx[i],
                 self.qy[i], self.qz[i])
                 for i, w in enumerate(self.qw)]
-        self.quats = np.asarray(quats)
+        self.quats = quats
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
@@ -242,6 +242,17 @@ class ImuTraj(Trajectory):
         self.next_frame_index = 0
         self.queue_first_ts = 0
 
+    def _quats_diff(self, quats_f, dt):
+        num_q = len(quats_f)
+        dqdt = []        
+        for i in range(num_q - 1):
+            dq = quaternion.as_quat_array((quats_f[i+1] - quats_f[i]) / dt)
+            dqdt.append(dq)
+        dqdt.append((quats_f[-1] - quats_f[-2]) / dt)
+            
+        print(dqdt[:5])
+        print(len(dqdt))
+
     def _gen_unnoisy_imu(self):
         """ Generates IMU data from visual trajectory, without noise. """
 
@@ -257,9 +268,18 @@ class ImuTraj(Trajectory):
         self.ax = np.gradient(self.vx, dt)
         self.ay = np.gradient(self.vy, dt)
         self.az = np.gradient(self.vz, dt)
+        
+        # w2
+        quats = interpolated.quats
+        quats_f = quaternion.as_float_array(quats)
+        
+        self._quats_diff(quats_f, dt)
+        input()
+        
+        quaternion.fd_derivative(quats_f, interpolated.t)
 
         # angular velocity
-        euler = quaternion.as_euler_angles(interpolated.quats)
+        euler = quaternion.as_euler_angles(quats)
         rx, ry, rz = euler[:,0], euler[:,1], euler[:,2]
         self.gx = np.gradient(rx, dt)
         self.gy = np.gradient(ry, dt)
