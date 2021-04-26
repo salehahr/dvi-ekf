@@ -51,7 +51,7 @@ Aim here was to check whether the generation of fake IMU data was correct.
 Here I tried to reconstruct the trajectory by integrating the
 generated IMU data (without noise).
 
-[`ImuTraj.reconstruct_vis_traj`](https://github.com/feudalism/dvi-ekf/blob/291a01af4cdb8d617a4f7a5fb095dc5acd8838bf/Trajectory.py#L384)
+[`ImuTraj.reconstruct_vis_traj`](https://github.com/feudalism/dvi-ekf/blob/291a01af4cdb8d617a4f7a5fb095dc5acd8838bf/Trajectory.py#L390)
 * Gets initial conditions `IC` (for the integration) from original `VisTraj`.
 * Integrate:
   * `int_vals = scipy.integrate.cumtrapz(diff_vals, t, initial=0) + IC`.
