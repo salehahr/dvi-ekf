@@ -3,24 +3,19 @@ np.set_printoptions(precision=1, linewidth=150)
 import quaternion
 import matplotlib.pyplot as plt
 
-from Filter import States, Filter
-from Trajectory import Trajectory, VisualTraj, ImuTraj
+from Filter import States, Filter, VisualTraj
 
 # load data
-vis_traj = VisualTraj("mono", "./trajs/offline_mandala0_mono.txt")
-gt_traj = VisualTraj("stereoGT (ref)", "./trajs/offline_mandala0_gt.txt")
+from generate_data import mono_traj, stereoGT_traj, imu_gt_traj, min_t, max_t
 
-imu_covariance = [0.01, 0.01, 0.01, 0.07, 0.005, 0.1]
-imu_traj = ImuTraj(name='imu gt',
-        vis_data=gt_traj,
-        num_imu_between_frames=100,
-        covariance=imu_covariance)
+# imu_traj = imu_gt_traj
+imu_traj = imu_gt_traj.noisy
 
 # initial states
-p0 = [vis_traj.x[0], vis_traj.y[0], vis_traj.z[0]]
+p0 = [mono_traj.x[0], mono_traj.y[0], mono_traj.z[0]]
 v0 = [0., 0., 0.]
-q0 = np.quaternion(vis_traj.qw[0],
-        vis_traj.qx[0], vis_traj.qy[0], vis_traj.qz[0])
+q0 = np.quaternion(mono_traj.qw[0],
+        mono_traj.qx[0], mono_traj.qy[0], mono_traj.qz[0])
 bw0 = [0., 0., 0.]
 ba0 = [0., 0., 0.]
 scale0 = 1.
@@ -53,12 +48,12 @@ R_q = [0.01 for i in range(3)]
 R = np.diag(np.hstack((R_p, R_q)))
 
 # filter main loop
-t_start = vis_traj.t[0]
-t_end = vis_traj.t[-1]
+t_start = mono_traj.t[0]
+t_end = mono_traj.t[-1]
 
 traj = VisualTraj("kf")
-for i, t in enumerate(vis_traj.t):
-    current_vis = vis_traj.at_index(i)
+for i, t in enumerate(mono_traj.t):
+    current_vis = mono_traj.at_index(i)
 
     # initialisation
     if i == 0:
@@ -104,9 +99,9 @@ for i, t in enumerate(vis_traj.t):
 
 # plot
 axes = None
-axes = gt_traj.plot(axes)
-axes = vis_traj.plot(axes)
-axes = traj.plot(axes, min_t=vis_traj.t[0], max_t=vis_traj.t[-1])
+axes = stereoGT_traj.plot(axes)
+axes = mono_traj.plot(axes)
+axes = traj.plot(axes, min_t=min_t, max_t=max_t)
 
 plt.legend()
 plt.show()

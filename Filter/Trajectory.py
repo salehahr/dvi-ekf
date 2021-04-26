@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, splrep, splev
 from scipy.integrate import cumtrapz
 
-from Measurement import VisualMeasurement, ImuMeasurement
+from .Measurement import VisualMeasurement, ImuMeasurement
 
 class Trajectory(object):
     """ Base trajectory class which requires a

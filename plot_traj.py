@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from Trajectory import VisualTraj
+from Filter import VisualTraj
 
 traj_data = {'stereoGT': "./trajs/offline_mandala0_gt.txt",
             'mono' : "./trajs/offline_mandala0_mono.txt"}
