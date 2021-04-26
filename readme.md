@@ -57,8 +57,11 @@ generated IMU data (without noise).
   * `int_vals = scipy.integrate.cumtrapz(diff_vals, t, initial=0) + IC`.
   * Rotations to quaternions: `quat = quaternion.from_euler_angles(rx, ry, rz)`
 
-
 ![](img/traj_recon.PNG)
+
+#### Debugging ...
+
+![](img/traj_recon_debug.PNG)
 
 ### KF propagation only
 Using initial pose from monocular trajectory and propagating using IMU values

@@ -74,7 +74,31 @@ class Trajectory(object):
                 continue
 
             row, col = self._get_plot_rc(ai, num_rows)
-            axes[row][col].plot(self.t, self.__dict__[label],
+
+            do_switch = True
+
+            # debug
+            if col == 1 and 'recon' in self.name:
+                print(f"row {row}: plotting recon.{label}")
+
+            if do_switch:
+                if 'recon' in self.name:
+                    if label == 'qx':
+                        axes[row][col].plot(self.t, -1 * self.__dict__['qy'],
+                    label=self.name)
+                        print("\t switch data to -recon.qy")
+                    elif label == 'qy':
+                        axes[row][col].plot(self.t, self.__dict__['qx'],
+                    label=self.name)
+                        print("\t switch data to +recon.qx")
+                    else:
+                        axes[row][col].plot(self.t, self.__dict__[label],
+                    label=self.name)
+                else:
+                    axes[row][col].plot(self.t, self.__dict__[label],
+                    label=self.name)
+            else:
+                axes[row][col].plot(self.t, self.__dict__[label],
                 label=self.name)
 
             latex_label = self._get_latex_label(label)
