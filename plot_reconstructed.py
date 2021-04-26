@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from Trajectory import VisualTraj, ImuTraj
 
 max_vals = None
-num_imu_between_frames = 30
+num_imu_between_frames = 10
 
 # trajectory generation:  stereoGT (ref) and imu
 stereoGT_traj = VisualTraj("stereoGT",
@@ -14,13 +14,11 @@ mono_traj = VisualTraj("mono",
 
 imu_covariance = [0.01, 0.01, 0.01, 0.07, 0.005, 0.1]
 imu_gt_traj = ImuTraj(name='imu gt',
-        filepath="./trajs/mandala0_imu_gt.txt",
         vis_data=stereoGT_traj,
         cap=max_vals,
         num_imu_between_frames=num_imu_between_frames,
         covariance=imu_covariance)
 imu_mono_traj = ImuTraj(name='imu mono',
-        filepath="./trajs/mandala0_imu_mono.txt",
         vis_data=mono_traj,
         cap=max_vals,
         num_imu_between_frames=num_imu_between_frames,

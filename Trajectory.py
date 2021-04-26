@@ -271,7 +271,8 @@ class ImuTraj(Trajectory):
 
         self.t = interpolated.t
 
-        self._write_to_file()
+        if self.filepath:
+            self._write_to_file()
         self._flag_gen_unnoisy_imu = True
 
     def _gen_noisy_imu(self, covariance):
@@ -279,8 +280,11 @@ class ImuTraj(Trajectory):
 
         assert(self._flag_gen_unnoisy_imu == True)
 
-        filename, ext = os.path.splitext(self.filepath)
-        filename_noisy = filename + '_noisy' + ext
+        if self.filepath:
+            filename, ext = os.path.splitext(self.filepath)
+            filename_noisy = filename + '_noisy' + ext
+        else:
+            filename_noisy = None
 
         noisy = ImuTraj(name="noisy imu",
             filepath=filename_noisy,
@@ -298,7 +302,9 @@ class ImuTraj(Trajectory):
                     size=len(self.t))
 
         self.noisy = noisy
-        self._write_to_file(filename_noisy)
+
+        if self.filepath:
+            self._write_to_file(filename_noisy)
 
     def _interpolate_imu(self, t):
         """ Generates IMU data points between frames. """

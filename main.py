@@ -12,7 +12,6 @@ gt_traj = VisualTraj("stereoGT (ref)", "./trajs/offline_mandala0_gt.txt")
 
 imu_covariance = [0.01, 0.01, 0.01, 0.07, 0.005, 0.1]
 imu_traj = ImuTraj(name='imu gt',
-        filepath="./trajs/mandala0_imu.txt",
         vis_data=gt_traj,
         num_imu_between_frames=100,
         covariance=imu_covariance)
