@@ -221,9 +221,11 @@ class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
     angular velocity measurements. """
 
-    def __init__(self, name="imu", filepath=None, vis_data=None, cap=None,
+    def __init__(self, name="imu", filepath=None, vis_data=None,
+        cap=None,
         num_imu_between_frames=0,
-        covariance = [0.] * 6):
+        covariance = [0.] * 6,
+        unnoised = False):
 
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
         self.num_imu_between_frames = num_imu_between_frames
@@ -237,7 +239,9 @@ class ImuTraj(Trajectory):
         if vis_data:
             self.clear()
             self._gen_unnoisy_imu()
-            self._gen_noisy_imu(covariance)
+
+            if not unnoised:
+                self._gen_noisy_imu(covariance)
 
         self.next_frame_index = 0
         self.queue_first_ts = 0
