@@ -1,24 +1,92 @@
 from math import factorial
 import numpy as np
-import quaternion
+import quaternion # convenient for quat multiplication, normalisation
+from scipy.spatial.transform import Rotation as R
 
 def skew(x):
     return np.array([[0,    -x[2], x[1]],
                      [x[2],    0, -x[0]],
                      [-x[1], x[0],    0]])
 
+class Quaternion(object):
+    def __init__(self, wxyz=None, xyzw=None, x=None, y=None, z=None, w=None, v=None, do_normalise=False):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w
+
+        # parsing
+        if wxyz is not None and type(wxyz) is quaternion.quaternion:
+            self.w, self.x, self.y, self.z = quaternion.as_float_array(wxyz)
+        elif xyzw is not None:
+            self.x, self.y, self.z, self.w = xyzw
+        elif v is not None:
+            self.x, self.y, self.z = v
+
+        # normalize
+        if do_normalise:
+            self.normalise()
+
+    # rotation representations
+    @property
+    def R(self):
+        return R.from_quat(self.xyzw)
+
+    @property
+    def rot(self):
+        return R.from_quat(self.xyzw).as_matrix()
+
+    @property
+    def wxyz(self):
+        return np.asarray([self.w, self.x, self.y, self.z])
+
+    @property
+    def xyzw(self):
+        return np.asarray([self.x, self.y, self.z, self.w])
+
+    @property
+    def np_quat(self):
+        return np.quaternion(self.w, self.x, self.y, self.z)
+
+    @property
+    def conjugate(self):
+        return Quaternion(wxyz=self.np_quat.conjugate())
+
+    # operators
+    def __mul__(self, other):
+        if type(other) is quaternion.quaternion:
+            mult = self.np_quat * other
+        elif type(other) is Quaternion:
+            mult = self.np_quat * other.np_quat
+        else:
+            mult = other * self.np_quat
+        return Quaternion(wxyz=mult)
+
+    def __rmul__(self, other):
+        if isinstance(other, float):
+            mult = other * self.np_quat
+        return Quaternion(wxyz=mult)
+
+    def __add__(self, other):
+        summ = self.np_quat + other.np_quat
+        return Quaternion(wxyz=summ)
+
+    def normalise(self):
+        quat = self.np_quat.normalized()
+        self.__init__(wxyz=quat)
+
 class States(object):
     def __init__(self, p, v, q, bw, ba, scale, p_offset, q_offset):
         self.p = np.asarray(p)
         self.v = np.asarray(v)
-        self.q = q.normalized()
+        self.q = Quaternion(xyzw=q, do_normalise=True)
 
         self.bw = np.asarray(bw)
         self.ba = np.asarray(ba)
         self.scale = scale
 
         self.p_offset = np.asarray(p_offset)
-        self.q_offset = q_offset.normalized()
+        self.q_offset = Quaternion(xyzw=q_offset, do_normalise=True)
 
         self.size = len(p) + len(v) + 4 \
                 + len(bw) + len(ba) + 1 \
@@ -28,7 +96,7 @@ class States(object):
         self.p += err.dp
         self.v += err.dv
         self.q = err.dq * self.q
-        self.q.normalized()
+        self.q.normalise()
 
         self.bw += err.dbw
         self.ba += err.dba
@@ -36,7 +104,7 @@ class States(object):
 
         self.p_offset += err.dp_offset
         self.q_offset = err.dq_offset * self.q_offset
-        self.q_offset.normalized()
+        self.q_offset.normalise()
 
 class ErrorStates(object):
     def __init__(self, vec):
@@ -51,14 +119,14 @@ class ErrorStates(object):
 
         self.dp = np.asarray(p)
         self.dv = np.asarray(v)
-        self.dq = np.quaternion(1, theta[0]/2, theta[1]/2, theta[2]/2)
+        self.dq = Quaternion(v=theta/2, w=1.)
 
         self.dbw = np.asarray(bw)
         self.dba = np.asarray(ba)
         self.dscale = scale
 
         self.dp_offset = np.asarray(p_offset)
-        self.dq_offset = np.quaternion(1, theta_offset[0]/2, theta_offset[1]/2, theta_offset[2]/2)
+        self.dq_offset = Quaternion(v=theta_offset/2, w=1.)
 
 class Filter(object):
     def __init__(self, num_states, num_meas, num_control):
@@ -73,7 +141,7 @@ class Filter(object):
         self.states = None
 
         self.p_VW = np.asarray([0., 0., 0.])
-        self.q_VW = np.quaternion(1., 0., 0., 0.)
+        self.q_VW = Quaternion(xyzw=[0., 0., 0., 1.])
 
         # imu
         self.om_old = None
@@ -86,18 +154,18 @@ class Filter(object):
         self.P = cov_matr
 
     def propagate_states(self, imu):
-        v_old = self.states.v
-        R_WB_old = quaternion.as_rotation_matrix(self.states.q)
+        v_old = self.states.v        
+        q_old = self.states.q
 
-        om = imu.om - self.states.bw
-        om_q = np.quaternion(0., om[0], om[1], om[2])
+        om = Quaternion(w=0., v=(imu.om - self.states.bw) )
 
-        self.states.q += self.dt / 2. * om_q * self.states.q # quat multiplication
-        self.states.q = self.states.q.normalized()
-        R_WB = quaternion.as_rotation_matrix(self.states.q)
+        self.states.q += self.dt / 2. * om * self.states.q
+        self.states.q.normalise()
+
+        R_WB = self.states.q.rot
 
         self.states.v += self.dt / 2. * ( \
-            R_WB_old @ (self.acc_old - self.states.ba) \
+            q_old.rot @ (self.acc_old - self.states.ba) \
             + R_WB @ (imu.acc - self.states.ba) )
         self.states.p += self.dt / 2. * (v_old + self.states.v)
 
@@ -141,9 +209,9 @@ class Filter(object):
         p_VC = camera.pos
         q_VC = camera.qrot
 
-        R_VW = quaternion.as_rotation_matrix(self.q_VW)
-        R_WB = quaternion.as_rotation_matrix(self.states.q)
-        R_BC = quaternion.as_rotation_matrix(self.states.q_offset)
+        R_VW = self.q_VW.rot
+        R_WB = self.states.q.rot
+        R_BC = self.states.q_offset.rot
 
         h_scale = R_VW @ (R_WB @ self.states.p_offset + self.states.p)
         h_scale = np.reshape(h_scale, (h_scale.shape[0], -1))
@@ -184,14 +252,14 @@ class Filter(object):
         r_p = p_VC - z_est;
 
         zq = self.states.q_offset * self.states.q * self.q_VW
-        r_q = (q_VC * ( zq ).conjugate() ).conjugate()
-        r_q_float = quaternion.as_float_array(r_q)
+
+        r_q = (q_VC * ( zq ).conjugate ).conjugate.wxyz
 
         r = np.hstack((
             r_p,
-            2*r_q_float[1],
-            2*r_q_float[2],
-            2*r_q_float[3],
+            2*r_q[1],
+            2*r_q[2],
+            2*r_q[3],
         ))
 
         # calculate Kalman gain
@@ -204,7 +272,7 @@ class Filter(object):
 
     def _calculate_Fd(self, om, acc):
         Fd = np.eye(self.num_error_states, self.num_error_states)
-        R_WB = quaternion.as_rotation_matrix(self.states.q)
+        R_WB = self.states.q.rot
 
         dt = self.dt * np.eye(3, 3)
         delt2 = self.dt**2/2 * np.eye(3, 3)
@@ -241,7 +309,7 @@ class Filter(object):
 
     def _calculate_Gc(self):
         Gc = np.zeros((self.num_states, self.num_control))
-        R_WB = quaternion.as_rotation_matrix(self.states.q)
+        R_WB = self.states.q.rot
 
         Gc[3:6, 0:3] = -R_WB
         Gc[6:9, 6:9] = -np.eye(3, 3)

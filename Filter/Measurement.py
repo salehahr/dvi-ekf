@@ -1,5 +1,5 @@
 import numpy as np
-import quaternion
+from .Filter import Quaternion
 
 class Measurement(object):
     """ Base measurement class.
@@ -30,7 +30,7 @@ class VisualMeasurement(Measurement):
         self.qy = rot[1]
         self.qz = rot[2]
         self.qw = rot[3]
-        self.qrot = np.quaternion(self.qw, self.qx, self.qy, self.qz)
+        self.qrot = Quaternion(xyzw=rot)
 
 class ImuMeasurement(Measurement):
     """ IMU measurements containing acceleration and angular velocity.

@@ -1,8 +1,8 @@
 import os
 import math
 import numpy as np
-import quaternion
 import matplotlib.pyplot as plt
+
 from scipy.interpolate import interp1d, splrep, splev
 from scipy.integrate import cumtrapz
 from scipy.spatial.transform import Rotation as R
@@ -153,7 +153,7 @@ class VisualTraj(Trajectory):
         """ Appends new measurement from current state. """
 
         x, y, z = state.p
-        qw, qx, qy, qz = quaternion.as_float_array(state.q)
+        qx, qy, qz, qw = state.q.xyzw
         data = [t, x, y, z, qx, qy, qz, qw]
 
         for i, label in enumerate(self.labels):
