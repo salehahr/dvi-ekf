@@ -3,8 +3,8 @@ from Filter import VisualTraj, ImuTraj
 """ Generates visual trajectory data as well as fake IMU data """
 
 max_vals = None
-num_imu_between_frames = 10
-imu_covariance = [0.01, 0.01, 0.01, 0.07, 0.005, 0.1]
+num_imu_between_frames = 100
+imu_covariance = [0.01, 0.03, 0.01, 0.03, 0.005, 0.005]
 
 # SLAM data
 stereoGT_traj = VisualTraj("stereoGT",
