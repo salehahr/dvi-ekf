@@ -8,8 +8,8 @@ from Filter import States, Filter, VisualTraj
 # load data
 from generate_data import mono_traj, stereoGT_traj, imu_gt_traj, min_t, max_t
 
-# imu_traj = imu_gt_traj
-imu_traj = imu_gt_traj.noisy
+imu_traj = imu_gt_traj
+# imu_traj = imu_gt_traj.noisy
 
 # initial states
 p0 = [mono_traj.x[0], mono_traj.y[0], mono_traj.z[0]]
@@ -93,7 +93,7 @@ for i, t in enumerate(mono_traj.t):
             old_ti = ti
 
     # update
-    kf.update(current_vis, R)
+    # kf.update(current_vis, R)
 
     old_t = t
 
