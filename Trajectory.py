@@ -5,8 +5,9 @@ import quaternion
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, splrep, splev
 from scipy.integrate import cumtrapz
+from scipy.spatial.transform import Rotation as R
 
-from Measurement import VisualMeasurement, ImuMeasurement
+from .Measurement import VisualMeasurement, ImuMeasurement
 
 class Trajectory(object):
     """ Base trajectory class which requires a
@@ -74,7 +75,31 @@ class Trajectory(object):
                 continue
 
             row, col = self._get_plot_rc(ai, num_rows)
-            axes[row][col].plot(self.t, self.__dict__[label],
+
+            do_switch = False
+
+            # debug
+            if col == 1 and 'recon' in self.name:
+                print(f"row {row}: plotting recon.{label}")
+
+            if do_switch:
+                if 'recon' in self.name:
+                    if label == 'qx':
+                        axes[row][col].plot(self.t, -1 * self.__dict__['qy'],
+                    label=self.name)
+                        print("\t switch data to -recon.qy")
+                    elif label == 'qy':
+                        axes[row][col].plot(self.t, self.__dict__['qx'],
+                    label=self.name)
+                        print("\t switch data to +recon.qx")
+                    else:
+                        axes[row][col].plot(self.t, self.__dict__[label],
+                    label=self.name)
+                else:
+                    axes[row][col].plot(self.t, self.__dict__[label],
+                    label=self.name)
+            else:
+                axes[row][col].plot(self.t, self.__dict__[label],
                 label=self.name)
 
             latex_label = self._get_latex_label(label)
@@ -215,15 +240,17 @@ class VisualTraj(Trajectory):
         quats = [np.quaternion(w, self.qx[i],
                 self.qy[i], self.qz[i])
                 for i, w in enumerate(self.qw)]
-        self.quats = quats
+        self.quats = np.asarray(quats)
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
     angular velocity measurements. """
 
-    def __init__(self, name="imu", filepath=None, vis_data=None, cap=None,
+    def __init__(self, name="imu", filepath=None, vis_data=None,
+        cap=None,
         num_imu_between_frames=0,
-        covariance = [0.] * 6):
+        covariance = [0.] * 6,
+        unnoised = False):
 
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
         self.num_imu_between_frames = num_imu_between_frames
@@ -237,21 +264,12 @@ class ImuTraj(Trajectory):
         if vis_data:
             self.clear()
             self._gen_unnoisy_imu()
-            self._gen_noisy_imu(covariance)
+
+            if not unnoised:
+                self._gen_noisy_imu(covariance)
 
         self.next_frame_index = 0
         self.queue_first_ts = 0
-
-    def _quats_diff(self, quats_f, dt):
-        num_q = len(quats_f)
-        dqdt = []        
-        for i in range(num_q - 1):
-            dq = quaternion.as_quat_array((quats_f[i+1] - quats_f[i]) / dt)
-            dqdt.append(dq)
-        dqdt.append((quats_f[-1] - quats_f[-2]) / dt)
-            
-        print(dqdt[:5])
-        print(len(dqdt))
 
     def _gen_unnoisy_imu(self):
         """ Generates IMU data from visual trajectory, without noise. """
@@ -268,26 +286,21 @@ class ImuTraj(Trajectory):
         self.ax = np.gradient(self.vx, dt)
         self.ay = np.gradient(self.vy, dt)
         self.az = np.gradient(self.vz, dt)
-        
-        # w2
-        quats = interpolated.quats
-        quats_f = quaternion.as_float_array(quats)
-        
-        self._quats_diff(quats_f, dt)
-        input()
-        
-        quaternion.fd_derivative(quats_f, interpolated.t)
 
         # angular velocity
-        euler = quaternion.as_euler_angles(quats)
-        rx, ry, rz = euler[:,0], euler[:,1], euler[:,2]
+        quats_as_array = quaternion.as_float_array(interpolated.quats)
+        quats_as_array[:, -1] = -np.abs(quats_as_array[:, -1])
+        euler = np.asarray([R.from_quat(x).as_euler('zyx', degrees=False) for x in quats_as_array])
+        # euler = quaternion.as_euler_angles(interpolated.quats)
+        rx, ry, rz = euler[:,0], euler[:,1], euler[:,2]  # TODO: I have no idea why this works as xyz when it's created with zyx...
         self.gx = np.gradient(rx, dt)
-        self.gy = np.gradient(ry, dt)
+        self.gy = -np.gradient(ry, dt)
         self.gz = np.gradient(rz, dt)
 
         self.t = interpolated.t
 
-        self._write_to_file()
+        if self.filepath:
+            self._write_to_file()
         self._flag_gen_unnoisy_imu = True
 
     def _gen_noisy_imu(self, covariance):
@@ -295,8 +308,11 @@ class ImuTraj(Trajectory):
 
         assert(self._flag_gen_unnoisy_imu == True)
 
-        filename, ext = os.path.splitext(self.filepath)
-        filename_noisy = filename + '_noisy' + ext
+        if self.filepath:
+            filename, ext = os.path.splitext(self.filepath)
+            filename_noisy = filename + '_noisy' + ext
+        else:
+            filename_noisy = None
 
         noisy = ImuTraj(name="noisy imu",
             filepath=filename_noisy,
@@ -314,7 +330,9 @@ class ImuTraj(Trajectory):
                     size=len(self.t))
 
         self.noisy = noisy
-        self._write_to_file(filename_noisy)
+
+        if self.filepath:
+            self._write_to_file(filename_noisy)
 
     def _interpolate_imu(self, t):
         """ Generates IMU data points between frames. """
@@ -421,19 +439,21 @@ class ImuTraj(Trajectory):
         reconstructed.y = cumtrapz(vy, t, initial=0) + y0
         reconstructed.z = cumtrapz(vz, t, initial=0) + z0
 
-        # integrating for orientation
-        quat0 = np.quaternion(qw0, qx0, qy0, qz0)
-        rx0, ry0, rz0 = quaternion.as_euler_angles(quat0)
+        # quat0 = np.quaternion(qw0, qx0, qy0, qz0)
+        # rx0, ry0, rz0 = quaternion.as_euler_angles(quat0)
+        rz0, ry0, rx0 = R.from_quat([qx0, qy0, qz0, -abs(qw0)]).as_euler('zyx', degrees=False)
         rx = cumtrapz(self.gx, t, initial=0) + rx0
         ry = cumtrapz(self.gy, t, initial=0) + ry0
         rz = cumtrapz(self.gz, t, initial=0) + rz0
 
-        quats = quaternion.from_euler_angles(rx, ry, rz)
-        quats_f = quaternion.as_float_array(quats)
-        reconstructed.qw = quats_f[:,0]
-        reconstructed.qx = quats_f[:,1]
-        reconstructed.qy = quats_f[:,2]
-        reconstructed.qz = quats_f[:,3]
+        # quats = quaternion.from_euler_angles(rx, ry, rz)
+        angles = np.asarray([rz, ry, rx]).T
+        quats_f = np.asarray([R.from_euler('zyx', x, degrees=False).as_quat() for x in angles])
+        # quats_f = quaternion.as_float_array(quats)
+        reconstructed.qw = -quats_f[:,-1]
+        reconstructed.qx = quats_f[:,0]
+        reconstructed.qy = quats_f[:,1]
+        reconstructed.qz = quats_f[:,2]
 
         self.reconstructed = reconstructed
 
