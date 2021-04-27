@@ -5,6 +5,7 @@ import quaternion
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, splrep, splev
 from scipy.integrate import cumtrapz
+from scipy.spatial.transform import Rotation as R
 
 from .Measurement import VisualMeasurement, ImuMeasurement
 
@@ -75,7 +76,7 @@ class Trajectory(object):
 
             row, col = self._get_plot_rc(ai, num_rows)
 
-            do_switch = True
+            do_switch = False
 
             # debug
             if col == 1 and 'recon' in self.name:
@@ -287,10 +288,13 @@ class ImuTraj(Trajectory):
         self.az = np.gradient(self.vz, dt)
 
         # angular velocity
-        euler = quaternion.as_euler_angles(interpolated.quats)
-        rx, ry, rz = euler[:,0], euler[:,1], euler[:,2]
+        quats_as_array = quaternion.as_float_array(interpolated.quats)
+        quats_as_array[:, -1] = -np.abs(quats_as_array[:, -1])
+        euler = np.asarray([R.from_quat(x).as_euler('zyx', degrees=False) for x in quats_as_array])
+        # euler = quaternion.as_euler_angles(interpolated.quats)
+        rx, ry, rz = euler[:,0], euler[:,1], euler[:,2]  # TODO: I have no idea why this works as xyz when it's created with zyx...
         self.gx = np.gradient(rx, dt)
-        self.gy = np.gradient(ry, dt)
+        self.gy = -np.gradient(ry, dt)
         self.gz = np.gradient(rz, dt)
 
         self.t = interpolated.t
@@ -435,19 +439,21 @@ class ImuTraj(Trajectory):
         reconstructed.y = cumtrapz(vy, t, initial=0) + y0
         reconstructed.z = cumtrapz(vz, t, initial=0) + z0
 
-        # integrating for orientation
-        quat0 = np.quaternion(qw0, qx0, qy0, qz0)
-        rx0, ry0, rz0 = quaternion.as_euler_angles(quat0)
+        # quat0 = np.quaternion(qw0, qx0, qy0, qz0)
+        # rx0, ry0, rz0 = quaternion.as_euler_angles(quat0)
+        rz0, ry0, rx0 = R.from_quat([qx0, qy0, qz0, -abs(qw0)]).as_euler('zyx', degrees=False)
         rx = cumtrapz(self.gx, t, initial=0) + rx0
         ry = cumtrapz(self.gy, t, initial=0) + ry0
         rz = cumtrapz(self.gz, t, initial=0) + rz0
 
-        quats = quaternion.from_euler_angles(rx, ry, rz)
-        quats_f = quaternion.as_float_array(quats)
-        reconstructed.qw = quats_f[:,0]
-        reconstructed.qx = quats_f[:,1]
-        reconstructed.qy = quats_f[:,2]
-        reconstructed.qz = quats_f[:,3]
+        # quats = quaternion.from_euler_angles(rx, ry, rz)
+        angles = np.asarray([rz, ry, rx]).T
+        quats_f = np.asarray([R.from_euler('zyx', x, degrees=False).as_quat() for x in angles])
+        # quats_f = quaternion.as_float_array(quats)
+        reconstructed.qw = -quats_f[:,-1]
+        reconstructed.qx = quats_f[:,0]
+        reconstructed.qy = quats_f[:,1]
+        reconstructed.qz = quats_f[:,2]
 
         self.reconstructed = reconstructed
 
