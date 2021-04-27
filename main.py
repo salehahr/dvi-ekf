@@ -66,7 +66,7 @@ for i, t in enumerate(mono_traj.t):
 
         kf = Filter(num_states, num_meas, num_control)
         kf.dt = 0.
-        kf.set_states(x0)
+        kf.states = x0
         kf.set_covariance(cov0)
 
         current_imu = imu_traj.at_index(i)

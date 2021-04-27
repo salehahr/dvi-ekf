@@ -24,6 +24,20 @@ class States(object):
                 + len(bw) + len(ba) + 1 \
                 + len(p_offset) + 4
 
+    def apply_correction(self, err):
+        self.p += err.dp
+        self.v += err.dv
+        self.q = err.dq * self.q
+        self.q.normalized()
+
+        self.bw += err.dbw
+        self.ba += err.dba
+        self.scale += err.dscale
+
+        self.p_offset += err.dp_offset
+        self.q_offset = err.dq_offset * self.q_offset
+        self.q_offset.normalized()
+
 class ErrorStates(object):
     def __init__(self, vec):
         p = vec[0:3]
@@ -57,14 +71,6 @@ class Filter(object):
 
         # states
         self.states = None
-        self.p = None
-        self.v = None
-        self.q = None
-        self.bw = None
-        self.ba = None
-        self.scale = None
-        self.p_offset = None
-        self.q_offset = None
 
         self.p_VW = np.asarray([0., 0., 0.])
         self.q_VW = np.quaternion(1., 0., 0., 0.)
@@ -76,44 +82,31 @@ class Filter(object):
         # covariance
         self.p = None
 
-    def set_states(self, states):
-        self.states = states
-
-        self.p = states.p
-        self.v = states.v
-        self.q = states.q
-        self.bw = states.bw
-        self.ba = states.ba
-        self.scale = states.scale
-        self.p_offset = states.p_offset
-        self.q_offset = states.q_offset
-
     def set_covariance(self, cov_matr):
         self.P = cov_matr
 
     def propagate_states(self, imu):
-        v_old = self.v
-        R_WB_old = quaternion.as_rotation_matrix(self.q)
+        v_old = self.states.v
+        R_WB_old = quaternion.as_rotation_matrix(self.states.q)
 
-        om = imu.om - self.bw
+        om = imu.om - self.states.bw
         om_q = np.quaternion(0., om[0], om[1], om[2])
 
-        self.q += self.dt / 2. * om_q * self.q # quat multiplication
-        self.q = self.q.normalized()
-        R_WB = quaternion.as_rotation_matrix(self.q)
+        self.states.q += self.dt / 2. * om_q * self.states.q # quat multiplication
+        self.states.q = self.states.q.normalized()
+        R_WB = quaternion.as_rotation_matrix(self.states.q)
 
-        self.v += self.dt / 2. * ( \
-            R_WB_old @ (self.acc_old - self.ba) \
-            + R_WB @ (imu.acc - self.ba) )
-        self.p += self.dt / 2. * (v_old + self.v)
+        self.states.v += self.dt / 2. * ( \
+            R_WB_old @ (self.acc_old - self.states.ba) \
+            + R_WB @ (imu.acc - self.states.ba) )
+        self.states.p += self.dt / 2. * (v_old + self.states.v)
 
-        self._update_states()
         self.om_old = imu.om
         self.acc_old = imu.acc
 
     def propagate_covariance(self, imu):
-        om = imu.om - self.bw
-        acc = imu.acc - self.ba
+        om = imu.om - self.states.bw
+        acc = imu.acc - self.states.ba
 
         Qda, Qdb, Qdc, Fda, Fdb = self._calculate_Qd(om, acc)
 
@@ -149,21 +142,21 @@ class Filter(object):
         q_VC = camera.qrot
 
         R_VW = quaternion.as_rotation_matrix(self.q_VW)
-        R_WB = quaternion.as_rotation_matrix(self.q)
-        R_BC = quaternion.as_rotation_matrix(self.q_offset)
+        R_WB = quaternion.as_rotation_matrix(self.states.q)
+        R_BC = quaternion.as_rotation_matrix(self.states.q_offset)
 
-        h_scale = R_VW @ (R_WB @ self.p_offset + self.p)
+        h_scale = R_VW @ (R_WB @ self.states.p_offset + self.states.p)
         h_scale = np.reshape(h_scale, (h_scale.shape[0], -1))
 
         zero3 = np.zeros((3, 3))
         Hp = np.hstack((
-            R_VW * self.scale,
+            R_VW * self.states.scale,
             zero3,
-            -R_VW @ R_WB @ skew(self.p_offset) * self.scale,
+            -R_VW @ R_WB @ skew(self.states.p_offset) * self.states.scale,
             zero3,
             zero3,
             h_scale,
-            R_VW @ R_WB * self.scale,
+            R_VW @ R_WB * self.states.scale,
             zero3,
             # np.eye(3, 3) * self.scale,
             # -R_VW @ skew( self.p_offset + R_WB @ self.p_offset ) \
@@ -187,10 +180,10 @@ class Filter(object):
 
         # residual
     # def _calculate_residual(self, p_vc):
-        z_est = ( R_VW @ (self.p + R_WB @ self.p_offset) + self.p_VW ) * self.scale
+        z_est = ( R_VW @ (self.states.p + R_WB @ self.states.p_offset) + self.p_VW ) * self.states.scale
         r_p = p_VC - z_est;
 
-        zq = self.q_offset * self.q * self.q_VW
+        zq = self.states.q_offset * self.states.q * self.q_VW
         r_q = (q_VC * ( zq ).conjugate() ).conjugate()
         r_q_float = quaternion.as_float_array(r_q)
 
@@ -207,27 +200,11 @@ class Filter(object):
         x_error = ErrorStates(K @ r)
 
         # apply Kalman gain
-        self.apply_correction(x_error)
-
-    def apply_correction(self, err):
-        self.p += err.dp
-        self.v += err.dv
-        self.q = err.dq * self.q
-        self.q.normalized()
-
-        self.bw += err.dbw
-        self.ba += err.dba
-        self.scale += err.dscale
-
-        self.p_offset += err.dp_offset
-        self.q_offset = err.dq_offset * self.q_offset
-        self.q_offset.normalized()
-
-        self._update_states()
+        self.states.apply_correction(x_error)
 
     def _calculate_Fd(self, om, acc):
         Fd = np.eye(self.num_error_states, self.num_error_states)
-        R_WB = quaternion.as_rotation_matrix(self.q)
+        R_WB = quaternion.as_rotation_matrix(self.states.q)
 
         dt = self.dt * np.eye(3, 3)
         delt2 = self.dt**2/2 * np.eye(3, 3)
@@ -264,7 +241,7 @@ class Filter(object):
 
     def _calculate_Gc(self):
         Gc = np.zeros((self.num_states, self.num_control))
-        R_WB = quaternion.as_rotation_matrix(self.q)
+        R_WB = quaternion.as_rotation_matrix(self.states.q)
 
         Gc[3:6, 0:3] = -R_WB
         Gc[6:9, 6:9] = -np.eye(3, 3)
@@ -315,13 +292,3 @@ class Filter(object):
         Qd = Qd_theirs
 
         return Qda, Qdb, Qdc, Fda, Fdb
-
-    def _update_states(self):
-        self.states.p = self.p
-        self.states.v = self.v
-        self.states.q = self.q
-        self.states.bw = self.bw
-        self.states.ba = self.ba
-        self.states.scale = self.scale
-        self.states.p_offset = self.p_offset
-        self.states.q_offset = self.q_offset
