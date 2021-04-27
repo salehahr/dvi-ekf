@@ -75,31 +75,7 @@ class Trajectory(object):
                 continue
 
             row, col = self._get_plot_rc(ai, num_rows)
-
-            do_switch = False
-
-            # debug
-            if col == 1 and 'recon' in self.name:
-                print(f"row {row}: plotting recon.{label}")
-
-            if do_switch:
-                if 'recon' in self.name:
-                    if label == 'qx':
-                        axes[row][col].plot(self.t, -1 * self.__dict__['qy'],
-                    label=self.name)
-                        print("\t switch data to -recon.qy")
-                    elif label == 'qy':
-                        axes[row][col].plot(self.t, self.__dict__['qx'],
-                    label=self.name)
-                        print("\t switch data to +recon.qx")
-                    else:
-                        axes[row][col].plot(self.t, self.__dict__[label],
-                    label=self.name)
-                else:
-                    axes[row][col].plot(self.t, self.__dict__[label],
-                    label=self.name)
-            else:
-                axes[row][col].plot(self.t, self.__dict__[label],
+            axes[row][col].plot(self.t, self.__dict__[label],
                 label=self.name)
 
             latex_label = self._get_latex_label(label)
@@ -237,10 +213,7 @@ class VisualTraj(Trajectory):
             line.set_linewidth(0.5)
 
     def gen_quats_farray(self):
-        quats = [np.quaternion(w, self.qx[i],
-                self.qy[i], self.qz[i])
-                for i, w in enumerate(self.qw)]
-        self.quats = np.asarray(quats)
+        self.quats = np.asarray([self.qx, self.qy, self.qz, self.qw]).T
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
@@ -288,13 +261,10 @@ class ImuTraj(Trajectory):
         self.az = np.gradient(self.vz, dt)
 
         # angular velocity
-        quats_as_array = quaternion.as_float_array(interpolated.quats)
-        quats_as_array[:, -1] = -np.abs(quats_as_array[:, -1])
-        euler = np.asarray([R.from_quat(x).as_euler('zyx', degrees=False) for x in quats_as_array])
-        # euler = quaternion.as_euler_angles(interpolated.quats)
-        rx, ry, rz = euler[:,0], euler[:,1], euler[:,2]  # TODO: I have no idea why this works as xyz when it's created with zyx...
+        euler = np.asarray([R.from_quat(q).as_euler('zyx') for q in interpolated.quats])
+        rz, ry, rx = euler[:,0], euler[:,1], euler[:,2]
         self.gx = np.gradient(rx, dt)
-        self.gy = -np.gradient(ry, dt)
+        self.gy = np.gradient(ry, dt)
         self.gz = np.gradient(rz, dt)
 
         self.t = interpolated.t
@@ -439,21 +409,19 @@ class ImuTraj(Trajectory):
         reconstructed.y = cumtrapz(vy, t, initial=0) + y0
         reconstructed.z = cumtrapz(vz, t, initial=0) + z0
 
-        # quat0 = np.quaternion(qw0, qx0, qy0, qz0)
-        # rx0, ry0, rz0 = quaternion.as_euler_angles(quat0)
-        rz0, ry0, rx0 = R.from_quat([qx0, qy0, qz0, -abs(qw0)]).as_euler('zyx', degrees=False)
+        # integrating for orientation
+        rz0, ry0, rx0 = R.from_quat([qx0, qy0, qz0, qw0]).as_euler('zyx')
         rx = cumtrapz(self.gx, t, initial=0) + rx0
         ry = cumtrapz(self.gy, t, initial=0) + ry0
         rz = cumtrapz(self.gz, t, initial=0) + rz0
 
-        # quats = quaternion.from_euler_angles(rx, ry, rz)
-        angles = np.asarray([rz, ry, rx]).T
-        quats_f = np.asarray([R.from_euler('zyx', x, degrees=False).as_quat() for x in angles])
-        # quats_f = quaternion.as_float_array(quats)
-        reconstructed.qw = -quats_f[:,-1]
-        reconstructed.qx = quats_f[:,0]
-        reconstructed.qy = quats_f[:,1]
-        reconstructed.qz = quats_f[:,2]
+        euler_ang = np.asarray([rz, ry, rx]).T
+        quats = np.asarray([R.from_euler('zyx', e).as_quat()
+            for e in euler_ang])
+        reconstructed.qx = quats[:,0]
+        reconstructed.qy = quats[:,1]
+        reconstructed.qz = quats[:,2]
+        reconstructed.qw = quats[:,3]
 
         self.reconstructed = reconstructed
 
