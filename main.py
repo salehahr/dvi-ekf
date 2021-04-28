@@ -12,7 +12,7 @@ imu_traj = imu_gt_traj
 
 # initial states
 p0 = [mono_traj.x[0], mono_traj.y[0], mono_traj.z[0]]
-v0 = [0., 0., 0.]
+v0 = [stereoGT_traj.vx[0], stereoGT_traj.vy[0], stereoGT_traj.vz[0]]
 q0 = [mono_traj.qx[0], mono_traj.qy[0], mono_traj.qz[0],
         mono_traj.qw[0]]
 bw0 = [0., 0., 0.]
