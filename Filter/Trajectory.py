@@ -95,6 +95,40 @@ class Trajectory(object):
 
         return axes
 
+    def plot_velocities(self, axes=None, min_t=None, max_t=None):
+        num_labels = 3
+        num_rows = 3
+
+        if axes is None:
+            fig, axes = plt.subplots(num_rows, 1)
+            fig.tight_layout()
+
+        for row, label in enumerate(['vx', 'vy', 'vz']):
+            if 'imu' in self.name:
+                t = self.t
+            elif 'kf' in self.name:
+                t = self.t
+            else:
+                t = self.interpolated.t
+
+            axes[row].plot(t, self.__dict__[label],
+                label=self.name)
+
+            latex_label = self._get_latex_label(label)
+            axes[row].set_title(latex_label)
+            axes[row].set_xlim(left=min_t, right=max_t)
+            axes[row].grid(True)
+
+        # late setting of line styles
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
+
+        # legend on last plot
+        axes[row].legend()
+
+        return axes
+
     def _get_plot_rc(self, ai, num_rows):
         """ Returns current row and column for plotting. """
 
@@ -153,11 +187,18 @@ class VisualTraj(Trajectory):
         """ Appends new measurement from current state. """
 
         x, y, z = state.p
+        vx, vy, vz = state.v
         qx, qy, qz, qw = state.q.xyzw
         data = [t, x, y, z, qx, qy, qz, qw]
 
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
+
+        for i, label in enumerate(['vx', 'vy', 'vz']):
+            if label not in self.__dict__:
+                self.__dict__[label] = [eval(label)]
+            else:
+                self.__dict__[label].append(eval(label))
 
     def interpolate(self, num_imu_between_frames):
         """ Generates interpolated/fitted data points between frames. """
@@ -255,6 +296,9 @@ class ImuTraj(Trajectory):
         self.vx = np.gradient(interpolated.x, dt)
         self.vy = np.gradient(interpolated.y, dt)
         self.vz = np.gradient(interpolated.z, dt)
+        self.vis_data.vx = self.vx
+        self.vis_data.vy = self.vy
+        self.vis_data.vz = self.vz
 
         self.ax = np.gradient(self.vx, dt)
         self.ay = np.gradient(self.vy, dt)

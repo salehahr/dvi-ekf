@@ -102,5 +102,10 @@ axes = stereoGT_traj.plot(axes)
 axes = mono_traj.plot(axes)
 axes = traj.plot(axes, min_t=min_t, max_t=max_t)
 
+# plot velocities
+v_axes = None
+v_axes = stereoGT_traj.plot_velocities(v_axes)
+v_axes = traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
+
 plt.legend()
 plt.show()
