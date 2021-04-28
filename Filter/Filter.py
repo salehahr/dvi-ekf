@@ -157,17 +157,25 @@ class Filter(object):
         v_old = self.states.v        
         q_old = self.states.q
 
+        # orientation q
         om = Quaternion(w=0., v=(imu.om - self.states.bw) )
-
         self.states.q += self.dt / 2. * om * self.states.q
         self.states.q.normalise()
-
         R_WB = self.states.q.rot
 
-        self.states.v += self.dt / 2. * ( \
-            q_old.rot @ (self.acc_old - self.states.ba) \
-            + R_WB @ (imu.acc - self.states.ba) )
-        self.states.p += self.dt / 2. * (v_old + self.states.v)
+        # velocity v (both eqns are equiv)
+        self.states.v += q_old.rot @ (self.acc_old - self.states.ba) \
+                            * self.dt
+        # self.states.v += self.dt / 2. * ( \
+            # q_old.rot @ (self.acc_old - self.states.ba) \
+            # + R_WB @ (imu.acc - self.states.ba) )
+
+        # position p (both eqns are equiv)
+        self.states.p += \
+            self.dt * v_old \
+            + self.dt**2/2. \
+            * (q_old.rot @ (self.acc_old - self.states.ba))
+        # self.states.p += self.dt / 2. * (v_old + self.states.v)
 
         self.om_old = imu.om
         self.acc_old = imu.acc
