@@ -129,7 +129,7 @@ class VisualTraj(Trajectory):
         self.quats = None
 
         if self.qx:
-            self.gen_quats_farray()
+            self._gen_quats_farray()
 
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
@@ -154,7 +154,7 @@ class VisualTraj(Trajectory):
 
         x, y, z = state.p
         qw, qx, qy, qz = quaternion.as_float_array(state.q)
-        data = np.hstack((t, x, y, z, qx, qy, qz, qw))
+        data = [t, x, y, z, qx, qy, qz, qw]
 
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
@@ -183,7 +183,7 @@ class VisualTraj(Trajectory):
             interpolated.__dict__[label] = splev(interpolated.t, f)
 
         self.interpolated = interpolated
-        self.interpolated.gen_quats_farray()
+        self.interpolated._gen_quats_farray()
 
     def _set_plot_line_style(self, line):
         """ Defines line styles for IMU plot. """
@@ -212,7 +212,7 @@ class VisualTraj(Trajectory):
             line.set_color('darkgrey')
             line.set_linewidth(0.5)
 
-    def gen_quats_farray(self):
+    def _gen_quats_farray(self):
         self.quats = np.asarray([self.qx, self.qy, self.qz, self.qw]).T
 
 class ImuTraj(Trajectory):
