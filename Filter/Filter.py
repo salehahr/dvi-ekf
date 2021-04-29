@@ -73,6 +73,12 @@ class Quaternion(object):
 
     def normalise(self):
         quat = self.np_quat.normalized()
+
+        # # constrain scalar part to be positive
+        # w, _, _, _ = quaternion.as_float_array(quat)
+        # if w < 0:
+            # quat = -quat
+
         self.__init__(wxyz=quat)
 
 class States(object):
