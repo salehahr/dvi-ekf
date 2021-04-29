@@ -247,8 +247,9 @@ class VisualTraj(Trajectory):
             line.set_linewidth(1)
             line.set_color('tab:orange')
         elif label == 'kf':
-            line.set_linewidth(1)
-            line.set_color('tab:blue')
+            line.set_linewidth(0.75)
+            line.set_linestyle('-')
+            line.set_color('blue')
         else:
             line.set_color('darkgrey')
             line.set_linewidth(0.5)

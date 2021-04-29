@@ -5,8 +5,8 @@ Based on ![this repo](https://github.com/skrogh/msf_ekf).
 ## Table of contents
 * [Current status (of the filter)](#current-status-of-the-filter)
 * [Preliminaries/Tests](#preliminariestests)
-  * [Comparing velocities](#comparing-velocities)
   * [KF propagation only](#kf-propagation-only)
+    * [Comparing velocities](#comparing-velocities)
 * [Old tests](/tests)
   * [Offline trajectories](/tests#offline-trajectories)
   * [Fake IMU data](/tests#fake-imu-data)
@@ -26,7 +26,7 @@ Pictured: KF with both propagation and update steps; **non-noisy IMU**
 for the time being.
 
 ![](img/kf.PNG)
-![](img/kf_z.PNG)
+![](img/kf_zoom.PNG)
 
 -----
 
@@ -43,7 +43,7 @@ Pictured: after correcting the initial values for the velocity `v0`:
 
 ![](img/traj_only_prop.PNG)
 
-### Comparing velocities
+#### Comparing velocities
 ```
 python3 main.py prop nonoise vel
 ```
