@@ -186,11 +186,11 @@ class Filter(object):
         self.om_old = imu.om
         self.acc_old = imu.acc
 
-    def propagate_covariance(self, imu):
+    def propagate_covariance(self, imu, Qc):
         om = imu.om - self.states.bw
         acc = imu.acc - self.states.ba
 
-        Qda, Qdb, Qdc, Fda, Fdb = self._calculate_Qd(om, acc)
+        Qda, Qdb, Qdc, Fda, Fdb = self._calculate_Qd(Qc, om, acc)
 
         P = self.P
         PC = P[0:9, 0:9]
@@ -332,14 +332,12 @@ class Filter(object):
 
         return Gc
 
-    def _calculate_Qd(self, om, acc):
-        stdev_na = [0.1, 0.1, 0.1]
-        stdev_nba = [0.1, 0.1, 0.1]
-        stdev_nw = [0.05, 0.05, 0.05]
-        stdev_nbw = [0.1, 0.1, 0.1]
-        stdevs = np.hstack((stdev_na, stdev_nba, \
-                    stdev_nw, stdev_nbw))
-        Qc = np.square(np.diag(stdevs))
+    def _calculate_Qd(self, Qc, om, acc):
+        stdevs = np.sqrt(np.diag(Qc))
+        stdev_na = stdevs[0:3]
+        stdev_nba = stdevs[3:6]
+        stdev_nw = stdevs[6:9]
+        stdev_nbw = stdevs[9:12]
 
         Nce = np.zeros((9, 9))
         Nch = np.zeros((6, 6))

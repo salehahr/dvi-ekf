@@ -33,9 +33,18 @@ if use_noisy_imu:
 else:
     imu_traj = imu_gt_traj
 
+# process noise
+stdev_na = [1e-3] * 3
+stdev_nba = stdev_na
+stdev_nw = stdev_na
+stdev_nbw = stdev_na
+stdevs = np.hstack((stdev_na, stdev_nba, \
+            stdev_nw, stdev_nbw))
+Qc = np.square(np.diag(stdevs))
+
 # measurement noise
-R_p = [0.01*0.01 for i in range(3)]
-R_q = [0.01 for i in range(3)]
+R_p = [0.1] * 3
+R_q = [0.05] * 3
 R = np.diag(np.hstack((R_p, R_q)))
 
 # filter main loop
@@ -69,7 +78,7 @@ for i, t in enumerate(mono_traj.t):
             kf.dt = ti - old_ti
 
             kf.propagate_states(current_imu)
-            kf.propagate_covariance(current_imu)
+            kf.propagate_covariance(current_imu, Qc)
             
             kf_traj.append_state(ti, kf.states)
 
