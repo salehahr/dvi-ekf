@@ -1,3 +1,5 @@
+import context
+
 import matplotlib.pyplot as plt
 
 # load data

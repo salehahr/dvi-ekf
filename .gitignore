@@ -1,3 +1,5 @@
 *pycache*
 trajs/mandala0*.txt
+trajs/archive/*.txt
 diff.py
+*.swp

@@ -1,9 +1,11 @@
+import context
+
 import matplotlib.pyplot as plt
 from Filter import VisualTraj
 
 traj_data = {'stereoGT': "./trajs/offline_mandala0_gt.txt",
             'mono' : "./trajs/offline_mandala0_mono.txt"}
-    
+
 axes = None
 for name, filepath in traj_data.items():
     traj = VisualTraj(name, filepath)
