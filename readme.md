@@ -16,7 +16,7 @@ Based on ![this repo](https://github.com/skrogh/msf_ekf).
 
 ## Current status (of the filter)
 ```
-python3 main.py
+python3 main.py all nonoise
 ```
 
 
@@ -32,6 +32,9 @@ for the time being.
 
 ## Preliminaries/Tests
 ### KF propagation only
+```
+python3 main.py prop nonoise
+```
 Using initial pose from monocular trajectory and propagating using IMU values
 (**not noisy**).
 
@@ -41,6 +44,9 @@ Pictured: after correcting the initial values for the velocity `v0`:
 ![](img/traj_only_prop.PNG)
 
 ### Comparing velocities
+```
+python3 main.py prop nonoise vel
+```
 Tried to compare
 * velocities from the stereo trajectory (from numerical differentation of x, y, z)
 * velocities from kalman filter (propagation only, IMU without noise)

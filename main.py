@@ -1,45 +1,37 @@
 import numpy as np
 np.set_printoptions(precision=1, linewidth=150)
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
 from Filter import States, Filter, VisualTraj
 
+import sys
+
+# parse arguments
+do_prop_only = False
+do_plot_vel = False
+use_noisy_imu = False
+if len(sys.argv) == 1:
+    print(f"Usage: {__file__} <prop> <noise> [<vel>]")
+    print("\t <prop>  - prop / all")
+    print("\t <noise> - noise / nonoise")
+    print("Optional arguments:")
+    print("\t <vel>   - vel")
+    sys.exit()
+if len(sys.argv) > 1:
+    do_prop_only = (sys.argv[1] == 'prop')
+if len(sys.argv) > 2:
+    use_noisy_imu = (sys.argv[2] == 'noise')
+if len(sys.argv) > 3:
+    do_plot_vel = (sys.argv[3] == 'vel')
+
 # load data
-from generate_data import mono_traj, stereoGT_traj, imu_gt_traj, min_t, max_t
+from generate_data import mono_traj, stereoGT_traj, imu_gt_traj
+from generate_data import IC, cov0, min_t, max_t
 
-imu_traj = imu_gt_traj
-# imu_traj = imu_gt_traj.noisy
-
-# initial states
-p0 = [mono_traj.x[0], mono_traj.y[0], mono_traj.z[0]]
-v0 = [stereoGT_traj.vx[0], stereoGT_traj.vy[0], stereoGT_traj.vz[0]]
-q0 = [mono_traj.qx[0], mono_traj.qy[0], mono_traj.qz[0],
-        mono_traj.qw[0]]
-bw0 = [0., 0., 0.]
-ba0 = [0., 0., 0.]
-scale0 = 1.
-p_BC_0 = [0., 0., 0.]
-q_BC_0 = [0, 0, 0, 1]
-
-# initial input
-na0 = [0.01, 0.01, 0.01]
-nba0 = [0.01, 0.01, 0.01]
-nw0 = [0.01, 0.01, 0.01]
-nbw0 = [0.01, 0.01, 0.01]
-u0 = np.hstack((na0, nba0, nw0, nbw0))
-
-# initial covariances
-stdev_p = [0.1, 0.1, 0.1]
-stdev_v = [0.1, 0.1, 0.1]
-stdev_q = [0.05, 0.04, 0.025]
-stdev_bw = [0.1, 0.1, 0.1]
-stdev_ba = [0.1, 0.1, 0.1]
-stdev_scale = 0.4
-stdev_p_BC = [0.1, 0.1, 0.1]
-stdev_q_BC = [0.05, 0.04, 0.025]
-
-stdevs0 = np.hstack((stdev_p, stdev_v, stdev_q, \
-        stdev_bw, stdev_ba, stdev_scale, stdev_p_BC, stdev_q_BC))
+if use_noisy_imu:
+    imu_traj = imu_gt_traj.noisy
+else:
+    imu_traj = imu_gt_traj
 
 # measurement noise
 R_p = [0.01*0.01 for i in range(3)]
@@ -47,30 +39,22 @@ R_q = [0.01 for i in range(3)]
 R = np.diag(np.hstack((R_p, R_q)))
 
 # filter main loop
-t_start = mono_traj.t[0]
-t_end = mono_traj.t[-1]
+kf_traj = VisualTraj("kf")
 
-traj = VisualTraj("kf")
 for i, t in enumerate(mono_traj.t):
     current_vis = mono_traj.at_index(i)
 
     # initialisation
     if i == 0:
-        x0 = States(p0, v0, q0, bw0, ba0, scale0, p_BC_0, q_BC_0)
-        cov0 = np.square(np.diag(stdevs0))
-
-        num_states = x0.size
-        num_meas = 7
-        num_control = len(u0)
-
+        num_states, num_meas, num_control = IC.size, 7, 12
         kf = Filter(num_states, num_meas, num_control)
+
         kf.dt = 0.
-        kf.states = x0
+        kf.states = IC
         kf.set_covariance(cov0)
 
         current_imu = imu_traj.at_index(i)
-        kf.om_old = current_imu.om
-        kf.acc_old = current_imu.acc
+        kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
 
         old_t = t
         old_ti = t
@@ -87,25 +71,28 @@ for i, t in enumerate(mono_traj.t):
             kf.propagate_states(current_imu)
             kf.propagate_covariance(current_imu)
             
-            traj.append_state(ti, kf.states)
+            kf_traj.append_state(ti, kf.states)
 
             old_ti = ti
 
     # update
-    # kf.update(current_vis, R)
+    if not do_prop_only:
+        kf.update(current_vis, R)
 
     old_t = t
 
 # plot
 axes = None
 axes = stereoGT_traj.plot(axes)
-axes = mono_traj.plot(axes)
-axes = traj.plot(axes, min_t=min_t, max_t=max_t)
+if not do_prop_only:
+    axes = mono_traj.plot(axes)
+axes = kf_traj.plot(axes, min_t=min_t, max_t=max_t)
 
-# plot velocities
-v_axes = None
-v_axes = stereoGT_traj.plot_velocities(v_axes)
-v_axes = traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
+# # plot velocities
+if do_plot_vel:
+    v_axes = None
+    v_axes = stereoGT_traj.plot_velocities(v_axes)
+    v_axes = kf_traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
 
 plt.legend()
 plt.show()
