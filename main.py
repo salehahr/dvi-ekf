@@ -33,8 +33,13 @@ if use_noisy_imu:
 else:
     imu_traj = imu_gt_traj
 
+# noise values
+Qval = 1e-3
+Rpval = 0.1
+Rqval = 0.05
+
 # process noise
-stdev_na = [1e-3] * 3
+stdev_na = [Qval] * 3
 stdev_nba = stdev_na
 stdev_nw = stdev_na
 stdev_nbw = stdev_na
@@ -43,9 +48,9 @@ stdevs = np.hstack((stdev_na, stdev_nba, \
 Qc = np.square(np.diag(stdevs))
 
 # measurement noise
-R_p = [0.1] * 3
-R_q = [0.05] * 3
-R = np.diag(np.hstack((R_p, R_q)))
+Rp = [Rpval] * 3
+Rq = [Rqval] * 3
+R = np.diag(np.hstack((Rp, Rq)))
 
 # filter main loop
 kf_traj = VisualTraj("kf")
@@ -97,11 +102,21 @@ if not do_prop_only:
     axes = mono_traj.plot(axes)
 axes = kf_traj.plot(axes, min_t=min_t, max_t=max_t)
 
-# # plot velocities
+# plot velocities
 if do_plot_vel:
     v_axes = None
     v_axes = stereoGT_traj.plot_velocities(v_axes)
     v_axes = kf_traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
+
+# plot sensitivity to measurement noise R
+R_axes = None
+R_axes = stereoGT_traj.plot_sens_noise(Rpval, Rqval, Qval, R_axes)
+if not do_prop_only:
+    R_axes = mono_traj.plot_sens_noise(Rpval, Rqval, Qval, R_axes)
+R_axes = kf_traj.plot_sens_noise(Rpval, Rqval, Qval, R_axes, min_t=min_t, max_t=max_t)
+figname = f"./img/Rp{Rpval}_Rq{Rqval}_Q{Qval}.png"
+print(figname)
+R_axes[0].figure.savefig(figname)
 
 plt.legend()
 plt.show()

@@ -129,6 +129,42 @@ class Trajectory(object):
 
         return axes
 
+    def plot_sens_noise(self, Rp, Rq, Q, axes=None, min_t=None, max_t=None):
+        num_labels = 4
+        num_rows = 4
+        suptitle = f"Rp = {Rp};\nRq = {Rq}'\n Q = {Q}"
+        figname = f"./img/Rp{Rp}_Rq{Rq}_Q{Q}.png"
+
+        if axes is None:
+            fig, axes = plt.subplots(num_rows, 1)
+            fig.tight_layout()
+            st = fig.suptitle(suptitle, fontsize="x-large")
+
+            # shift subplots down:
+            st.set_y(0.95)
+            fig.subplots_adjust(top=0.75)
+
+        t = self.t
+
+        for row, label in enumerate(['x', 'z', 'qy', 'qw']):
+            axes[row].plot(t, self.__dict__[label],
+                label=self.name)
+
+            latex_label = self._get_latex_label(label)
+            axes[row].set_title(latex_label)
+            axes[row].set_xlim(left=min_t, right=max_t)
+            axes[row].grid(True)
+
+        # late setting of line styles
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
+
+        # legend on last plot
+        axes[row].legend()
+
+        return axes
+
     def _get_plot_rc(self, ai, num_rows):
         """ Returns current row and column for plotting. """
 
