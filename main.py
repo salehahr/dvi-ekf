@@ -1,56 +1,85 @@
+import sys
+
 import numpy as np
 np.set_printoptions(precision=1, linewidth=150)
 
 import matplotlib.pyplot as plt
 from Filter import States, Filter, VisualTraj
 
-import sys
+def parse_arguments():
+    def print_usage():
+        print(f"Usage: {__file__} <prop> <noise> [<vel>]")
+        print("\t <prop>  - prop / all")
+        print("\t <noise> - noise / nonoise")
+        print("Optional arguments:")
+        print("\t <vel>   - vel")
+        sys.exit()
 
-# parse arguments
-do_prop_only = False
-do_plot_vel = False
-use_noisy_imu = False
-if len(sys.argv) == 1:
-    print(f"Usage: {__file__} <prop> <noise> [<vel>]")
-    print("\t <prop>  - prop / all")
-    print("\t <noise> - noise / nonoise")
-    print("Optional arguments:")
-    print("\t <vel>   - vel")
-    sys.exit()
-if len(sys.argv) > 1:
-    do_prop_only = (sys.argv[1] == 'prop')
-if len(sys.argv) > 2:
-    use_noisy_imu = (sys.argv[2] == 'noise')
-if len(sys.argv) > 3:
-    do_plot_vel = (sys.argv[3] == 'vel')
+    try:
+        do_prop_only = False or (sys.argv[1] == 'prop')
+        use_noisy_imu = False or (sys.argv[2] == 'noise')
+    except:
+        print_usage()
+
+    try:
+        do_plot_vel =  (sys.argv[3] == 'vel')
+    except:
+        do_plot_vel = False
+
+    return do_prop_only, use_noisy_imu, do_plot_vel
+do_prop_only, use_noisy_imu, do_plot_vel = parse_arguments()
+
+def gen_noise_matrices(Q, Rp, Rq):
+    # process noise
+    stdev_na = [Qval] * 3
+    stdev_nba = stdev_na
+    stdev_nw = stdev_na
+    stdev_nbw = stdev_na
+    stdevs = np.hstack((stdev_na, stdev_nba, \
+                stdev_nw, stdev_nbw))
+    Qc = np.square(np.diag(stdevs))
+
+    # measurement noise
+    Rp = [Rpval] * 3
+    Rq = [Rqval] * 3
+    R = np.diag(np.hstack((Rp, Rq)))
+
+    return Qc, R
 
 # load data
 from generate_data import mono_traj, stereoGT_traj, imu_gt_traj
 from generate_data import IC, cov0, min_t, max_t
+imu_traj = (imu_gt_traj.noisy if use_noisy_imu else imu_gt_traj)
 
-if use_noisy_imu:
-    imu_traj = imu_gt_traj.noisy
-else:
-    imu_traj = imu_gt_traj
+def plot_savefig(fig, figname):
+    print(f"Saving file \"{figname}\". ")
+    fig.savefig(figname)
+
+def plot_trajectories():
+    axes = stereoGT_traj.plot()
+    if not do_prop_only:
+        axes = mono_traj.plot(axes)
+    axes = kf_traj.plot(axes, min_t=min_t, max_t=max_t)
+
+def plot_velocities():
+    if do_plot_vel:
+        v_axes = stereoGT_traj.plot_velocities()
+        v_axes = kf_traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
+
+def plot_noise_sensitivity(Q, Rp, Rq):
+    """ plots sensitivity to measurement noise R and process noise Q """
+    R_axes = stereoGT_traj.plot_sens_noise(Rp, Rq, Q)
+    R_axes = kf_traj.plot_sens_noise(Rp, Rq, Q, R_axes,
+            min_t=min_t, max_t=max_t)
+
+    figname = f"./img/Rp{Rp}_Rq{Rqval}_Q{Q}.png"
+    plot_savefig(R_axes[0].figure, figname)
 
 # noise values
 Qval = 1e-3
 Rpval = 0.1
 Rqval = 0.05
-
-# process noise
-stdev_na = [Qval] * 3
-stdev_nba = stdev_na
-stdev_nw = stdev_na
-stdev_nbw = stdev_na
-stdevs = np.hstack((stdev_na, stdev_nba, \
-            stdev_nw, stdev_nbw))
-Qc = np.square(np.diag(stdevs))
-
-# measurement noise
-Rp = [Rpval] * 3
-Rq = [Rqval] * 3
-R = np.diag(np.hstack((Rp, Rq)))
+Qc, R = gen_noise_matrices(Qval, Rpval, Rqval)
 
 # filter main loop
 kf_traj = VisualTraj("kf")
@@ -95,28 +124,10 @@ for i, t in enumerate(mono_traj.t):
 
     old_t = t
 
-# plot
-axes = None
-axes = stereoGT_traj.plot(axes)
-if not do_prop_only:
-    axes = mono_traj.plot(axes)
-axes = kf_traj.plot(axes, min_t=min_t, max_t=max_t)
-
-# plot velocities
-if do_plot_vel:
-    v_axes = None
-    v_axes = stereoGT_traj.plot_velocities(v_axes)
-    v_axes = kf_traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
-
-# plot sensitivity to measurement noise R
-R_axes = None
-R_axes = stereoGT_traj.plot_sens_noise(Rpval, Rqval, Qval, R_axes)
-if not do_prop_only:
-    R_axes = mono_traj.plot_sens_noise(Rpval, Rqval, Qval, R_axes)
-R_axes = kf_traj.plot_sens_noise(Rpval, Rqval, Qval, R_axes, min_t=min_t, max_t=max_t)
-figname = f"./img/Rp{Rpval}_Rq{Rqval}_Q{Qval}.png"
-print(figname)
-R_axes[0].figure.savefig(figname)
+# plots
+plot_trajectories()
+plot_velocities()
+plot_noise_sensitivity(Qval, Rpval, Rqval)
 
 plt.legend()
 plt.show()
