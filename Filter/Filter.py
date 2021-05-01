@@ -135,16 +135,16 @@ class ErrorStates(object):
         self.dq_offset = Quaternion(v=theta_offset/2, w=1.)
 
 class Filter(object):
-    def __init__(self, num_states, num_meas, num_control):
-        self.num_states = num_states
-        self.num_error_states = num_states - 2
+    def __init__(self, IC, P0, num_meas, num_control):
+        self.num_states = IC.size
+        self.num_error_states = IC.size - 2
         self.num_meas = num_meas
         self.num_control = num_control
 
-        self.dt = None
+        self.dt = 0.
 
         # states
-        self.states = None
+        self.states = IC
 
         self.p_VW = np.asarray([0., 0., 0.])
         self.q_VW = Quaternion(xyzw=[0., 0., 0., 1.])
@@ -154,10 +154,7 @@ class Filter(object):
         self.acc_old = None
 
         # covariance
-        self.p = None
-
-    def set_covariance(self, cov_matr):
-        self.P = cov_matr
+        self.P = P0
 
     def propagate_states(self, imu):
         v_old = self.states.v        

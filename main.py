@@ -51,6 +51,15 @@ from generate_data import mono_traj, stereoGT_traj, imu_gt_traj
 from generate_data import IC, cov0, min_t, max_t
 imu_traj = (imu_gt_traj.noisy if use_noisy_imu else imu_gt_traj)
 
+def init_kf(current_imu):
+    num_meas, num_control = 7, 12
+    kf = Filter(IC, cov0, num_meas, num_control)
+    kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
+
+    kf_traj = VisualTraj("kf")
+
+    return kf, kf_traj
+
 def plot_savefig(fig, figname):
     print(f"Saving file \"{figname}\". ")
     fig.savefig(figname)
@@ -81,28 +90,16 @@ Rpval = 0.1
 Rqval = 0.05
 Qc, R = gen_noise_matrices(Qval, Rpval, Rqval)
 
-# filter main loop
-kf_traj = VisualTraj("kf")
+# initialisation
+current_imu = imu_traj.at_index(0)
+kf, kf_traj = init_kf(current_imu)
 
+old_t = min_t
+old_ti = min_t
+
+# filter main loop
 for i, t in enumerate(mono_traj.t):
     current_vis = mono_traj.at_index(i)
-
-    # initialisation
-    if i == 0:
-        num_states, num_meas, num_control = IC.size, 7, 12
-        kf = Filter(num_states, num_meas, num_control)
-
-        kf.dt = 0.
-        kf.states = IC
-        kf.set_covariance(cov0)
-
-        current_imu = imu_traj.at_index(i)
-        kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
-
-        old_t = t
-        old_ti = t
-        
-        continue
 
     # propagate
     imu_queue = imu_traj.get_queue(old_t, t)
