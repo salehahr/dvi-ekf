@@ -236,6 +236,16 @@ class VisualTraj(Trajectory):
             else:
                 self.__dict__[label].append(eval(label))
 
+    def append_data(self, t, data_labels, data):
+        """ Appends new data not already belonging to the existing
+            labels. """
+
+        for i, label in enumerate(data_labels):
+            if label not in self.__dict__:
+                self.__dict__[label] = [data[i]]
+            else:
+                self.__dict__[label].append(data[i])
+
     def interpolate(self, num_imu_between_frames):
         """ Generates interpolated/fitted data points between frames. """
 
