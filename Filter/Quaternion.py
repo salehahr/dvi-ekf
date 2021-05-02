@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation as R
 class Quaternion(object):
     """ Quaternion convenience class. """
 
-    def __init__(self, wxyz=None, xyzw=None, x=None, y=None, z=None, w=None, v=None, do_normalise=False):
+    def __init__(self, wxyz=None, xyzw=None, x=None, y=None, z=None, w=None, v=None, rot=None, do_normalise=False):
         self.x = x
         self.y = y
         self.z = z
@@ -16,6 +16,8 @@ class Quaternion(object):
             self.w, self.x, self.y, self.z = quaternion.as_float_array(wxyz)
         elif xyzw is not None:
             self.x, self.y, self.z, self.w = xyzw
+        elif rot is not None:
+            self.x, self.y, self.z, self.w = R.from_matrix(rot).as_quat()
         elif v is not None:
             self.x, self.y, self.z = v
 
