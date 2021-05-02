@@ -1,5 +1,5 @@
 import numpy as np
-from .Filter import Quaternion
+from .Quaternion import Quaternion
 
 class Measurement(object):
     """ Base measurement class.
