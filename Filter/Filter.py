@@ -85,6 +85,11 @@ class Filter(object):
         # covariance
         self.P = P0
 
+    def propagate(self, t, imu, Qc):
+        self.propagate_states(imu)
+        self.propagate_covariance(imu, Qc)
+        self.traj.append_state(t, self.states)
+
     def propagate_states(self, imu):
         v_old = self.states.v        
         q_old = self.states.q
@@ -98,6 +103,10 @@ class Filter(object):
         # velocity v (both eqns are equiv)
         self.states.v += q_old.rot @ (self.acc_old - self.states.ba) \
                             * self.dt
+        # print("v' = v + RWB @ (a - ba) dt")
+        # print(f"{self.states.v[2]} = {v_old[2]} + {q_old.rot[2,:]} @ ({self.acc_old} - ba) dt")
+        # input()
+
         # self.states.v += self.dt / 2. * ( \
             # q_old.rot @ (self.acc_old - self.states.ba) \
             # + R_WB @ (imu.acc - self.states.ba) )

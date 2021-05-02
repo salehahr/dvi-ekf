@@ -106,10 +106,7 @@ for i, t in enumerate(mono_traj.t):
             current_imu = imu_queue.at_index(ii)
             kf.dt = ti - old_ti
 
-            kf.propagate_states(current_imu)
-            kf.propagate_covariance(current_imu, Qc)
-
-            kf.traj.append_states(ti, kf.states)
+            kf.propagate(ti, current_imu, Qc)
 
             old_ti = ti
 
