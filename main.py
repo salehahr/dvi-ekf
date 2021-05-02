@@ -53,7 +53,7 @@ imu_traj = (imu_gt_traj.noisy if use_noisy_imu else imu_gt_traj)
 
 def init_kf(current_imu):
     num_meas, num_control = 7, 12
-    kf = Filter(IC, cov0, num_meas, num_control)
+    kf = Filter(min_t, IC, cov0, num_meas, num_control)
     kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
 
     return kf
@@ -96,7 +96,8 @@ old_t = min_t
 old_ti = min_t
 
 # filter main loop
-for i, t in enumerate(mono_traj.t):
+for i, t in enumerate(mono_traj.t[1:]):
+
     current_vis = mono_traj.at_index(i)
 
     # propagate
@@ -106,7 +107,7 @@ for i, t in enumerate(mono_traj.t):
             current_imu = imu_queue.at_index(ii)
             kf.dt = ti - old_ti
 
-            kf.propagate(ti, current_imu, Qc)
+            kf.propagate(ti, current_imu, Qc, do_prop_only)
 
             old_ti = ti
 
@@ -120,6 +121,10 @@ for i, t in enumerate(mono_traj.t):
 plot_trajectories()
 plot_velocities()
 plot_noise_sensitivity(Qval, Rpval, Rqval)
+
+R_WB_mp_axes = kf.R_WB_mp.plot(min_t=min_t, max_t=max_t)
+for ax in R_WB_mp_axes.reshape(-1):
+    ax.set_ylim(bottom=-1.1, top=1.1)
 
 plt.legend()
 plt.show()
