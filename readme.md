@@ -6,27 +6,11 @@ Based on ![this repo](https://github.com/skrogh/msf_ekf).
 * [Current status (of the filter)](#current-status-of-the-filter)
 * [Preliminaries/Tests](#preliminariestests)
   * [KF propagation only](#kf-propagation-only)
-    * [Comparing velocities](#comparing-velocities)
 * [Old tests](/tests)
   * [Offline trajectories](/tests#offline-trajectories)
   * [Fake IMU data](/tests#fake-imu-data)
   * [Reconstructed visual trajectory](/tests#reconstructed-visual-trajectory)
-
-------
-
-## Current status (of the filter)
-```
-python3 main.py all nonoise
-```
-
-
-Not working, something's wrong...
-
-Pictured: KF with both propagation and update steps; **non-noisy IMU**
-for the time being.
-
-![](img/kf.PNG)
-![](img/kf_zoom.PNG)
+  * [Comparing velocities](/tests#comparing-velocities)
 
 -----
 
@@ -43,20 +27,16 @@ Pictured: after correcting the initial values for the velocity `v0`:
 
 ![](img/traj_only_prop.PNG)
 
-#### Comparing velocities
+## Current status (of the filter)
 ```
-python3 main.py prop nonoise vel
+python3 main.py all nonoise
 ```
-Tried to compare
-* velocities from the stereo trajectory (from numerical differentation of x, y, z)
-* velocities from kalman filter (propagation only, IMU without noise)
 
-![](img/velocities.png)
 
-Corrected the offset by setting the initial values v0 in the Kalman filter
-to the initial values from the stereo trajectory.
+Not working, something's wrong...
 
-(Previously `v0 = [0., 0., 0.]`, now `v0 = [stereoGT_traj.vx[0], stereoGT_traj.vy[0], stereoGT_traj.vz[0]]`)
+Pictured: KF with both propagation and update steps; **non-noisy IMU**
+for the time being.
 
-![](img/velocities_corrected.png)
-
+![](img/kf.PNG)
+![](img/kf_zoom.PNG)

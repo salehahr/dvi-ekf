@@ -6,17 +6,16 @@ The Python files here are to be run from the main (parent) folder!
 * [Fake IMU data](#fake-imu-data)
 * [Reconstructed visual trajectory](#reconstructed-visual-trajectory)
 * [Comparing velocities](#comparing-velocities)
-* [KF propagation only](#kf-propagation-only)
 
 ## Offline trajectories
 ```
-python3 plot_traj.py
+python3 tests/plot_traj.py
 ```
 ![](../img/offline_trajs.PNG)
 
 ## Fake IMU data
 ```
-python3 plot_imu.py
+python3 tests/plot_imu.py
 ```
 
 How they were generated:
@@ -38,7 +37,7 @@ To improve:
 
 ## Reconstructed visual trajectory
 ```
-python3 plot_reconstructed.py
+python3 tests/plot_reconstructed.py
 ```
 
 Aim here was to check whether the generation of fake IMU data was correct.
@@ -53,4 +52,20 @@ generated IMU data (without noise).
 
 ![](../img/traj_recon.PNG)
 
+### Comparing velocities
+```
+python3 main.py prop nonoise vel
+```
+Tried to compare
+* velocities from the stereo trajectory (from numerical differentation of x, y, z)
+* velocities from kalman filter (propagation only, IMU without noise)
+
+![](../img/velocities.png)
+
+Corrected the offset by setting the initial values v0 in the Kalman filter
+to the initial values from the stereo trajectory.
+
+(Previously `v0 = [0., 0., 0.]`, now `v0 = [stereoGT_traj.vx[0], stereoGT_traj.vy[0], stereoGT_traj.vz[0]]`)
+
+![](../img/velocities_corrected.png)
 
