@@ -70,6 +70,7 @@ class Filter(object):
         self.num_control = num_control
 
         self.dt = 0.
+        self.traj = VisualTraj("kf")
 
         # states
         self.states = IC

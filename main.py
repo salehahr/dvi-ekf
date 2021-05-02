@@ -56,9 +56,7 @@ def init_kf(current_imu):
     kf = Filter(IC, cov0, num_meas, num_control)
     kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
 
-    kf_traj = VisualTraj("kf")
-
-    return kf, kf_traj
+    return kf
 
 def plot_savefig(fig, figname):
     print(f"Saving file \"{figname}\". ")
@@ -68,17 +66,17 @@ def plot_trajectories():
     axes = stereoGT_traj.plot()
     if not do_prop_only:
         axes = mono_traj.plot(axes)
-    axes = kf_traj.plot(axes, min_t=min_t, max_t=max_t)
+    axes = kf.traj.plot(axes, min_t=min_t, max_t=max_t)
 
 def plot_velocities():
     if do_plot_vel:
         v_axes = stereoGT_traj.plot_velocities()
-        v_axes = kf_traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
+        v_axes = kf.traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
 
 def plot_noise_sensitivity(Q, Rp, Rq):
     """ plots sensitivity to measurement noise R and process noise Q """
     R_axes = stereoGT_traj.plot_sens_noise(Rp, Rq, Q)
-    R_axes = kf_traj.plot_sens_noise(Rp, Rq, Q, R_axes,
+    R_axes = kf.traj.plot_sens_noise(Rp, Rq, Q, R_axes,
             min_t=min_t, max_t=max_t)
 
     figname = f"./img/Rp{Rp}_Rq{Rqval}_Q{Q}.png"
@@ -92,7 +90,7 @@ Qc, R = gen_noise_matrices(Qval, Rpval, Rqval)
 
 # initialisation
 current_imu = imu_traj.at_index(0)
-kf, kf_traj = init_kf(current_imu)
+kf = init_kf(current_imu)
 
 old_t = min_t
 old_ti = min_t
@@ -110,8 +108,8 @@ for i, t in enumerate(mono_traj.t):
 
             kf.propagate_states(current_imu)
             kf.propagate_covariance(current_imu, Qc)
-            
-            kf_traj.append_state(ti, kf.states)
+
+            kf.traj.append_states(ti, kf.states)
 
             old_ti = ti
 
