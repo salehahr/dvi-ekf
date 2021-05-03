@@ -47,6 +47,10 @@ class Quaternion(object):
         return np.quaternion(self.w, self.x, self.y, self.z)
 
     @property
+    def euler_zyx(self):
+        return R.from_quat(self.xyzw).as_euler('zyx')
+
+    @property
     def conjugate(self):
         return Quaternion(wxyz=self.np_quat.conjugate())
 
