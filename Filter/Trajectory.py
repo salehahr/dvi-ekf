@@ -8,6 +8,7 @@ from scipy.integrate import cumtrapz
 from scipy.spatial.transform import Rotation as R
 
 from .Measurement import VisualMeasurement, ImuMeasurement
+from .Quaternion import Quaternion
 
 class Trajectory(object):
     """ Base trajectory class which requires a
@@ -301,7 +302,9 @@ class VisualTraj(Trajectory):
             line.set_linewidth(0.5)
 
     def _gen_quats_farray(self):
-        self.quats = np.asarray([self.qx, self.qy, self.qz, self.qw]).T
+        self.quats = [Quaternion(x=self.qx[i],
+                        y=self.qy[i], z=self.qz[i], w=w)
+                        for i, w in enumerate(self.qw)]
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
@@ -352,7 +355,7 @@ class ImuTraj(Trajectory):
         self.az = np.gradient(self.vz, dt)
 
         # angular velocity
-        euler = np.asarray([R.from_quat(q).as_euler('zyx') for q in interpolated.quats])
+        euler = np.asarray([q.euler_zyx for q in interpolated.quats])
         rz, ry, rx = euler[:,0], euler[:,1], euler[:,2]
         self.gx = np.gradient(rx, dt)
         self.gy = np.gradient(ry, dt)
@@ -489,7 +492,7 @@ class ImuTraj(Trajectory):
         # initial conditions
         x0, y0, z0 = self.vis_data.x[0], self.vis_data.y[0], self.vis_data.z[0]
         vx0, vy0, vz0 = self.vx[0], self.vy[0], self.vz[0]
-        qx0, qy0, qz0, qw0 = self.vis_data.qx[0], self.vis_data.qy[0], self.vis_data.qz[0], self.vis_data.qw[0]
+        q0 = self.vis_data.quats[0]
 
         # iontegrating for pos
         vx = cumtrapz(self.ax, t, initial=0) + vx0
@@ -501,7 +504,7 @@ class ImuTraj(Trajectory):
         reconstructed.z = cumtrapz(vz, t, initial=0) + z0
 
         # integrating for orientation
-        rz0, ry0, rx0 = R.from_quat([qx0, qy0, qz0, qw0]).as_euler('zyx')
+        rz0, ry0, rx0 = q0.euler_zyx
         rx = cumtrapz(self.gx, t, initial=0) + rx0
         ry = cumtrapz(self.gy, t, initial=0) + ry0
         rz = cumtrapz(self.gz, t, initial=0) + rz0
