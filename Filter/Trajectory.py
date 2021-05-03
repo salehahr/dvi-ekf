@@ -341,35 +341,52 @@ class ImuTraj(Trajectory):
         self.queue_first_ts = 0
 
     def _gen_unnoisy_imu(self):
-        """ Generates IMU data from visual trajectory, without noise. """
+        """ Generates IMU data from visual trajectory, without noise.
+            Involves transformation from SLAM world coordinates
+            to IMU coordinates."""
 
         self.vis_data.interpolate(self.num_imu_between_frames)
         interpolated = self.vis_data.interpolated
         dt = interpolated.t[1] - interpolated.t[0]
 
-        # acceleration
-        self.vx = np.gradient(interpolated.x, dt)
-        self.vy = np.gradient(interpolated.y, dt)
-        self.vz = np.gradient(interpolated.z, dt)
-        self.vis_data.vx = self.vx
-        self.vis_data.vy = self.vy
-        self.vis_data.vz = self.vz
+        # get rotations for coordinate transformation
+        R_BW_arr = [q.rot.T for q in interpolated.quats]
 
-        self.ax = np.gradient(self.vx, dt)
-        self.ay = np.gradient(self.vy, dt)
-        self.az = np.gradient(self.vz, dt)
+        # velocities
+        v_W = np.asarray((np.gradient(interpolated.x, dt),
+                        np.gradient(interpolated.y, dt),
+                        np.gradient(interpolated.z, dt) )).T
+        self.vis_data.vx = v_W[:,0] # VisTraj is in world coordinates
+        self.vis_data.vy = v_W[:,1]
+        self.vis_data.vz = v_W[:,2]
+
+        v_B = np.asarray([R_BW @ v_W[i,:]
+                for i, R_BW in enumerate(R_BW_arr)]) ## possibly wrong transformation?
+        self.vx, self.vy, self.vz = v_B[:,0], v_B[:,1], v_B[:,2]
+
+        # accelerations
+        a_W = np.array((np.gradient(v_W[:,0], dt),
+                        np.gradient(v_W[:,1], dt),
+                        np.gradient(v_W[:,2], dt))).T
+
+        a_B = np.asarray([R_BW @ a_W[i,:] for i, R_BW in enumerate(R_BW_arr)])
+        self.ax, self.ay, self.az = a_B[:,0], a_B[:,1], a_B[:,2]
 
         # angular velocity
         euler = np.asarray([q.euler_zyx for q in interpolated.quats])
         rz, ry, rx = euler[:,0], euler[:,1], euler[:,2]
-        self.gx = np.gradient(rx, dt)
-        self.gy = np.gradient(ry, dt)
-        self.gz = np.gradient(rz, dt)
+
+        om_W = np.asarray( (np.gradient(rx, dt),
+                            np.gradient(ry, dt),
+                            np.gradient(rz, dt)) )
+        om_B = np.asarray([R_BW @ om_W[:,i] for i, R_BW in enumerate(R_BW_arr)]).T
+        self.gx, self.gy, self.gz = om_B[0,:], om_B[1,:], om_B[2,:]
 
         self.t = interpolated.t
 
         if self.filepath:
             self._write_to_file()
+
         self._flag_gen_unnoisy_imu = True
 
     def _gen_noisy_imu(self, covariance):
@@ -494,25 +511,38 @@ class ImuTraj(Trajectory):
         dt = t[1] - t[0]
         reconstructed.t = t
 
-        # initial conditions
+        # get rotations for coordinate transformation
+        R_WB_arr = [q.rot for q in self.vis_data.interpolated.quats]
+
+        # initial conditions in world coordinates
+        R_WB0 = R_WB_arr[0]
         x0, y0, z0 = self.vis_data.x[0], self.vis_data.y[0], self.vis_data.z[0]
-        vx0, vy0, vz0 = self.vx[0], self.vy[0], self.vz[0]
+        v0 = self._to_world_coords(R_WB0, np.asarray((self.vx[0],
+                                            self.vy[0],
+                                            self.vz[0])))
         q0 = self.vis_data.quats[0]
 
-        # iontegrating for pos
-        vx = cumtrapz(self.ax, t, initial=0) + vx0
-        vy = cumtrapz(self.ay, t, initial=0) + vy0
-        vz = cumtrapz(self.az, t, initial=0) + vz0
+        # integrating for pos
+        a_W = self._to_world_coords(R_WB_arr, np.asarray((self.ax,
+                                            self.ay,
+                                            self.az)).T )
+        vx_W = cumtrapz(a_W[:,0], t, initial=0) + v0[0]
+        vy_W = cumtrapz(a_W[:,1], t, initial=0) + v0[1]
+        vz_W = cumtrapz(a_W[:,2], t, initial=0) + v0[2]
 
-        reconstructed.x = cumtrapz(vx, t, initial=0) + x0
-        reconstructed.y = cumtrapz(vy, t, initial=0) + y0
-        reconstructed.z = cumtrapz(vz, t, initial=0) + z0
+        reconstructed.x = cumtrapz(vx_W, t, initial=0) + x0
+        reconstructed.y = cumtrapz(vy_W, t, initial=0) + y0
+        reconstructed.z = cumtrapz(vz_W, t, initial=0) + z0
 
         # integrating for orientation
         rz0, ry0, rx0 = q0.euler_zyx
-        rx = cumtrapz(self.gx, t, initial=0) + rx0
-        ry = cumtrapz(self.gy, t, initial=0) + ry0
-        rz = cumtrapz(self.gz, t, initial=0) + rz0
+
+        om_B = np.array((self.gx, self.gy, self.gz))
+        om_W = np.asarray([R_WB @ om_B[:,i] for i, R_WB in enumerate(R_WB_arr)]).T
+
+        rx = cumtrapz(om_W[0,:], t, initial=0) + rx0
+        ry = cumtrapz(om_W[1,:], t, initial=0) + ry0
+        rz = cumtrapz(om_W[2,:], t, initial=0) + rz0
 
         euler_ang = np.asarray([rz, ry, rx]).T
         quats = np.asarray([R.from_euler('zyx', e).as_quat()
@@ -542,3 +572,13 @@ class ImuTraj(Trajectory):
             line.set_color('black')
         elif 'mono' in label:
             line.set_color('saddlebrown')
+
+    def _to_world_coords(self, R_WB, vec):
+        if isinstance(R_WB, list):
+            assert(vec.shape[1] == 3)
+            return np.asarray([Rot @ vec[i,:] for i, Rot in enumerate(R_WB)])
+        else:
+            return R_WB @ vec
+
+    def _to_imu_coords(self, R_BW, vec):
+        self._to_world_coords(R_BW, vec)

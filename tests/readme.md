@@ -27,6 +27,9 @@ How they were generated:
         `np.gradient(interpolated.x, dt)`
     * Converted quaternions to Euler angles
          which are then differentiated to gx, gy, gz
+3. Conversion of `a` and `g` to IMU coordinates.
+
+   ![](../img/coord_trafo_imu.png)
 
 To improve:
 - [ ] add bias
@@ -49,6 +52,7 @@ generated IMU data (without noise).
 * Integrate:
   * `int_vals = scipy.integrate.cumtrapz(diff_vals, t, initial=0) + IC`.
   * Rotations to quaternions
+* Keep in mind the coordinate transformations IMU <-> world, s. [above](#reconstructed-visual-trajectory)
 
 ![](../img/traj_recon.PNG)
 
