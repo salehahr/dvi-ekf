@@ -33,6 +33,11 @@ Pictured: after correcting the fake IMU data to be in IMU coordinates.
 
 ![](img/traj_only_prop.PNG)
 
+Increasing `num_imu_between_frames` in [`generate_data.py'](/generate_data.py)
+improves the reconstruction accuracy.
+
+![](img/traj_only_prop_incr_imu.PNG)
+
 ## Current status (of the filter)
 ```
 python3 main.py all nonoise

@@ -4,7 +4,7 @@ import numpy as np
 """ Generates visual trajectory data as well as fake IMU data """
 
 max_vals = None
-num_imu_between_frames = 100
+num_imu_between_frames = 300
 imu_covariance = [0.01, 0.03, 0.01, 0.03, 0.005, 0.005]
 
 # SLAM data
