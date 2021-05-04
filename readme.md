@@ -22,8 +22,14 @@ python3 main.py prop nonoise
 Using initial pose from monocular trajectory and propagating using IMU values
 (**not noisy**).
 
-Currently, propagation equations seem to check out for the quaternions!
-Pictured: after correcting the initial values for the velocity `v0`:
+Propagation equations for the states
+* ignoring gravity for now, as the fake IMU data does not take
+    gravity into account.
+* ignoring noise here according to the method suggested in the corresp. paper.
+    The noise terms are used in the covariance propagation equations.
+![](img/prop_eqns.PNG)
+
+Pictured: after correcting the fake IMU data to be in IMU coordinates. 
 
 ![](img/traj_only_prop.PNG)
 
