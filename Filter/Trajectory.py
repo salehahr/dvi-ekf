@@ -316,15 +316,20 @@ class ImuTraj(Trajectory):
         covariance = [0.] * 6,
         unnoised = False):
 
+        # base properties
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
-        self.num_imu_between_frames = num_imu_between_frames
-        self._flag_gen_unnoisy_imu = False
+        super().__init__(name, labels, filepath, cap)
         self.vis_data = vis_data
+        self.num_imu_between_frames = num_imu_between_frames
+
+        # extra data
         self.noisy = None
         self.reconstructed = None
 
-        super().__init__(name, labels, filepath, cap)
+        # flags
+        self._flag_gen_unnoisy_imu = False
 
+        # data generation
         if vis_data:
             self.clear()
             self._gen_unnoisy_imu()
