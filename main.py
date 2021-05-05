@@ -4,7 +4,7 @@ import numpy as np
 np.set_printoptions(precision=1, linewidth=150)
 
 import matplotlib.pyplot as plt
-from Filter import States, Filter, VisualTraj
+from Filter import States, Filter, VisualTraj, MatrixPlotter
 
 def parse_arguments():
     def print_usage():
@@ -53,8 +53,12 @@ imu_traj = (imu_gt_traj.noisy if use_noisy_imu else imu_gt_traj)
 
 def init_kf(current_imu):
     num_meas, num_control = 7, 12
-    kf = Filter(min_t, IC, cov0, num_meas, num_control)
+    kf = Filter(IC, cov0, num_meas, num_control)
     kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
+
+    # debugging
+    kf.R_WB_mp = MatrixPlotter("R_WB", min_t, kf.states.q.rot)
+    kf.P_mp = MatrixPlotter("P", min_t, kf.P, max_row=3, max_col=3)
 
     return kf
 
@@ -109,6 +113,11 @@ for i, t in enumerate(mono_traj.t[1:]):
 
             kf.propagate(ti, current_imu, Qc, do_prop_only)
 
+            # for plotting matrices
+            kf.R_WB_mp.append(ti, kf.states.q.rot)
+            if not do_prop_only:
+                kf.P_mp.append(ti, kf.P)
+
             old_ti = ti
 
     # update
@@ -125,6 +134,7 @@ plot_noise_sensitivity(Qval, Rpval, Rqval)
 R_WB_mp_axes = kf.R_WB_mp.plot(min_t=min_t, max_t=max_t)
 for ax in R_WB_mp_axes.reshape(-1):
     ax.set_ylim(bottom=-1.1, top=1.1)
+P_mp_axes = kf.P_mp.plot(min_t=min_t, max_t=max_t)
 
 plt.legend()
 plt.show()

@@ -3,7 +3,6 @@ import numpy as np
 
 from .Quaternion import Quaternion
 from .Trajectory import VisualTraj
-from .MatrixPlotter import MatrixPlotter
 
 def skew(x):
     return np.array([[0,    -x[2], x[1]],
@@ -64,7 +63,7 @@ class ErrorStates(object):
         self.dq_offset = Quaternion(v=theta_offset/2, w=1.)
 
 class Filter(object):
-    def __init__(self, t0, IC, P0, num_meas, num_control):
+    def __init__(self, IC, P0, num_meas, num_control):
         self.num_states = IC.size
         self.num_error_states = IC.size - 2
         self.num_meas = num_meas
@@ -86,18 +85,15 @@ class Filter(object):
         # covariance
         self.P = P0
 
-        # plotting
-        self.R_WB_mp = MatrixPlotter("R_WB", t0, self.states.q.rot)
-
-    def propagate(self, t, imu, Qc, do_prop_only):
-        self.propagate_states(t, imu)
+    def propagate(self, t, imu, Qc, do_prop_only=False):
+        self.propagate_states(imu)
 
         if not do_prop_only:
             self.propagate_covariance(imu, Qc)
 
         self.traj.append_state(t, self.states)
 
-    def propagate_states(self, t, imu):
+    def propagate_states(self, imu):
         v_old = self.states.v
         R_WB_old = self.states.q.rot
 
@@ -105,9 +101,6 @@ class Filter(object):
         om = Quaternion(w=0., v=(imu.om - self.states.bw) )
         self.states.q += self.dt / 2. * om * self.states.q
         self.states.q.normalise()
-
-        R_WB = self.states.q.rot
-        self.R_WB_mp.append(t, R_WB)
 
         # velocity v (both eqns are equiv)
         self.states.v += R_WB_old @ (self.acc_old - self.states.ba) \
