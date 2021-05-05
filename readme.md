@@ -14,6 +14,25 @@ Based on ![this repo](https://github.com/skrogh/msf_ekf).
 
 -----
 
+## Current status (of the filter)
+```
+python3 main.py all nonoise
+```
+
+
+Not working, something's wrong...
+
+Noise values: `Q = 1e-3`, `Rp = 0.1`, `Rq = 0.05`.
+
+Pictured: KF with both propagation and update steps; **non-noisy IMU**
+for the time being.
+
+![](img/kf.PNG)
+
+![](img/kf_zoom1.PNG)
+
+![](img/kf_zoom2.PNG)
+
 ## Preliminaries/Tests
 ### KF propagation only
 ```
@@ -38,16 +57,3 @@ improves the reconstruction accuracy.
 
 ![](img/traj_only_prop_incr_imu.PNG)
 
-## Current status (of the filter)
-```
-python3 main.py all nonoise
-```
-
-
-Not working, something's wrong...
-
-Pictured: KF with both propagation and update steps; **non-noisy IMU**
-for the time being.
-
-![](img/kf.PNG)
-![](img/kf_zoom.PNG)
