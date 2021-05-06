@@ -5,6 +5,7 @@ Based on ![this repo](https://github.com/skrogh/msf_ekf).
 ## Table of contents
 * [Current status (of the filter)](#current-status-of-the-filter)
 * [Preliminaries/Tests](#preliminariestests)
+  * [Playing with noise values](#playing-with-noise-values)
   * [KF propagation only](#kf-propagation-only)
 * [Old tests](/tests)
   * [Offline trajectories](/tests#offline-trajectories)
@@ -19,7 +20,6 @@ Based on ![this repo](https://github.com/skrogh/msf_ekf).
 python3 main.py all nonoise
 ```
 
-
 Not working, something's wrong...
 
 Noise values: `Q = 1e-3`, `Rp = 0.1`, `Rq = 0.05`.
@@ -29,11 +29,22 @@ for the time being.
 
 ![](img/kf.PNG)
 
+Zoomed in:
+
 ![](img/kf_zoom1.PNG)
 
-![](img/kf_zoom2.PNG)
-
 ## Preliminaries/Tests
+### Playing with noise values
+#### Increasing Rp
+Increasing the measurement noise for the positions:
+
+![](img/rp_sens.png)
+
+#### Increasing Rq
+Increasing the measurement noise for the rotations:
+
+![](img/rq_sens.png)
+
 ### KF propagation only
 ```
 python3 main.py prop nonoise
