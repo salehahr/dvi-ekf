@@ -3,6 +3,7 @@ Implementation of a loosely-coupled VI-SLAM.
 Based on ![this repo](https://github.com/skrogh/msf_ekf).
 
 ## Table of contents
+* [Some notes](#some-notes)
 * [Current status (of the filter)](#current-status-of-the-filter)
 * [Preliminaries/Tests](#preliminariestests)
   * [Playing with noise values](#playing-with-noise-values)
@@ -15,6 +16,27 @@ Based on ![this repo](https://github.com/skrogh/msf_ekf).
 
 -----
 
+## Some notes
+* Propagation stage works as expected,
+    s. [this section](#kf-propagation-only)
+* [Increasing R values](#playing-with-noise-values)
+    --> less trust in camera measurements
+    --> convergence towards the green (reference/stereo/IMU) trajectory.
+* Possible sources of error in the update stage
+    * implementation of quaternions?
+    * the generation of the cov matrix P
+        (s. `Filter.propagate_covariance()` [`Filter.py`](/Filter/Filter.py))
+    * the update equations themselves / the corresp. code?
+    * combination of the above?
+* Something funny seems to happen around
+    * Frame 210: where the quaternions switch to negative
+    * Frame 204: quats seem to start to diverge here. also, up till
+        this frame, the y position seems to be following the
+        green ref. traj.
+* What I've already tried: constraining the quaternions, see
+    [constrain_quats](../../tree/constrain_quats) branch.
+
+
 ## Current status (of the filter)
 ```
 python3 main.py all nonoise
@@ -22,10 +44,9 @@ python3 main.py all nonoise
 
 Not working, something's wrong...
 
-Noise values: `Q = 1e-3`, `Rp = 0.1`, `Rq = 0.05`.
-
 Pictured: KF with both propagation and update steps; **non-noisy IMU**
 for the time being.
+Noise values: `Q = 1e-3`, `Rp = 0.1`, `Rq = 0.05`.
 
 ![](img/kf.PNG)
 
