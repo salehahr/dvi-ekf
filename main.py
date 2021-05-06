@@ -111,12 +111,11 @@ for i, t in enumerate(mono_traj.t[1:]):
             current_imu = imu_queue.at_index(ii)
             kf.dt = ti - old_ti
 
-            kf.propagate(ti, current_imu, Qc, do_prop_only)
+            kf.propagate(ti, current_imu, Qc)
 
             # for plotting matrices
             kf.R_WB_mp.append(ti, kf.states.q.rot)
-            if not do_prop_only:
-                kf.P_mp.append(ti, kf.P)
+            kf.P_mp.append(ti, kf.P)
 
             old_ti = ti
 
