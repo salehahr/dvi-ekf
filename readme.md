@@ -99,3 +99,9 @@ improves the reconstruction accuracy.
 
 ![](img/traj_only_prop_incr_imu.PNG)
 
+#### Covariance matrix P
+![](img/P_prop_only_0to6.png)
+![](img/P_prop_only_7to12.png)
+![](img/P_prop_only_13to18.png)
+![](img/P_prop_only_19to22.png)
+
