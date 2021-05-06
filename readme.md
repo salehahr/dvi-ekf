@@ -25,8 +25,18 @@ Based on ![this repo](https://github.com/skrogh/msf_ekf).
 * Possible sources of error in the update stage
     * implementation of quaternions?
     * the generation of the cov matrix P
-        (s. `Filter.propagate_covariance()` [`Filter.py`](/Filter/Filter.py))
+      * (s. `Filter.propagate_covariance()` [`Filter.py`](/Filter/Filter.py))
+      * overview:  
+        ![](/img/cov_eqn_overview.png)  
+      * detailed definition of the matrices, s.
+            [Weiss PhD thesis](http://e-collection.library.ethz.ch/eserv/eth:5889/eth-5889-02.pdf) and
+            [Weiss, Siegwart 2011 paper](https://ieeexplore.ieee.org/document/5979982)
+      * [my code in Python](https://github.com/feudalism/dvi-ekf/blob/44001bb6960a49e4fe6b42e7dcd5eea7ed4a9952/Filter/Filter.py#L122)
+        vs [base repo's code in C++](https://github.com/skrogh/msf_ekf/blob/1bce89fa9125378b932564e0aa0eeaef3bd0ef5a/src/EstimatorBase.cpp#L192)
     * the update equations themselves / the corresp. code?
+      * also see the above linked papers for the update equation definitions
+      * [my code in Python](https://github.com/feudalism/dvi-ekf/blob/fe038dd593d1f6ac533197f1f6ccb19ee01ca61c/Filter/Filter.py#L155)
+      vs [base repo's code in C++](https://github.com/skrogh/msf_ekf/blob/master/src/EstimatorBase.cpp#L273)
     * combination of the above?
 * Something funny seems to happen around
     * Frame 210: where the quaternions switch to negative
