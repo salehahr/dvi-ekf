@@ -6,6 +6,8 @@ np.set_printoptions(precision=1, linewidth=150)
 import matplotlib.pyplot as plt
 from Filter import States, Filter, VisualTraj, MatrixPlotter
 
+from plotter import plot_savefig, plot_trajectories, plot_velocities, plot_noise_sensitivity
+
 def parse_arguments():
     def print_usage():
         print(f"Usage: {__file__} <prop> <noise> [<vel>]")
@@ -62,30 +64,6 @@ def init_kf(current_imu):
 
     return kf
 
-def plot_savefig(fig, figname):
-    print(f"Saving file \"{figname}\". ")
-    fig.savefig(figname)
-
-def plot_trajectories():
-    axes = stereoGT_traj.plot()
-    if not do_prop_only:
-        axes = mono_traj.plot(axes)
-    axes = kf.traj.plot(axes, min_t=min_t, max_t=max_t)
-
-def plot_velocities():
-    if do_plot_vel:
-        v_axes = stereoGT_traj.plot_velocities()
-        v_axes = kf.traj.plot_velocities(v_axes, min_t=min_t, max_t=max_t)
-
-def plot_noise_sensitivity(Q, Rp, Rq):
-    """ plots sensitivity to measurement noise R and process noise Q """
-    R_axes = stereoGT_traj.plot_sens_noise(Rp, Rq, Q)
-    R_axes = kf.traj.plot_sens_noise(Rp, Rq, Q, R_axes,
-            min_t=min_t, max_t=max_t)
-
-    figname = f"./img/Rp{Rp}_Rq{Rqval}_Q{Q}.png"
-    plot_savefig(R_axes[0].figure, figname)
-
 # noise values
 Qval = 1e-3
 Rpval = 0.1
@@ -126,9 +104,9 @@ for i, t in enumerate(mono_traj.t[1:]):
     old_t = t
 
 # plots
-plot_trajectories()
-plot_velocities()
-plot_noise_sensitivity(Qval, Rpval, Rqval)
+plot_trajectories(kf.traj, do_prop_only)
+plot_velocities(kf.traj, do_plot_vel)
+plot_noise_sensitivity(kf.traj, Qval, Rpval, Rqval)
 
 R_WB_mp_axes = kf.R_WB_mp.plot(min_t=min_t, max_t=max_t)
 for ax in R_WB_mp_axes.reshape(-1):
