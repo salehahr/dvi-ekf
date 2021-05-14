@@ -10,21 +10,21 @@ def skew(x):
                      [-x[1], x[0],    0]])
 
 class States(object):
-    def __init__(self, p, v, q, bw, ba, scale, p_offset, q_offset):
+    def __init__(self, p, v, q, bw, ba):#, scale, p_offset, q_offset):
         self.p = np.asarray(p)
         self.v = np.asarray(v)
         self.q = Quaternion(xyzw=q, do_normalise=True)
 
         self.bw = np.asarray(bw)
         self.ba = np.asarray(ba)
-        self.scale = scale
+        # self.scale = scale
 
-        self.p_offset = np.asarray(p_offset)
-        self.q_offset = Quaternion(xyzw=q_offset, do_normalise=True)
+        # self.p_offset = np.asarray(p_offset)
+        # self.q_offset = Quaternion(xyzw=q_offset, do_normalise=True)
 
         self.size = len(p) + len(v) + 4 \
-                + len(bw) + len(ba) + 1 \
-                + len(p_offset) + 4
+                + len(bw) + len(ba) #+ 1 \
+                # + len(p_offset) + 4
 
     def apply_correction(self, err):
         self.p += err.dp
@@ -34,11 +34,11 @@ class States(object):
 
         self.bw += err.dbw
         self.ba += err.dba
-        self.scale += err.dscale
+        # self.scale += err.dscale
 
-        self.p_offset += err.dp_offset
-        self.q_offset = err.dq_offset * self.q_offset
-        self.q_offset.normalise()
+        # self.p_offset += err.dp_offset
+        # self.q_offset = err.dq_offset * self.q_offset
+        # self.q_offset.normalise()
 
 class ErrorStates(object):
     def __init__(self, vec):
@@ -47,9 +47,9 @@ class ErrorStates(object):
         theta = vec[6:9]
         bw = vec[9:12]
         ba = vec[12:15]
-        scale = vec[15]
-        p_offset = vec[16:19]
-        theta_offset = vec[19:]
+        # scale = vec[15]
+        # p_offset = vec[16:19]
+        # theta_offset = vec[19:]
 
         self.dp = np.asarray(p)
         self.dv = np.asarray(v)
@@ -57,15 +57,15 @@ class ErrorStates(object):
 
         self.dbw = np.asarray(bw)
         self.dba = np.asarray(ba)
-        self.dscale = scale
+        # self.dscale = scale
 
-        self.dp_offset = np.asarray(p_offset)
-        self.dq_offset = Quaternion(v=theta_offset/2, w=1.)
+        # self.dp_offset = np.asarray(p_offset)
+        # self.dq_offset = Quaternion(v=theta_offset/2, w=1.)
 
 class Filter(object):
     def __init__(self, IC, P0, num_meas, num_control):
         self.num_states = IC.size
-        self.num_error_states = IC.size - 2
+        self.num_error_states = IC.size - 1
         self.num_meas = num_meas
         self.num_control = num_control
 
@@ -86,14 +86,14 @@ class Filter(object):
         self.P = P0
 
     def propagate(self, t, imu, Qc, do_prop_only=False):
-        self.propagate_states(imu)
+        self.propagate_states(imu, Qc)
 
-        if not do_prop_only:
-            self.propagate_covariance(imu, Qc)
+        # if not do_prop_only:
+            # self.propagate_covariance(imu, Qc)
 
         self.traj.append_state(t, self.states)
 
-    def propagate_states(self, imu):
+    def propagate_states(self, imu, Qc):
         v_old = self.states.v
         R_WB_old = self.states.q.rot
 
@@ -105,16 +105,22 @@ class Filter(object):
         # velocity v (both eqns are equiv)
         self.states.v += R_WB_old @ (self.acc_old - self.states.ba) \
                             * self.dt
-        # self.states.v += self.dt / 2. * ( \
-            # q_old.rot @ (self.acc_old - self.states.ba) \
-            # + R_WB @ (imu.acc - self.states.ba) )
 
         # position p (both eqns are equiv)
         self.states.p += \
             self.dt * v_old \
             + self.dt**2/2. \
             * (R_WB_old @ (self.acc_old - self.states.ba))
-        # self.states.p += self.dt / 2. * (v_old + self.states.v)
+
+        F = np.eye(9)
+        F[0:3, 3:6] = self.dt * np.eye(3)
+        F[3:6, 6:9] = - R_WB_old @ skew(self.acc_old - self.states.ba) \
+                            * self.dt
+        F[6:9, 6:9] = om.rot.T
+        self.Fx = F
+        
+        Qc = (self.dt ** 2) * Qc # integration acceleration to obstain position
+        # self.P = F @ self.P @ F.T + 
 
         self.om_old = imu.om
         self.acc_old = imu.acc

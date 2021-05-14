@@ -38,11 +38,11 @@ q0 = [mono_traj.qx[0], mono_traj.qy[0], mono_traj.qz[0],
         mono_traj.qw[0]]
 bw0 = [0., 0., 0.]
 ba0 = [0., 0., 0.]
-scale0 = 1.
-p_BC_0 = [0., 0., 0.]
-q_BC_0 = [0, 0, 0, 1]
+# scale0 = 1.
+# p_BC_0 = [0., 0., 0.]
+# q_BC_0 = [0, 0, 0, 1]
 
-IC = States(p0, v0, q0, bw0, ba0, scale0, p_BC_0, q_BC_0)
+IC = States(p0, v0, q0, bw0, ba0)#, scale0, p_BC_0, q_BC_0)
 
 # initial covariances
 stdev_p = [0.1, 0.1, 0.1]
@@ -50,10 +50,10 @@ stdev_v = [0.1, 0.1, 0.1]
 stdev_q = [0.05, 0.04, 0.025]
 stdev_bw = [0.1, 0.1, 0.1]
 stdev_ba = [0.1, 0.1, 0.1]
-stdev_scale = 0.4
-stdev_p_BC = [0.1, 0.1, 0.1]
-stdev_q_BC = [0.05, 0.04, 0.025]
+# stdev_scale = 0.4
+# stdev_p_BC = [0.1, 0.1, 0.1]
+# stdev_q_BC = [0.05, 0.04, 0.025]
 
 stdevs0 = np.hstack((stdev_p, stdev_v, stdev_q, \
-        stdev_bw, stdev_ba, stdev_scale, stdev_p_BC, stdev_q_BC))
+        stdev_bw, stdev_ba))#, stdev_scale, stdev_p_BC, stdev_q_BC))
 cov0 = np.square(np.diag(stdevs0))
