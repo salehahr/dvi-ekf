@@ -77,41 +77,44 @@ kf = init_kf(current_imu)
 old_t = min_t
 old_ti = min_t
 
-# filter main loop
-for i, t in enumerate(mono_traj.t[1:]):
+# filter main loop -- start at 1 b/c we have initial values
+for i, t in enumerate(imu_traj.t[1:]):
 
-    current_vis = mono_traj.at_index(i)
-
-    # propagate
-    imu_queue = imu_traj.get_queue(old_t, t)
-    if imu_queue:
-        for ii, ti in enumerate(imu_queue.t):
-            current_imu = imu_queue.at_index(ii)
-            kf.dt = ti - old_ti
-
-            kf.propagate(ti, current_imu, Qc)
-
-            # for plotting matrices
-            kf.R_WB_mp.append(ti, kf.states.q.rot)
-            kf.P_mp.append(ti, kf.P)
-
-            old_ti = ti
-
-    # update
-    if not do_prop_only:
-        kf.update(current_vis, R)
-
+    current_imu = imu_traj.at_index(i)
+    kf.dt = t - old_t
+    
+    kf.propagate(t, current_imu, Qc)
+    
     old_t = t
+
+    # current_vis = mono_traj.at_index(i)
+
+    # # propagate
+    # imu_queue = imu_traj.get_queue(old_t, t)
+    # if imu_queue:
+        # for ii, ti in enumerate(imu_queue.t):
+
+            # # for plotting matrices
+            # kf.R_WB_mp.append(ti, kf.states.q.rot)
+            # kf.P_mp.append(ti, kf.P)
+
+            # old_ti = ti
+
+    # # update
+    # if not do_prop_only:
+        # kf.update(current_vis, R)
+
+    # old_t = t
 
 # plots
 plot_trajectories(kf.traj, do_prop_only)
-plot_velocities(kf.traj, do_plot_vel)
-plot_noise_sensitivity(kf.traj, Qval, Rpval, Rqval)
+# plot_velocities(kf.traj, do_plot_vel)
+# plot_noise_sensitivity(kf.traj, Qval, Rpval, Rqval)
 
-R_WB_mp_axes = kf.R_WB_mp.plot(min_t=min_t, max_t=max_t)
-for ax in R_WB_mp_axes.reshape(-1):
-    ax.set_ylim(bottom=-1.1, top=1.1)
-P_mp_axes = kf.P_mp.plot(min_t=min_t, max_t=max_t)
+# R_WB_mp_axes = kf.R_WB_mp.plot(min_t=min_t, max_t=max_t)
+# for ax in R_WB_mp_axes.reshape(-1):
+    # ax.set_ylim(bottom=-1.1, top=1.1)
+# P_mp_axes = kf.P_mp.plot(min_t=min_t, max_t=max_t)
 
 plt.legend()
 plt.show()
