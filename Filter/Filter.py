@@ -164,69 +164,81 @@ class Filter(object):
         # self.P = self.Fd @ self.P @ self.Fd.T + Qd
 
     def update(self, camera, R):
-        p_VC = camera.pos
-        q_VC = camera.qrot
+        # compute gain
+        S = h_jac @ self.P @ h_jac.T + R
+        K = self.P @ h_jac.T @ np.linalg.inv(S)
 
-        R_VW = self.q_VW.rot
-        R_WB = self.states.q.rot
-        R_BC = self.states.q_offset.rot
+        # compute error state
+        res = camera.pos - self.states.p
+        err = ErrorStates(K @ res)
 
-        h_scale = R_VW @ (R_WB @ self.states.p_offset + self.states.p)
-        h_scale = np.reshape(h_scale, (h_scale.shape[0], -1))
+        # correct predicted state and covariance
+        self.states.apply_correction(err)
+        self.P = (np.eye(9) - K @ h_jac) @ self.P
 
-        zero3 = np.zeros((3, 3))
-        Hp = np.hstack((
-            R_VW * self.states.scale,
-            zero3,
-            -R_VW @ R_WB @ skew(self.states.p_offset) * self.states.scale,
-            zero3,
-            zero3,
-            h_scale,
-            R_VW @ R_WB * self.states.scale,
-            zero3,
-            # np.eye(3, 3) * self.scale,
-            # -R_VW @ skew( self.p_offset + R_WB @ self.p_offset ) \
-                # * self.scale
-        ))
+        # p_VC = camera.pos
+        # q_VC = camera.qrot
 
-        Hq = np.hstack((
-            zero3,
-            zero3,
-            R_BC,
-            zero3,
-            zero3,
-            np.zeros((3, 1)),
-            zero3,
-            np.eye(3, 3),
+        # R_VW = self.q_VW.rot
+        # R_WB = self.states.q.rot
+        # R_BC = self.states.q_offset.rot
+
+        # h_scale = R_VW @ (R_WB @ self.states.p_offset + self.states.p)
+        # h_scale = np.reshape(h_scale, (h_scale.shape[0], -1))
+
+        # zero3 = np.zeros((3, 3))
+        # Hp = np.hstack((
+            # R_VW * self.states.scale,
             # zero3,
-            # C_q_c_i*C_q_i_w;
-        ))
+            # -R_VW @ R_WB @ skew(self.states.p_offset) * self.states.scale,
+            # zero3,
+            # zero3,
+            # h_scale,
+            # R_VW @ R_WB * self.states.scale,
+            # zero3,
+            # # np.eye(3, 3) * self.scale,
+            # # -R_VW @ skew( self.p_offset + R_WB @ self.p_offset ) \
+                # # * self.scale
+        # ))
 
-        H = np.vstack((Hp, Hq))
+        # Hq = np.hstack((
+            # zero3,
+            # zero3,
+            # R_BC,
+            # zero3,
+            # zero3,
+            # np.zeros((3, 1)),
+            # zero3,
+            # np.eye(3, 3),
+            # # zero3,
+            # # C_q_c_i*C_q_i_w;
+        # ))
 
-        # residual
-    # def _calculate_residual(self, p_vc):
-        z_est = ( R_VW @ (self.states.p + R_WB @ self.states.p_offset) + self.p_VW ) * self.states.scale
-        r_p = p_VC - z_est;
+        # H = np.vstack((Hp, Hq))
 
-        zq = self.states.q_offset * self.states.q * self.q_VW
+        # # residual
+    # # def _calculate_residual(self, p_vc):
+        # z_est = ( R_VW @ (self.states.p + R_WB @ self.states.p_offset) + self.p_VW ) * self.states.scale
+        # r_p = p_VC - z_est;
 
-        r_q = (q_VC * ( zq ).conjugate ).conjugate.wxyz
+        # zq = self.states.q_offset * self.states.q * self.q_VW
 
-        r = np.hstack((
-            r_p,
-            2*r_q[1],
-            2*r_q[2],
-            2*r_q[3],
-        ))
+        # r_q = (q_VC * ( zq ).conjugate ).conjugate.wxyz
 
-        # calculate Kalman gain
-        S = H @ self.P @ H.T + R
-        K = self.P @ H.T @ np.linalg.inv(S)
-        x_error = ErrorStates(K @ r)
+        # r = np.hstack((
+            # r_p,
+            # 2*r_q[1],
+            # 2*r_q[2],
+            # 2*r_q[3],
+        # ))
+
+        # # calculate Kalman gain
+        # S = H @ self.P @ H.T + R
+        # K = self.P @ H.T @ np.linalg.inv(S)
+        # x_error = ErrorStates(K @ r)
 
         # apply Kalman gain
-        self.states.apply_correction(x_error)
+        # self.states.apply_correction(x_error)
 
     def _calculate_Fd(self, om, acc):
         Fd = np.eye(self.num_error_states, self.num_error_states)
