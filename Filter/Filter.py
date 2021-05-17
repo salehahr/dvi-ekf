@@ -4,6 +4,11 @@ import numpy as np
 from .Quaternion import Quaternion
 from .Trajectory import VisualTraj
 
+l_jac = np.zeros([9, 6])
+l_jac[3:, :] = np.eye(6)  # motion model noise jacobian
+h_jac = np.zeros([3, 9])
+h_jac[:, :3] = np.eye(3)  # measurement model jacobian
+
 def skew(x):
     return np.array([[0,    -x[2], x[1]],
                      [x[2],    0, -x[0]],
@@ -118,9 +123,9 @@ class Filter(object):
                             * self.dt
         F[6:9, 6:9] = om.rot.T
         self.Fx = F
-        
+
         Qc = (self.dt ** 2) * Qc # integration acceleration to obstain position
-        # self.P = F @ self.P @ F.T + 
+        self.P = F @ self.P @ F.T + l_jac @ Qc @ l_jac.T
 
         self.om_old = imu.om
         self.acc_old = imu.acc

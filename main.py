@@ -34,11 +34,10 @@ do_prop_only, use_noisy_imu, do_plot_vel = parse_arguments()
 def gen_noise_matrices(Q, Rp, Rq):
     # process noise
     stdev_na = [Qval] * 3
-    stdev_nba = stdev_na
+    # stdev_nba = stdev_na
     stdev_nw = stdev_na
-    stdev_nbw = stdev_na
-    stdevs = np.hstack((stdev_na, stdev_nba, \
-                stdev_nw, stdev_nbw))
+    # stdev_nbw = stdev_na
+    stdevs = np.hstack((stdev_na,  stdev_nw))#, stdev_nbw))
     Qc = np.square(np.diag(stdevs))
 
     # measurement noise
@@ -59,8 +58,8 @@ def init_kf(current_imu):
     kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
 
     # debugging
-    kf.R_WB_mp = MatrixPlotter("R_WB", min_t, kf.states.q.rot)
-    kf.P_mp = MatrixPlotter("P", min_t, kf.P, max_row=3, max_col=3)
+    # kf.R_WB_mp = MatrixPlotter("R_WB", min_t, kf.states.q.rot)
+    kf.P_mp = MatrixPlotter("P", min_t, kf.P, max_row=6, max_col=6)
 
     return kf
 
@@ -75,7 +74,6 @@ current_imu = imu_traj.at_index(0)
 kf = init_kf(current_imu)
 
 old_t = min_t
-old_ti = min_t
 
 # filter main loop -- start at 1 b/c we have initial values
 for i, t in enumerate(imu_traj.t[1:]):
@@ -84,6 +82,8 @@ for i, t in enumerate(imu_traj.t[1:]):
     kf.dt = t - old_t
     
     kf.propagate(t, current_imu, Qc)
+    # for plotting matrices
+    kf.P_mp.append(t, kf.P)
     
     old_t = t
 
@@ -94,9 +94,8 @@ for i, t in enumerate(imu_traj.t[1:]):
     # if imu_queue:
         # for ii, ti in enumerate(imu_queue.t):
 
-            # # for plotting matrices
+            # 
             # kf.R_WB_mp.append(ti, kf.states.q.rot)
-            # kf.P_mp.append(ti, kf.P)
 
             # old_ti = ti
 
@@ -114,7 +113,7 @@ plot_trajectories(kf.traj, do_prop_only)
 # R_WB_mp_axes = kf.R_WB_mp.plot(min_t=min_t, max_t=max_t)
 # for ax in R_WB_mp_axes.reshape(-1):
     # ax.set_ylim(bottom=-1.1, top=1.1)
-# P_mp_axes = kf.P_mp.plot(min_t=min_t, max_t=max_t)
+P_mp_axes = kf.P_mp.plot(min_t=min_t, max_t=max_t)
 
 plt.legend()
 plt.show()
