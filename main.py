@@ -85,6 +85,8 @@ for i, t in enumerate(imu_traj.t[1:]):
     # for plotting matrices
     kf.P_mp.append(t, kf.P)
     
+    current_vis = mono_traj.get_meas(old_t, t)
+
     old_t = t
 
     # current_vis = mono_traj.at_index(i)

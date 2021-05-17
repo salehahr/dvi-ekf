@@ -189,6 +189,10 @@ class Trajectory(object):
     def _set_plot_line_style(line):
         pass
 
+    def _get_index_at(self, T):
+        """ Get index for which timestamp matches the argument T. """
+        return max([i for i, t in enumerate(self.t) if t <= T])
+
 class VisualTraj(Trajectory):
     """ Visual trajectory containing time and pose. """
 
@@ -305,6 +309,31 @@ class VisualTraj(Trajectory):
         self.quats = [Quaternion(x=self.qx[i],
                         y=self.qy[i], z=self.qz[i], w=w)
                         for i, w in enumerate(self.qw)]
+
+    def get_meas(self, old_t, current_t):
+        """ Gets measurement, if any, after old_t up to current_t. """
+
+        prev_index = self._get_index_at(old_t) # end of old imu queue
+        next_index = self._get_index_at(current_t)
+        assert(prev_index <= next_index)
+
+        if prev_index == next_index:
+            return None
+        else:
+            t = self.t[next_index]
+
+            x = self.x[next_index]
+            y = self.y[next_index]
+            z = self.z[next_index]
+            pos = np.vstack((x, y, z))
+
+            qx = self.qx[next_index]
+            qy = self.qy[next_index]
+            qz = self.qz[next_index]
+            qw = self.qw[next_index]
+            rot = np.vstack((qx, qy, qz, qw))
+
+            return VisualMeasurement(t, pos, rot)
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
@@ -472,8 +501,8 @@ class ImuTraj(Trajectory):
 
         start_index = self.next_frame_index
 
-        prev_index = self._get_next_frame_index(old_t) # end of old imu queue
-        next_index = self._get_next_frame_index(current_cam_t)
+        prev_index = self._get_index_at(old_t) # end of old imu queue
+        next_index = self._get_index_at(current_cam_t)
         assert(prev_index <= next_index)
 
         # update start index, if outdated (less than prev_index)
@@ -496,10 +525,6 @@ class ImuTraj(Trajectory):
         self.next_frame_index = next_index + 1
 
         return ImuMeasurement(t, acc, om)
-
-    def _get_next_frame_index(self, cam_t):
-        """ Get index for which IMU time matches current camera time """
-        return max([i for i, t in enumerate(self.t) if t <= cam_t])
 
     def reconstruct_vis_traj(self):
         """ Generates trajectory from IMU data using
