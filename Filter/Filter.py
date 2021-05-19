@@ -15,21 +15,12 @@ def skew(x):
                      [-x[1], x[0],    0]])
 
 class States(object):
-    def __init__(self, p, v, q, bw, ba):#, scale, p_offset, q_offset):
+    def __init__(self, p, v, q):
         self.p = np.asarray(p)
         self.v = np.asarray(v)
         self.q = Quaternion(xyzw=q, do_normalise=True)
 
-        self.bw = np.asarray(bw)
-        self.ba = np.asarray(ba)
-        # self.scale = scale
-
-        # self.p_offset = np.asarray(p_offset)
-        # self.q_offset = Quaternion(xyzw=q_offset, do_normalise=True)
-
-        self.size = len(p) + len(v) + 4 \
-                + len(bw) + len(ba) #+ 1 \
-                # + len(p_offset) + 4
+        self.size = len(p) + len(v) + 4
 
     def apply_correction(self, err):
         self.p += err.dp
@@ -37,35 +28,15 @@ class States(object):
         self.q = err.dq * self.q
         self.q.normalise()
 
-        self.bw += err.dbw
-        self.ba += err.dba
-        # self.scale += err.dscale
-
-        # self.p_offset += err.dp_offset
-        # self.q_offset = err.dq_offset * self.q_offset
-        # self.q_offset.normalise()
-
 class ErrorStates(object):
     def __init__(self, vec):
         p = vec[0:3]
         v = vec[3:6]
         theta = vec[6:9]
-        bw = vec[9:12]
-        ba = vec[12:15]
-        # scale = vec[15]
-        # p_offset = vec[16:19]
-        # theta_offset = vec[19:]
 
         self.dp = np.asarray(p)
         self.dv = np.asarray(v)
         self.dq = Quaternion(v=theta/2, w=1.)
-
-        self.dbw = np.asarray(bw)
-        self.dba = np.asarray(ba)
-        # self.dscale = scale
-
-        # self.dp_offset = np.asarray(p_offset)
-        # self.dq_offset = Quaternion(v=theta_offset/2, w=1.)
 
 class Filter(object):
     def __init__(self, IC, P0, num_meas, num_control):
@@ -79,9 +50,6 @@ class Filter(object):
 
         # states
         self.states = IC
-
-        self.p_VW = np.asarray([0., 0., 0.])
-        self.q_VW = Quaternion(xyzw=[0., 0., 0., 1.])
 
         # imu
         self.om_old = None
@@ -103,24 +71,21 @@ class Filter(object):
         R_WB_old = self.states.q.rot
 
         # orientation q
-        om = Quaternion(w=0., v=(imu.om - self.states.bw) )
+        om = Quaternion(w=0., v=imu.om )
         self.states.q += self.dt / 2. * om * self.states.q
         self.states.q.normalise()
 
         # velocity v (both eqns are equiv)
-        self.states.v += R_WB_old @ (self.acc_old - self.states.ba) \
-                            * self.dt
+        self.states.v += R_WB_old @ self.acc_old  * self.dt
 
         # position p (both eqns are equiv)
         self.states.p += \
             self.dt * v_old \
-            + self.dt**2/2. \
-            * (R_WB_old @ (self.acc_old - self.states.ba))
+            + self.dt**2/2. * R_WB_old @ self.acc_old
 
         F = np.eye(9)
         F[0:3, 3:6] = self.dt * np.eye(3)
-        F[3:6, 6:9] = - R_WB_old @ skew(self.acc_old - self.states.ba) \
-                            * self.dt
+        F[3:6, 6:9] = - R_WB_old @ skew(self.acc_old) * self.dt
         F[6:9, 6:9] = om.rot.T
         self.Fx = F
 
