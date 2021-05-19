@@ -4,8 +4,9 @@ import numpy as np
 from .Quaternion import Quaternion
 from .Trajectory import VisualTraj
 
-l_jac = np.zeros([9, 6])
-l_jac[3:, :] = np.eye(6)  # motion model noise jacobian
+Fi = np.zeros([9, 6])
+Fi[3:, :] = np.eye(6)  # motion model noise jacobian
+
 h_jac = np.zeros([3, 9])
 h_jac[:, :3] = np.eye(3)  # measurement model jacobian
 
@@ -59,74 +60,49 @@ class Filter(object):
         self.P = P0
 
     def propagate(self, t, imu, Qc, do_prop_only=False):
-        self.propagate_states(imu, Qc)
+        self._predict_nominal()
+        self._predict_error()
+        self._predict_error_covariance(Qc)
 
-        # if not do_prop_only:
-            # self.propagate_covariance(imu, Qc)
+        self.om_old = imu.om
+        self.acc_old = imu.acc
 
         self.traj.append_state(t, self.states)
 
-    def propagate_states(self, imu, Qc):
+    def _predict_nominal(self):
         v_old = self.states.v
         R_WB_old = self.states.q.rot
 
         # orientation q
-        om = Quaternion(w=0., v=imu.om )
-        self.states.q += self.dt / 2. * om * self.states.q
+        Om = Quaternion(w=0., v=(self.dt * self.om_old) )
+        # self.states.q = self.states.q * Om # Solà
+        self.states.q += 0.5 * Om * self.states.q
         self.states.q.normalise()
 
         # velocity v (both eqns are equiv)
-        self.states.v += R_WB_old @ self.acc_old  * self.dt
+        self.states.v += R_WB_old @ self.acc_old * self.dt
 
         # position p (both eqns are equiv)
         self.states.p += \
             self.dt * v_old \
             + self.dt**2/2. * R_WB_old @ self.acc_old
 
+        self.R_WB_old = R_WB_old
+        self.Om_old = Om
+
+    def _predict_error(self):
         F = np.eye(9)
         F[0:3, 3:6] = self.dt * np.eye(3)
-        F[3:6, 6:9] = - R_WB_old @ skew(self.acc_old) * self.dt
-        F[6:9, 6:9] = om.rot.T
+        F[3:6, 6:9] = - self.R_WB_old @ skew(self.acc_old) * self.dt
+        F[6:9, 6:9] = self.Om_old.rot.T
         self.Fx = F
 
-        Qc = (self.dt ** 2) * Qc # integration acceleration to obstain position
-        self.P = F @ self.P @ F.T + l_jac @ Qc @ l_jac.T
+        # returns zero
+        # self.err_states = self.Fx @ self.err_states
 
-        self.om_old = imu.om
-        self.acc_old = imu.acc
-
-    def propagate_covariance(self, imu, Qc):
-        om = imu.om - self.states.bw
-        acc = imu.acc - self.states.ba
-
-        Qda, Qdb, Qdc, Fda, Fdb = self._calculate_Qd(Qc, om, acc)
-
-        P = self.P
-        PC = P[0:9, 0:9]
-        PD = P[0:9, 9:15]
-        PE = P[0:9, 15:]
-        PG = P[9:15, 9:15]
-        PH = P[9:15, -7:]
-
-        # PC
-        P[0:9, 0:9] = Fda@PC@Fda.T + Fdb@PD.T@Fda.T + Fda@PD@Fdb.T \
-                + Fdb@PG@Fdb.T + Qda
-
-        # PD
-        PD = Fda@PD + Fdb@PG + Qdb
-        P[0:9, 9:15] = PD
-        P[9:15, 0:9] = PD.T
-
-        # PE
-        P[0:9, 15:] = Fda@PE + Fdb@PH
-        P[0:9, 15:] = PE
-        P[-7:, 0:9] = PE.T
-
-        # PG
-        P[9:15, 9:15] += Qdc
-
-        self.P = P
-        # self.P = self.Fd @ self.P @ self.Fd.T + Qd
+    def _predict_error_covariance(self, Qc):
+        Qc = (self.dt ** 2) * Qc # integrate acceleration to obstain position
+        self.P = self.Fx @ self.P @ self.Fx.T + Fi @ Qc @ Fi.T
 
     def update(self, camera, R):
         # compute gain
