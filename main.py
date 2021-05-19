@@ -33,16 +33,14 @@ do_prop_only, use_noisy_imu, do_plot_vel = parse_arguments()
 
 def gen_noise_matrices(Q, Rp, Rq):
     # process noise
-    stdev_na = [Qval] * 3
-    # stdev_nba = stdev_na
+    stdev_na = [Q] * 3
     stdev_nw = stdev_na
-    # stdev_nbw = stdev_na
-    stdevs = np.hstack((stdev_na,  stdev_nw))#, stdev_nbw))
+    stdevs = np.hstack((stdev_na,  stdev_nw))
     Qc = np.square(np.diag(stdevs))
 
     # measurement noise
-    Rp = [Rpval] * 3
-    Rq = [Rqval] * 3
+    Rp = [Rp] * 3
+    Rq = [Rq] * 3
     R = np.diag(np.hstack((Rp, Rq)))
 
     return Qc, R
