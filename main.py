@@ -56,7 +56,6 @@ def init_kf(current_imu):
     kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
 
     # debugging
-    # kf.R_WB_mp = MatrixPlotter("R_WB", min_t, kf.states.q.rot)
     kf.P_mp = MatrixPlotter("P", min_t, kf.P, max_row=6, max_col=6)
 
     return kf
@@ -91,32 +90,11 @@ for i, t in enumerate(imu_traj.t[1:]):
 
     old_t = t
 
-    # current_vis = mono_traj.at_index(i)
-
-    # # propagate
-    # imu_queue = imu_traj.get_queue(old_t, t)
-    # if imu_queue:
-        # for ii, ti in enumerate(imu_queue.t):
-
-            # 
-            # kf.R_WB_mp.append(ti, kf.states.q.rot)
-
-            # old_ti = ti
-
-    # # update
-    # if not do_prop_only:
-        # kf.update(current_vis, R)
-
-    # old_t = t
-
 # plots
 plot_trajectories(kf.traj, do_prop_only)
 # plot_velocities(kf.traj, do_plot_vel)
 # plot_noise_sensitivity(kf.traj, Qval, Rpval, Rqval)
 
-# R_WB_mp_axes = kf.R_WB_mp.plot(min_t=min_t, max_t=max_t)
-# for ax in R_WB_mp_axes.reshape(-1):
-    # ax.set_ylim(bottom=-1.1, top=1.1)
 P_mp_axes = kf.P_mp.plot(min_t=min_t, max_t=max_t)
 
 plt.legend()
