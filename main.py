@@ -40,7 +40,7 @@ def gen_noise_matrices(Q, Rp, Rq):
 
     # measurement noise
     Rp = [Rp] * 3
-    Rq = [Rq] * 3
+    Rq = [Rq] * 4
     R = np.diag(np.hstack((Rp, Rq)))
 
     return Qc, R

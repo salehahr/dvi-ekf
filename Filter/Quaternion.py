@@ -76,6 +76,10 @@ class Quaternion(object):
         summ = self.np_quat + other.np_quat
         return Quaternion(wxyz=summ)
 
+    def __sub__(self, other):
+        subb = self.np_quat - other.np_quat
+        return Quaternion(wxyz=subb)
+
     def normalise(self):
         quat = self.np_quat.normalized()
 

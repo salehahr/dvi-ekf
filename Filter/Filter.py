@@ -9,15 +9,7 @@ Fi[3:, :] = np.eye(6)  # motion model noise jacobian
 
 H_x = np.zeros([7, 10])
 H_x[:3,:3] = np.eye(3)
-H_x[3:,-4:] = np.eye(4)
-
-X_deltx = np.zeros([10, 9])
-X_deltx[:6,:6] = np.eye(6)
-X_deltx[-4:,-3:] = Q_deltth
-
-
-h_jac = np.zeros([3, 9])
-h_jac[:, :3] = np.eye(3)  # measurement model jacobian
+H_x[3:,-4:] = np.eye(4) # part of measurement model jacobian
 
 def skew(x):
     return np.array([[0,    -x[2], x[1]],
@@ -68,6 +60,20 @@ class Filter(object):
         # covariance
         self.P = P0
 
+    @property
+    def jac_X_deltx(self):
+        x, y, z, w = self.states.q.xyzw
+        Q_deltth = 0.5 * np.array([[-x, -y, -z],
+                                   [ w, -z,  y],
+                                   [ z,  w, -x],
+                                   [-y,  x,  w]])
+
+        X_deltx = np.zeros([10, 9])
+        X_deltx[:6,:6] = np.eye(6)
+        X_deltx[-4:,-3:] = Q_deltth
+
+        return X_deltx
+
     def propagate(self, t, imu, Qc, do_prop_only=False):
         self._predict_nominal()
         self._predict_error()
@@ -116,17 +122,20 @@ class Filter(object):
         self.P = self.Fx @ self.P @ self.Fx.T + Fi @ Qc @ Fi.T
 
     def update(self, camera, R):
-        # compute gain
-        S = h_jac @ self.P @ h_jac.T + R
-        K = self.P @ h_jac.T @ np.linalg.inv(S)
+        # compute gain        
+        H = H_x @ self.jac_X_deltx
+        S = H @ self.P @ H.T + R
+        K = self.P @ H.T @ np.linalg.inv(S)
 
         # compute error state
-        res = camera.pos - self.states.p
+        res_p = camera.pos.reshape((3,)) - self.states.p.reshape((3,))
+        res_q = (camera.qrot - self.states.q).xyzw
+        res = np.hstack((res_p, res_q))
         err = ErrorStates(K @ res)
 
         # correct predicted state and covariance
         self.states.apply_correction(err)
-        self.P = (np.eye(9) - K @ h_jac) @ self.P
+        self.P = (np.eye(9) - K @ H) @ self.P
 
         # p_VC = camera.pos
         # q_VC = camera.qrot
