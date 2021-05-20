@@ -79,9 +79,11 @@ class Filter(object):
         self._predict_error()
         self._predict_error_covariance(Qc)
 
+        # IMU buffer
         self.om_old = imu.om
         self.acc_old = imu.acc
 
+        # for plotting
         self.traj.append_state(t, self.states)
 
     def _predict_nominal(self):
