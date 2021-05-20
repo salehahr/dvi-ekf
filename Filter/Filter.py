@@ -74,10 +74,10 @@ class Filter(object):
 
         return X_deltx
 
-    def propagate(self, t, imu, Qc, do_prop_only=False):
+    def propagate(self, t, imu, do_prop_only=False):
         self._predict_nominal()
         self._predict_error()
-        self._predict_error_covariance(Qc)
+        self._predict_error_covariance()
 
         # IMU buffer
         self.om_old = imu.om
@@ -119,14 +119,14 @@ class Filter(object):
         # returns zero
         # self.err_states = self.Fx @ self.err_states
 
-    def _predict_error_covariance(self, Qc):
-        Qc = (self.dt ** 2) * Qc # integrate acceleration to obstain position
-        self.P = self.Fx @ self.P @ self.Fx.T + Fi @ Qc @ Fi.T
+    def _predict_error_covariance(self):
+        Q = (self.dt ** 2) * self.Qc # integrate acceleration to obstain position
+        self.P = self.Fx @ self.P @ self.Fx.T + Fi @ Q @ Fi.T
 
-    def update(self, camera, R):
+    def update(self, camera):
         # compute gain        
         H = H_x @ self.jac_X_deltx
-        S = H @ self.P @ H.T + R
+        S = H @ self.P @ H.T + self.R
         K = self.P @ H.T @ np.linalg.inv(S)
 
         # compute error state

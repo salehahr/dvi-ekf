@@ -60,15 +60,15 @@ def init_kf(current_imu):
 
     return kf
 
+# initialisation
+current_imu = imu_traj.at_index(0)
+kf = init_kf(current_imu)
+
 # noise values
 Qval = 1e-3
 Rpval = 1e3
 Rqval = 0.05
-Qc, R = gen_noise_matrices(Qval, Rpval, Rqval)
-
-# initialisation
-current_imu = imu_traj.at_index(0)
-kf = init_kf(current_imu)
+kf.Qc, kf.R = gen_noise_matrices(Qval, Rpval, Rqval)
 
 old_t = min_t
 
@@ -78,7 +78,8 @@ for i, t in enumerate(imu_traj.t[1:]):
     current_imu = imu_traj.at_index(i)
     kf.dt = t - old_t
     
-    kf.propagate(t, current_imu, Qc)
+    kf.propagate(t, current_imu)
+
     # for plotting matrices
     kf.P_mp.append(t, kf.P)
     
@@ -86,7 +87,7 @@ for i, t in enumerate(imu_traj.t[1:]):
         current_vis = mono_traj.get_meas(old_t, t)
 
         if current_vis:
-            kf.update(current_vis, R)
+            kf.update(current_vis)
 
     old_t = t
 
