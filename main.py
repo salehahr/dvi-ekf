@@ -63,7 +63,7 @@ def init_kf(current_imu):
 
 # noise values
 Qval = 1e-3
-Rpval = 0.1
+Rpval = 1e3
 Rqval = 0.05
 Qc, R = gen_noise_matrices(Qval, Rpval, Rqval)
 
