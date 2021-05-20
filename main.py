@@ -83,10 +83,11 @@ for i, t in enumerate(imu_traj.t[1:]):
     # for plotting matrices
     kf.P_mp.append(t, kf.P)
     
-    current_vis = mono_traj.get_meas(old_t, t)
+    if not do_prop_only:
+        current_vis = mono_traj.get_meas(old_t, t)
 
-    if current_vis:
-        kf.update(current_vis, R)
+        if current_vis:
+            kf.update(current_vis, R)
 
     old_t = t
 
