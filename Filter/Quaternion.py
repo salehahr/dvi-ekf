@@ -25,6 +25,9 @@ class Quaternion(object):
         if do_normalise:
             self.normalise()
 
+    def __repr__(self):
+        return f"Quaternion [x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f}, w={self.w:.3f}]"
+
     # rotation representations
     @property
     def R(self):
