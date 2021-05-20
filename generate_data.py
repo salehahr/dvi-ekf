@@ -27,6 +27,21 @@ imu_mono_traj = ImuTraj(name='imu mono',
         num_imu_between_frames=num_imu_between_frames,
         covariance=imu_covariance)
 
+# noise matrices
+def gen_noise_matrices(Q, Rp, Rq):
+    # process noise
+    stdev_na = [Q] * 3
+    stdev_nw = stdev_na
+    stdevs = np.hstack((stdev_na,  stdev_nw))
+    Qc = np.square(np.diag(stdevs))
+
+    # measurement noise
+    Rp = [Rp] * 3
+    Rq = [Rq] * 4
+    R = np.diag(np.hstack((Rp, Rq)))
+
+    return Qc, R
+
 # for plotting
 min_t = imu_gt_traj.t[0]
 max_t = imu_gt_traj.t[-1]

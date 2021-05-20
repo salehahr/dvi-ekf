@@ -1,12 +1,6 @@
 import sys
-
 import numpy as np
-np.set_printoptions(precision=1, linewidth=150)
-
-import matplotlib.pyplot as plt
 from Filter import States, Filter, VisualTraj, MatrixPlotter
-
-from plotter import plot_savefig, plot_trajectories, plot_velocities, plot_noise_sensitivity
 
 def parse_arguments():
     def print_usage():
@@ -31,23 +25,9 @@ def parse_arguments():
     return do_prop_only, use_noisy_imu, do_plot_vel
 do_prop_only, use_noisy_imu, do_plot_vel = parse_arguments()
 
-def gen_noise_matrices(Q, Rp, Rq):
-    # process noise
-    stdev_na = [Q] * 3
-    stdev_nw = stdev_na
-    stdevs = np.hstack((stdev_na,  stdev_nw))
-    Qc = np.square(np.diag(stdevs))
-
-    # measurement noise
-    Rp = [Rp] * 3
-    Rq = [Rq] * 4
-    R = np.diag(np.hstack((Rp, Rq)))
-
-    return Qc, R
-
 # load data
 from generate_data import mono_traj, stereoGT_traj, imu_gt_traj
-from generate_data import IC, cov0, min_t, max_t
+from generate_data import IC, cov0, min_t, max_t, gen_noise_matrices
 imu_traj = (imu_gt_traj.noisy if use_noisy_imu else imu_gt_traj)
 
 def init_kf(current_imu):
@@ -66,22 +46,18 @@ kf = init_kf(current_imu)
 
 # noise values
 Qval = 1e-3
-Rpval = 1e3
-Rqval = 0.05
+Rpval, Rqval = 1e3, 0.05
 kf.Qc, kf.R = gen_noise_matrices(Qval, Rpval, Rqval)
 
-old_t = min_t
-
 # filter main loop -- start at 1 b/c we have initial values
+old_t = min_t
 for i, t in enumerate(imu_traj.t[1:]):
 
     current_imu = imu_traj.at_index(i)
     kf.dt = t - old_t
     
     kf.propagate(t, current_imu)
-
-    # for plotting matrices
-    kf.P_mp.append(t, kf.P)
+    kf.P_mp.append(t, kf.P)  # for plotting matrices
     
     if not do_prop_only:
         current_vis = mono_traj.get_meas(old_t, t)
@@ -91,7 +67,12 @@ for i, t in enumerate(imu_traj.t[1:]):
 
     old_t = t
 
+
+
 # plots
+import matplotlib.pyplot as plt
+from plotter import plot_savefig, plot_trajectories, plot_velocities, plot_noise_sensitivity
+
 plot_trajectories(kf.traj, do_prop_only)
 # plot_velocities(kf.traj, do_plot_vel)
 # plot_noise_sensitivity(kf.traj, Qval, Rpval, Rqval)
