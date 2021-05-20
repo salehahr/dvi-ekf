@@ -7,6 +7,15 @@ from .Trajectory import VisualTraj
 Fi = np.zeros([9, 6])
 Fi[3:, :] = np.eye(6)  # motion model noise jacobian
 
+H_x = np.zeros([7, 10])
+H_x[:3,:3] = np.eye(3)
+H_x[3:,-4:] = np.eye(4)
+
+X_deltx = np.zeros([10, 9])
+X_deltx[:6,:6] = np.eye(6)
+X_deltx[-4:,-3:] = Q_deltth
+
+
 h_jac = np.zeros([3, 9])
 h_jac[:, :3] = np.eye(3)  # measurement model jacobian
 
@@ -70,24 +79,26 @@ class Filter(object):
         self.traj.append_state(t, self.states)
 
     def _predict_nominal(self):
-        v_old = self.states.v
-        R_WB_old = self.states.q.rot
+        self.R_WB_old = self.states.q.rot
 
-        # orientation q
-        Om = Quaternion(w=0., v=(self.dt * self.om_old) )
-        # self.states.q = self.states.q * Om # Solà
-        self.states.q += 0.5 * Om * self.states.q
+        # position p
+        self.states.p += \
+            self.dt * self.states.v \
+            + self.dt**2/2. * self.R_WB_old @ self.acc_old
+
+        # velocity v
+        self.states.v += self.R_WB_old @ self.acc_old * self.dt
+
+        # orientation q: Solà
+        Om = Quaternion(w=1., v=(0.5 * self.dt * self.om_old) ) #works but the 0.5 wasn't in the paper.....
+        self.states.q = self.states.q * Om
+
+        # # orientation q: Kok
+        # Om = Quaternion(w=0., v=(0.5 * self.dt * self.om_old) )
+        # self.states.q += Om * self.states.q
+
         self.states.q.normalise()
 
-        # velocity v (both eqns are equiv)
-        self.states.v += R_WB_old @ self.acc_old * self.dt
-
-        # position p (both eqns are equiv)
-        self.states.p += \
-            self.dt * v_old \
-            + self.dt**2/2. * R_WB_old @ self.acc_old
-
-        self.R_WB_old = R_WB_old
         self.Om_old = Om
 
     def _predict_error(self):
