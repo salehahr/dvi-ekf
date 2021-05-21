@@ -31,7 +31,7 @@ from generate_data import IC, cov0, min_t, max_t, gen_noise_matrices
 imu_traj = (imu_gt_traj.noisy if use_noisy_imu else imu_gt_traj)
 
 def init_kf(current_imu):
-    num_meas, num_control = 7, 12
+    num_meas, num_control = 7, 6
     kf = Filter(IC, cov0, num_meas, num_control)
     kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
 
