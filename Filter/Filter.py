@@ -27,7 +27,7 @@ class States(object):
     def apply_correction(self, err):
         self.p += err.dp
         self.v += err.dv
-        self.q = err.dq * self.q
+        self.q = self.q * err.dq
         self.q.normalise()
 
 class ErrorStates(object):
