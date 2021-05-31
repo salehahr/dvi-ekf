@@ -2,6 +2,7 @@ import os
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 from scipy.interpolate import interp1d, splrep, splev
 from scipy.integrate import cumtrapz
@@ -95,6 +96,26 @@ class Trajectory(object):
         axes[row][col].legend()
 
         return axes
+
+    def plot_3d(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            fig.tight_layout()
+            ax = fig.add_subplot(111, projection='3d')
+
+        ax.plot(self.x, self.y, self.z, label=self.name)
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        # late setting of line styles
+        for line in ax.get_lines():
+            self._set_plot_line_style(line)
+
+        ax.legend()
+
+        return ax
 
     def plot_velocities(self, axes=None, min_t=None, max_t=None):
         num_labels = 3
