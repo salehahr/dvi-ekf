@@ -1,5 +1,5 @@
 import numpy as np
-import quaternion # convenient for quat multiplication, normalisation
+# import quaternion # convenient for quat multiplication, normalisation
 from scipy.spatial.transform import Rotation as R
 
 class Quaternion(object):
@@ -45,9 +45,9 @@ class Quaternion(object):
     def xyzw(self):
         return np.asarray([self.x, self.y, self.z, self.w])
 
-    @property
-    def np_quat(self):
-        return np.quaternion(self.w, self.x, self.y, self.z)
+    # @property
+    # def np_quat(self):
+        # return np.quaternion(self.w, self.x, self.y, self.z)
 
     @property
     def euler_zyx(self):
@@ -81,12 +81,16 @@ class Quaternion(object):
         return Quaternion(wxyz=subb)
 
     def normalise(self):
-        quat = self.np_quat.normalized()
+        d = np.sqrt(self.x**2 + self.y**2 + self.z**2 + self.w**2)
+        self.x = self.x/d
+        self.y = self.y/d
+        self.z = self.z/d
+        self.w = self.w/d
 
         # # constrain scalar part to be positive
         # w, _, _, _ = quaternion.as_float_array(quat)
         # if w < 0:
             # quat = -quat
 
-        self.__init__(wxyz=quat)
+        # self.__init__(wxyz=quat)
 
