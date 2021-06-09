@@ -40,11 +40,25 @@ def dummify_array(expr):
         return dummify_undefined_functions(expr)
 
 class Probe(rtb.DHRobot):
-    def __init__(self, scope_length, theta_cam):
+    def __init__(self, scope_length, theta_cam, config='BC'):
         """ Initialises robot links. """
+        self.config = config
 
-        super().__init__(
-            [
+        links = self._gen_links(config, scope_length, theta_cam)
+        super().__init__(links, name='probe')
+
+        self.q_sym = [dynamicsymbols(f"q{i+1}") for i in range(self.nlinks)]
+        self.q_dot_sym = [sp.diff(q, t) for q in self.q_sym]
+        self.q_ddot_sym = [sp.diff(q, t) for q in self.q_dot_sym]
+        self.q_sym = [sp.Symbol(f'q{i+1}') for i in range(self.nlinks)]
+
+    def _gen_links(self, config, scope_length, theta_cam):
+        """ Generates robot links according to chosen configuration. """
+
+        print(f"Initialising the probe in the configuration {config}...")
+
+        if config == 'BC':
+            links = [
                 # imu orientation
                 rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
                 rtb.RevoluteDH(alpha=sp.pi/2, offset=-sp.pi/2),
@@ -59,12 +73,28 @@ class Probe(rtb.DHRobot):
                 rtb.RevoluteDH(d=scope_length),
                 # cam
                 rtb.RevoluteDH(alpha=theta_cam),
-            ], name="probe")
+                ]
+        elif config == 'CB':
+            links = [
+                # angled tip
+                rtb.RevoluteDH(alpha=-theta_cam),
+                # rod to camera coupling
+                rtb.RevoluteDH(alpha=-sp.pi/2, d=-scope_length),
+                rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
+                rtb.RevoluteDH(alpha=0, offset=-sp.pi/2),
+                # imu translation
+                rtb.PrismaticDH(alpha=sp.pi/2, theta=0),
+                rtb.PrismaticDH(alpha=sp.pi/2, theta=sp.pi/2),
+                rtb.PrismaticDH(alpha=-sp.pi/2, theta=-sp.pi/2),
+                # imu orientation
+                rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
+                rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
+                rtb.RevoluteDH(),
+                ]
+        else:
+            print("Invalid configuration!")
 
-        self.q_sym = [dynamicsymbols(f"q{i+1}") for i in range(self.nlinks)]
-        self.q_dot_sym = [sp.diff(q, t) for q in self.q_sym]
-        self.q_ddot_sym = [sp.diff(q, t) for q in self.q_dot_sym]
-        self.q_sym = [sp.Symbol(f'q{i+1}') for i in range(self.nlinks)]
+        return links
 
     @property
     def T(self):
@@ -170,21 +200,27 @@ class SimpleProbe(Probe):
     """ Simple probe with ROT9 as the only degree of freedom. """
 
     ROT1, ROT2, ROT3 = 0., 0., 0.
-    TRANS4, TRANS5, TRANS6 = 0., 0., 0.3
+    TRANS4, TRANS5, TRANS6 = 0., 0., 0.2
     ROT7, ROT8 = 0., 0.
 
-    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
+    constraints_BC = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
                     None, 0.]
 
-    def __init__(self, scope_length, theta_cam):
+    constraints_CB = [0.,
+                    None, ROT8, ROT7,
+                    -TRANS6, TRANS5, TRANS4,
+                    ROT3, ROT2, ROT1
+                    ]
+
+    def __init__(self, scope_length, theta_cam, config='BC'):
         """ Initialises probe as normal and sets the generalised
             coordinates, which are to be constrained, to the
             corresponding constant values. """
 
-        super().__init__(scope_length, theta_cam)
+        super().__init__(scope_length, theta_cam, config)
 
         # redefine q and qdot (symbolic)
-        constraints = eval(f"self.__class__.constraints")
+        constraints = eval(f"self.__class__.constraints_{config}")
         assert(len(constraints) == len(self.q_sym))
 
         for i, c in enumerate(constraints):

@@ -145,6 +145,20 @@ class TestSimpleRobotBC(unittest.TestCase):
         q9_dot = sp.Symbol('q9_dot')
         om_BC_func = sp.lambdify(q9_dot, self.om_BC, 'numpy')
 
+class TestSimpleRobotCB(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        """ Initialise probe and joint variables. """
+        cls.probe = SimpleProbe(scope_length=0.5, theta_cam=sp.pi/6,
+                config='CB')
+        cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_sym]
+
+    @unittest.skip("Skip plot.")
+    def test_plot(self):
+        view_selector(self.probe, self.q_0)
+        do_plot(self.probe, self.q_0)
+
 def suite():
     suite = unittest.TestSuite()
     # suite.addTest(TestSimpleRobotBC(''))
