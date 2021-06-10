@@ -1,10 +1,12 @@
 import unittest
 
-from Models import SimpleProbe
+from Models import SimpleProbe, RigidSimpleProbe
 from Models import Camera, n_dofs
 
 import numpy as np
 import sympy as sp
+t = sp.Symbol('t')
+
 from roboticstoolbox.backends.PyPlot import PyPlot
 
 cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=5)
@@ -157,6 +159,26 @@ class TestSimpleRobotCB(unittest.TestCase):
     @unittest.skip("Skip plot.")
     def test_plot(self):
         view_selector(self.probe, self.q_0)
+        do_plot(self.probe, self.q_0)
+
+class TestRigidSimpleRobot(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        """ Initialise probe and joint variables. """
+        cls.probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+        cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_sym]
+        cls.qd = [sp.diff(q, t) for q in cls.q_0]
+        cls.qdd = [sp.diff(q, t) for q in cls.qd]
+        cls.joint_dofs = [*cls.q_0, *cls.qd, *cls.qdd]
+
+        # parameters from fwkin
+        cls.R_BC = cls.probe.R
+        cls.p_BC, cls.v_BC, cls.acc_BC, cls.om_BC, cls.alp_BC = cls.probe.get_reversed_kin()
+
+    @unittest.skip("Skip plot.")
+    def test_plot(self):
+        # view_selector(self.probe, self.q_0)
         do_plot(self.probe, self.q_0)
 
 def suite():

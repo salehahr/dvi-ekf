@@ -227,3 +227,26 @@ class SimpleProbe(Probe):
             if c is not None:
                 self.q_sym[i] = c
         self.q_dot_sym = [sp.diff(q, t) for q in self.q_sym]
+
+class RigidSimpleProbe(SimpleProbe):
+    """ Simple probe with non-rotating, non-translating parts.
+        Uses the BC configuration. """
+
+    ROT1, ROT2, ROT3 = 0., 0., 0.
+    TRANS4, TRANS5, TRANS6 = 0., 0., 0.2
+    ROT7, ROT8, ROT9 = 0., 0., 0.
+
+    constraints_BC = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
+                    ROT9, 0.]
+
+    def __init__(self, scope_length, theta_cam):
+        super().__init__(scope_length, theta_cam, 'BC')
+
+        # set all joint values to 0
+        self.q = [q if not isinstance(q, sp.Expr) else 0. for q in self.q_sym]
+        self.qd = [sp.diff(q, t) for q in self.q_sym]
+        self.qdd = [sp.diff(q, t) for q in self.q_dot_sym]
+
+    @property
+    def joint_dofs(self):
+        return [*self.q, *self.qd, *self.qdd]
