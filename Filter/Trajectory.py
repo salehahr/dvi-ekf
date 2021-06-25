@@ -227,6 +227,10 @@ class VisualTraj(Trajectory):
         if self.qx:
             self._gen_quats_farray()
 
+    @property
+    def R(self):
+        return [q.rot for q in self.quats]
+
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
 
