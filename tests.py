@@ -1,7 +1,8 @@
+import os
 import unittest
 
 from Models import SimpleProbe, RigidSimpleProbe
-from Models import Camera, n_dofs
+from Models import Camera, Imu, n_dofs
 
 import numpy as np
 import sympy as sp
@@ -180,6 +181,59 @@ class TestRigidSimpleRobot(unittest.TestCase):
     def test_plot(self):
         # view_selector(self.probe, self.q_0)
         do_plot(self.probe, self.q_0)
+
+class TestImu(TestRigidSimpleRobot):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.filepath = './trajs/imu_test.txt'
+        cls.R_BW = calc_R_BW(cls.probe.R)
+
+        if os.path.exists(cls.filepath):
+            os.remove(cls.filepath)
+
+    def setUp(self):
+        self.imu = Imu(self.probe, cam)
+
+    def _get_numlines(self, filepath):
+        try:
+            with open(filepath) as f:
+                n = sum(1 for line in f)
+            return n
+        except FileNotFoundError:
+            return 0
+
+    def test_append_array(self):
+        assert(self.imu._om == [])
+
+        for i in range(2):
+            self.imu.eval_expr_single(cam.t[i], cam.acc[:,i], cam.om[:,i], cam.alp[:,i], self.R_BW[i], *self.joint_dofs, append_array=True)
+
+        assert(self.imu.om.shape == (3, 2))
+
+    def test_write_array_to_file(self):
+        self.test_append_array()
+        self.imu.write_array_to_file(self.filepath)
+
+        num_lines = self._get_numlines(self.filepath)
+        self.assertEqual(num_lines, 2)
+
+    def test_append_file(self):
+        num_lines = self._get_numlines(self.filepath)
+
+        num_data = 3
+        for i in range(num_data):
+            self.imu.eval_expr_single(cam.t[i], cam.acc[:,i], cam.om[:,i], cam.alp[:,i], self.R_BW[i], *self.joint_dofs, append_array=False, filepath=self.filepath)
+
+        new_num_lines = self._get_numlines(self.filepath)
+        self.assertEqual(new_num_lines, num_lines + num_data)
+
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.exists(cls.filepath):
+            os.remove(cls.filepath)
+        super().tearDownClass()
 
 def suite():
     suite = unittest.TestSuite()
