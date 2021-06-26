@@ -50,6 +50,10 @@ class Quaternion(object):
         # return np.quaternion(self.w, self.x, self.y, self.z)
 
     @property
+    def euler_xyz(self):
+        return R.from_quat(self.xyzw).as_euler('xyz')
+
+    @property
     def euler_zyx(self):
         return R.from_quat(self.xyzw).as_euler('zyx')
 

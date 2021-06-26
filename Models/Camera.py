@@ -21,6 +21,7 @@ class Camera(object):
         self.dt = self.t[1] - self.t[0]
 
         self._p = None
+        self._r = None
         self._R = None
         self._q = None
         self._v = None
@@ -31,6 +32,7 @@ class Camera(object):
         self.p0 = self.p[:,0]
         self.q0 = self.q[:,0]
         self.v0 = self.v[:,0]
+        self.r0 = self.r[:,0]
         self.om0 = self.om[:,0]
 
     @property
@@ -51,6 +53,11 @@ class Camera(object):
                             np.gradient(self.v[1,:], self.dt),
                             np.gradient(self.v[2,:], self.dt)) )
         return self._acc
+
+    @property
+    def r(self):
+        self._r = np.array([q.euler_xyz for q in self.traj.quats]).T
+        return self._r
 
     @property
     def R(self):
