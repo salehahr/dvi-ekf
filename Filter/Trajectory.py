@@ -555,6 +555,56 @@ class ImuTraj(Trajectory):
 
         return ImuMeasurement(t, acc, om)
 
+    def reconstruct_traj(self, R_WB_arr):
+        """ Generates trajectory from IMU data using
+        the available initial conditions. """
+
+        reconstructed = VisualTraj('recon')
+
+        t = self.t
+        dt = t[1] - t[0]
+        reconstructed.t = t
+
+        # initial conditions in world coordinates
+        R_WB0 = R_WB_arr[0]
+        x0, y0, z0 = self.W_p0
+        vx0, vy0, vz0 = self.W_v0
+        rz0, ry0, rx0 = self.vis_data.quats[0].euler_zyx
+
+        # velocity in world coordinates
+        assert(len(R_WB_arr) == len(self.ax))
+        W_a = self._to_world_coords(R_WB_arr,
+                    np.asarray((self.ax,
+                                self.ay,
+                                self.az)).T )
+
+        W_vx = cumtrapz(W_a[:,0], t, initial=0) + vx0
+        W_vy = cumtrapz(W_a[:,1], t, initial=0) + vy0
+        W_vz = cumtrapz(W_a[:,2], t, initial=0) + vz0
+
+        # position in world coordinates
+        reconstructed.x = cumtrapz(W_vx, t, initial=0) + x0
+        reconstructed.y = cumtrapz(W_vy, t, initial=0) + y0
+        reconstructed.z = cumtrapz(W_vz, t, initial=0) + z0
+
+        # integrating for orientation
+        om_BB = np.array((self.gx, self.gy, self.gz))
+        W_om_B = np.asarray([R_WB @ om_BB[:,i] for i, R_WB in enumerate(R_WB_arr)]).T
+
+        rx = cumtrapz(W_om_B[0,:], t, initial=0) + rx0
+        ry = cumtrapz(W_om_B[1,:], t, initial=0) + ry0
+        rz = cumtrapz(W_om_B[2,:], t, initial=0) + rz0
+
+        euler_ang = np.asarray([rz, ry, rx]).T
+        quats = np.asarray([R.from_euler('zyx', e).as_quat()
+            for e in euler_ang])
+        reconstructed.qx = quats[:,0]
+        reconstructed.qy = quats[:,1]
+        reconstructed.qz = quats[:,2]
+        reconstructed.qw = quats[:,3]
+
+        self.reconstructed = reconstructed
+
     def reconstruct_vis_traj(self):
         """ Generates trajectory from IMU data using
         the available initial conditions. """
