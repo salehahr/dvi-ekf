@@ -56,7 +56,7 @@ class Trajectory(object):
                     if i >= cap - 1:
                         break
 
-    def plot(self, axes=None, min_t=None, max_t=None):
+    def plot(self, axes=None, min_t=None, max_t=None, dist=None):
         """ Creates a two column plot of the states/data. """
 
         num_labels = len(self.labels) - 1
@@ -67,8 +67,12 @@ class Trajectory(object):
             fig, axes = plt.subplots(num_rows, 2)
             fig.tight_layout()
 
-        if offset == 1:
+        if offset == 1 and dist is None:
             axes[0,0].set_visible(False)
+        elif dist:
+            axes[0,0].set_visible(True)
+            axes[0,0].plot(self.t, dist, label=self.name)
+            axes[0,0].set_title('Euclidian distance B-C')
 
         ai = offset
         for i, label in enumerate(self.labels):
