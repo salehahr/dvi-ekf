@@ -470,9 +470,8 @@ class ImuTraj(Trajectory):
         if self.filepath:
             self._write_to_file(filename_noisy)
 
-    def _interpolate_imu(self, t):
+    def interpolate_imu(self, t):
         """ Generates IMU data points between frames. """
-
         tmin = t[0]
         tmax = t[-1]
         num_cam_datapoints = len(t)
@@ -480,12 +479,17 @@ class ImuTraj(Trajectory):
         num_imu_datapoints = (num_cam_datapoints - 1) * self.num_imu_between_frames + 1
         self.t = np.linspace(tmin, tmax, num=num_imu_datapoints)
 
+        print(f"Interpolating IMU data: {num_cam_datapoints} --> {num_imu_datapoints} values.")
+
         for label in self.labels:
             if label == 't':
                 continue
 
-            f = interp1d(t, self.__dict__[label], kind='linear')
-            self.__dict__[label] = f(self.t)
+            val = self.__dict__[label]
+
+            # interpolating
+            f = splrep(t, val, k=5)
+            self.__dict__[label] = splev(self.t, f)
 
     def _write_to_file(self, filename=None):
         """ Writes IMU trajectory to file. """
