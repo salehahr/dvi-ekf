@@ -12,9 +12,10 @@ class Camera(object):
         Also provides the initial conditions of p, q, v, om.
     """
 
-    def __init__(self, filepath, max_vals=None):
+    def __init__(self, filepath, traj=None, max_vals=None):
         self.traj_filepath = filepath
-        self.traj = VisualTraj("camera", self.traj_filepath, cap=max_vals)
+        self.traj = traj if (traj) else \
+            VisualTraj("camera", self.traj_filepath, cap=max_vals)
         self.max_vals = len(self.traj.t)
 
         self.t = self.traj.t
@@ -30,10 +31,12 @@ class Camera(object):
         self._alp = None
 
         self.p0 = self.p[:,0]
+        self.r0 = self.r[:,0]
         self.q0 = self.q[:,0]
         self.v0 = self.v[:,0]
-        self.r0 = self.r[:,0]
         self.om0 = self.om[:,0]
+
+        self._flag_interpolated = False
 
     @property
     def p(self):
@@ -85,3 +88,13 @@ class Camera(object):
                             np.gradient(self.om[1,:], self.dt),
                             np.gradient(self.om[2,:], self.dt)) )
         return self._alp
+
+    @property
+    def flag_interpolated(self):
+        self._flag_interpolated = self.traj.flag_interpolated
+        return self._flag_interpolated
+
+    def interpolate(self, num_imu_between_frames):
+        self.traj.interpolate(num_imu_between_frames)
+        traj_interp = self.traj.interpolated
+        return Camera(filepath='', traj=self.traj.interpolated)

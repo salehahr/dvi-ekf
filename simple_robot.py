@@ -26,32 +26,37 @@ def parse_arguments():
     return do_regenerate, do_plot
 do_regenerate, do_plot = parse_arguments()
 
+# data generation params
+num_imu_between_frames = 10
+
 # initialise robot, joint variables
 probe_BtoC = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
 
 # parameters from camera
 filepath_cam = './trajs/offline_mandala0_gt.txt'
 cam = Camera(filepath=filepath_cam, max_vals=50)
-min_t, max_t = cam.t[0], cam.t[-1]
+cam_interp = cam.interpolate(num_imu_between_frames)
+min_t, max_t = cam. t[0], cam.t[-1]
 
 # parameters from both cam + fwkin
 R_BC = probe_BtoC.R
 
 # generate IMU data
 filepath_imu = './trajs/offline_mandala0_gt_imugen.txt'
-imu = Imu(probe_BtoC, cam)
+imu = Imu(probe_BtoC, cam_interp)
 if do_regenerate:
     import time
     t_start = time.process_time()
 
-    print(f"Generating IMU data ({cam.max_vals} values) and saving to {filepath_imu}...")
+    print(f"Generating IMU data ({cam_interp.max_vals} values) and saving to {filepath_imu}...")
 
     if os.path.exists(filepath_imu):
         os.remove(filepath_imu)
 
     R_BW = imu.R_BW
-    for n in range(cam.max_vals):
-        imu.eval_expr_single(cam.t[n], cam.acc[:,n], cam.om[:,n], cam.alp[:,n],
+    for n in range(cam_interp.max_vals):
+        imu.eval_expr_single(cam_interp.t[n],
+                cam_interp.acc[:,n], cam_interp.om[:,n], cam_interp.alp[:,n],
                 R_BW[n],
                 *probe_BtoC.joint_dofs,
                 append_array=True,
@@ -59,23 +64,14 @@ if do_regenerate:
 
     imu.init_trajectory()
 
-    print(f"Time taken to generate data ({cam.max_vals} vals): {time.process_time() - t_start:.4f} s.")
+    print(f"Time taken to generate data ({cam.traj.interpolated.nvals} vals): {time.process_time() - t_start:.4f} s.")
 else:
     print(f"Reading IMU data from {filepath_imu}...")
     imu.read_from_file(filepath_imu)
 
-# interpolate IMU data
-num_imu_between_frames = 10
-imu.num_imu_between_frames = num_imu_between_frames
-
-cam.traj.interpolate(num_imu_between_frames)
-imu.traj.vis_data = cam.traj.interpolated
-
-R_BW_interp = [R_BC @ R_WC.T for R_WC in imu.traj.vis_data.R]
-imu.interpolate(cam.t)
-
 # reconstruct camera trajectory from IMU data
-imu.reconstruct_traj(R_BW_interp)
+imu.num_imu_between_frames = num_imu_between_frames
+imu.reconstruct_traj()
 imu.traj.reconstructed.name = "imu (B) recon"
 
 # distance

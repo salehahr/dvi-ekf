@@ -23,6 +23,9 @@ class Trajectory(object):
         self.filepath = filepath
         self.cap = cap
 
+        self._nvals = 0
+        self._flag_interpolated = False
+
         self.clear()
         if filepath:
             try:
@@ -30,6 +33,14 @@ class Trajectory(object):
             except FileNotFoundError:
                 file = open(filepath, 'w+')
                 file.close()
+
+    @property
+    def nvals(self):
+        return len(self.t)
+
+    @property
+    def flag_interpolated(self):
+        return self._flag_interpolated
 
     def __iter__(self):
         for attr, value in self.__dict__.items():
@@ -55,6 +66,32 @@ class Trajectory(object):
                 if cap is not None:
                     if i >= cap - 1:
                         break
+
+    def interpolate(self, old_t, num_imu_between_frames, interp_obj=None):
+        """ Generates data points between frames. """
+        interp_obj = self if (interp_obj is None) else interp_obj
+
+        tmin = old_t[0]
+        tmax = old_t[-1]
+        num_old_datapoints = len(old_t)
+
+        num_new_datapoints = (num_old_datapoints - 1) * num_imu_between_frames + 1
+        new_t = np.linspace(tmin, tmax, num=num_new_datapoints)
+
+        print(f"Interpolating {self.name} data: {num_old_datapoints} --> {num_new_datapoints} values.")
+
+        for label in self.labels:
+            if label == 't':
+                interp_obj.t = new_t
+                continue
+
+            val = self.__dict__[label]
+
+            # interpolating
+            f = splrep(old_t, val, k=5)
+            interp_obj.__dict__[label] = splev(new_t, f)
+
+        interp_obj._flag_interpolated = True
 
     def plot(self, axes=None, min_t=None, max_t=None, dist=None):
         """ Creates a two column plot of the states/data. """
@@ -283,27 +320,8 @@ class VisualTraj(Trajectory):
     def interpolate(self, num_imu_between_frames):
         """ Generates interpolated/fitted data points between frames. """
 
-        interpolated = VisualTraj(self.name + ' interpl')
-
-        tmin = self.t[0]
-        tmax = self.t[-1]
-        num_cam_datapoints = len(self.t)
-
-        num_imu_datapoints = (num_cam_datapoints - 1) \
-            * num_imu_between_frames + 1
-        interpolated.t = np.linspace(tmin, tmax, num=num_imu_datapoints)
-
-        for label in self.labels:
-            if label == 't':
-                continue
-
-            val = self.__dict__[label]
-
-            # interpolating
-            f = splrep(self.t, val, k=5)
-            interpolated.__dict__[label] = splev(interpolated.t, f)
-
-        self.interpolated = interpolated
+        self.interpolated = VisualTraj(self.name + ' interpl')
+        super().interpolate(self.t, num_imu_between_frames, self.interpolated)
         self.interpolated._gen_quats_farray()
 
     def _set_plot_line_style(self, line):
@@ -478,26 +496,9 @@ class ImuTraj(Trajectory):
         if self.filepath:
             self._write_to_file(filename_noisy)
 
-    def interpolate_imu(self, t):
+    def interpolate(self):
         """ Generates IMU data points between frames. """
-        tmin = t[0]
-        tmax = t[-1]
-        num_cam_datapoints = len(t)
-
-        num_imu_datapoints = (num_cam_datapoints - 1) * self.num_imu_between_frames + 1
-        self.t = np.linspace(tmin, tmax, num=num_imu_datapoints)
-
-        print(f"Interpolating IMU data: {num_cam_datapoints} --> {num_imu_datapoints} values.")
-
-        for label in self.labels:
-            if label == 't':
-                continue
-
-            val = self.__dict__[label]
-
-            # interpolating
-            f = splrep(t, val, k=5)
-            self.__dict__[label] = splev(self.t, f)
+        super().interpolate(self.t, self.num_imu_between_frames)
 
     def _write_to_file(self, filename=None):
         """ Writes IMU trajectory to file. """
@@ -560,8 +561,10 @@ class ImuTraj(Trajectory):
         return ImuMeasurement(t, acc, om)
 
     def reconstruct_traj(self, R_WB_arr):
-        """ Generates trajectory from IMU data using
-        the available initial conditions. """
+        """ For validation.
+            Generates trajectory from IMU data.
+            The IMU trajectory is obtained via numerical integration
+            using the available initial conditions. """
 
         reconstructed = VisualTraj('recon')
 

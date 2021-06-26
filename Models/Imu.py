@@ -52,14 +52,16 @@ class Imu(object):
 
         # for transforming between CS
         self.cam = cam
-        self.R_BW = [self.R_BC @ R_WC.T for R_WC in self.cam.R]
+        self._R_BW = [self.R_BC @ R_WC.T for R_WC in self.cam.R]
+        self._R_WB = [R.T for R in self._R_BW]
 
         # for trajectory reconstruction/plotting
-        self._num_imu_between_frames = None
         self.traj = None
+        self._num_imu_between_frames = None
 
         self._W_p0 = [0., 0., 0.]
         self._W_v0 = [0., 0., 0.]
+        self._R_WB0 = np.zeros((3, 3))
 
         self._flag_interpolated = False
 
@@ -70,6 +72,21 @@ class Imu(object):
     @property
     def acc(self):
         return np.array(self._acc).T # 3xn
+
+    @property
+    def R_BW(self):
+        return self._R_BW
+    @R_BW.setter
+    def R_BW(self, val):
+        self._R_BW = val
+        self._R_WB = [R.T for R in self._R_BW]
+    @property
+    def R_WB(self):
+        return self._R_WB
+    @R_WB.setter
+    def R_WB(self, val):
+        self._R_WB = val
+        self._R_BW = [R.T for R in self._R_WB]
 
     def init_trajectory(self):
         if self.traj is None:
@@ -84,7 +101,7 @@ class Imu(object):
 
     @property
     def num_imu_between_frames(self):
-        return num_imu_between_frames
+        return self._num_imu_between_frames
 
     @num_imu_between_frames.setter
     def num_imu_between_frames(self, val):
@@ -94,17 +111,29 @@ class Imu(object):
     @property
     def W_p0(self):
         return self._W_p0
-    @property
-    def W_v0(self):
-        return self._W_v0
     @W_p0.setter
     def W_p0(self, val):
         self._W_p0 = val
         self.traj.W_p0 = val
+    @property
+    def W_v0(self):
+        return self._W_v0
     @W_v0.setter
     def W_v0(self, val):
         self._W_v0 = val
         self.traj.W_v0 = val
+    @property
+    def R_WB0(self):
+        return self._R_WB0
+    @R_WB0.setter
+    def R_WB0(self, val):
+        self._R_WB0 = val
+        self.traj.R_WB0 = val
+
+    @property
+    def flag_interpolated(self):
+        self._flag_interpolated = self.cam.flag_interpolated
+        return self._flag_interpolated
 
     def __iter__(self):
         for attr, value in self.__dict__.items():
@@ -162,27 +191,25 @@ class Imu(object):
     def _correct_cam_dims(self, cam_arg):
         return cam_arg.reshape(3, 1) if cam_arg.shape != (3, 1) else cam_arg
 
-    def interpolate(self, cam_t):
-        self.traj.interpolate_imu(cam_t)
-        self._update_from_trajectory()
-
-        self._flag_interpolated = True
-
-    def reconstruct_traj(self, R_BW_interp):
-        if not self._flag_interpolated:
-            print("Warning: IMU data = camera data, no interpolation was performed.")
-
+    def reconstruct_traj(self):
+        assert(self.flag_interpolated == True)
         self._get_IC()
-
-        self.traj.reconstruct_traj(R_BW_interp)
-
+        self.traj.reconstruct_traj(self.R_BW)
         return self.traj.reconstructed
 
     def _get_IC(self):
-        """ Generates IC for trajectory reconstruction. """
+        """ For trajectory reconstruction.
+            Obtains IMU IC based on initial camera values and
+            the relative kinematics relations C to B.
+
+            W_p_B = W_p_C + W_p_BC
+            TODO: check velocity relations,
+                    check rel. to which frames are being differentiated!!!
+        """
         self.W_p0 = self.cam.p0.reshape(3,1) + self.p_BC
         self.W_v0 = self.cam.v0.reshape(3,1) + self.v_BC \
                     + np.cross(self.cam.om0, self.p_BC, axis=0)
+        self.R_WB0 = self.R_BW[0].T
 
     def write_array_to_file(self, filepath):
         """ Writes IMU trajectory, stored in the _om and _acc arrays,
