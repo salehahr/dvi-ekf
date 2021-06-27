@@ -208,7 +208,7 @@ class TestImu(TestRigidSimpleRobot):
         assert(self.imu._om == [])
 
         for i in range(2):
-            self.imu.eval_expr_single(cam.t[i], cam.acc[:,i], cam.om[:,i], cam.alp[:,i], self.R_BW[i], *self.joint_dofs, append_array=True)
+            self.imu.eval_expr_single(cam.t[i], cam.acc[:,i], cam.R[i], cam.om[:,i], cam.alp[:,i], *self.joint_dofs, append_array=True)
 
         assert(self.imu.om.shape == (3, 2))
 
@@ -224,7 +224,7 @@ class TestImu(TestRigidSimpleRobot):
 
         num_data = 3
         for i in range(num_data):
-            self.imu.eval_expr_single(cam.t[i], cam.acc[:,i], cam.om[:,i], cam.alp[:,i], self.R_BW[i], *self.joint_dofs, append_array=False, filepath=self.filepath)
+            self.imu.eval_expr_single(cam.t[i], cam.acc[:,i], cam.R[i], cam.om[:,i], cam.alp[:,i], *self.joint_dofs, append_array=False, filepath=self.filepath)
 
         new_num_lines = self._get_numlines(self.filepath)
         self.assertEqual(new_num_lines, num_lines + num_data)

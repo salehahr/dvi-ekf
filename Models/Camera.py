@@ -30,11 +30,14 @@ class Camera(object):
         self._acc = None
         self._alp = None
 
-        self.p0 = self.p[:,0]
-        self.r0 = self.r[:,0]
+        self.p0 = self.p[:,0].reshape(3,1)
+        self.r0 = self.r[:,0].reshape(3,1)
+        self.R0 = self.R[0]
         self.q0 = self.q[:,0]
-        self.v0 = self.v[:,0]
-        self.om0 = self.om[:,0]
+        self.v0 = self.v[:,0].reshape(3,1)
+        self.om0 = self.om[:,0].reshape(3,1)
+        self.acc0 = self.acc[:,0].reshape(3,1)
+        self.alp0 = self.alp[:,0].reshape(3,1)
 
         self._flag_interpolated = False
         self._num_imu_between_frames = 0

@@ -53,11 +53,9 @@ if do_regenerate:
     if os.path.exists(filepath_imu):
         os.remove(filepath_imu)
 
-    R_BW = imu.R_BW
     for n in range(cam_interp.max_vals):
         imu.eval_expr_single(cam_interp.t[n],
-                cam_interp.acc[:,n], cam_interp.om[:,n], cam_interp.alp[:,n],
-                R_BW[n],
+                cam_interp.acc[:,n], cam_interp.R[n], cam_interp.om[:,n], cam_interp.alp[:,n],
                 *probe_BtoC.joint_dofs,
                 append_array=True,
                 filepath=filepath_imu)

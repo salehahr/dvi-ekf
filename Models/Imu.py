@@ -7,61 +7,73 @@ import sympy as sp
 from .params import *
 
 """ Notation:
-        W_acc_B : acceleration of B in world coordinates
-        acc_BC  : acceleration of B relative to C,
-                    given in world coordinates.
-        R_BW    : rotation from W to B
+        W_acc_CD    : acceleration of C rel. to D.
+                        given in W coordinates
+        WB_v_CD     : velocity of C rel. to D, diff. wrt B-CS,
+                        given in W coordinates
+        R_BW        : rotation which transforms a vector in W to B
     ------
     Angular velocity:
-        W_om_B = W_om_C + om_BC
-
-        B_om_B = R_BW @ (W_om_C + om_BC)
+        B_om_BW = R_BW @ W_om_CW + B_om_BC
+                = R_BC @ R_WC.T @ W_om_CW - B_om_CB
 
     Acceleration:
-        W_acc_B = W_acc_C + acc_BC
-                    + W_alp_C x p_BC
-                    + 2 W_om_C x v_BC
-                    + W_om_C x W_om_C x p_BC
+        B_acc_BW = R_BC @ R_WC.T @ W_acc_CW
+                        - B_acc_CB
+                        - B_alp_BW x B_p_CB
+                        - 2 B_om_BW x BB_v_CB
+                        - B_om_BW x B_om_BW x B_p_CB
+    ------
+    Derived terms:
+        R_BW        = R_BC @ R_WC.T
+        W_p_BW      = W_p_CW - R_WC @ R_BC.T @ B_p_CB
 
-        B_acc_B = R_BW @ W_acc_B
+        W_om_BW     = W_om_CW - R_WC @ R_BC.T @ B_om_CB
+        WW_v_BW     = WW_v_CW - R_WC @ R_BC.T @ BB_v_CB
+                        - W_om_BW x R_WC @ R_BC.T @ B_p_CB
+
+        W_alp_BW    = W_alp_CW - R_WC @ R_BC.T @ B_alp_CB
+                        - W_om_BW x R_WC @ R_BC.T @ B_om_CB
     """
 
 class Imu(object):
     def __init__(self, probe_BtoC, cam):
+        # data arrays to be appended to upon evaluating om/acc expression
         self.t = []
         self._om = []
         self._acc = []
 
+        # cam values
+        self.cam = cam
+        # W_p_CW, WW_v_CW, W_acc_CW = cam.p, cam.v, cam.acc
+        # R_WC, W_om_CW, W_alp_CW = cam.R, cam.om, cam.alp
+
         # forward kinematics
         self.probe = probe_BtoC
-        R_BC = probe_BtoC.R
-        p_BC, v_BC, acc_BC, om_BC, alp_BC = probe_BtoC.get_reversed_kin()
-        self.R_BC = R_BC
-        self.p_BC = p_BC
-        self.v_BC = v_BC
-        self.acc_BC = acc_BC
-        self.om_BC = om_BC
-        self.alp_BC = alp_BC
+        self.B_p_CB, self.BB_v_CB, self.B_acc_CB = probe_BtoC.p, probe_BtoC.v, probe_BtoC.acc
+        self.R_BC, self.B_om_CB, self.B_alp_CB = probe_BtoC.R, probe_BtoC.om, probe_BtoC.alp
 
-        self.om_expr = R_BW_s @ (om_C_s + om_BC)
-        self.acc_expr = R_BW_s @ (acc_C_s + acc_BC
-                    + np.cross(alp_C_s, p_BC, axis=0)
-                    + 2 * np.cross(om_C_s, v_BC, axis=0)
-                    + np.cross( om_C_s, np.cross(om_C_s, p_BC,
-                        axis=0), axis=0 ))
+        # derived
+        R_BW = self.R_BC @ R_WC_s.T
+        B_om_BW = R_BW @ W_om_CW_s - self.B_om_CB
+        B_alp_BW = R_BW @ W_alp_CW_s - self.B_alp_CB \
+                        - np.cross(B_om_BW, self.B_om_CB, axis=0)
 
-        # for transforming between CS
-        self.cam = cam
-        self._R_BW = [self.R_BC @ R_WC.T for R_WC in self.cam.R]
-        self._R_WB = [R.T for R in self._R_BW]
+        cross_omBW_pCB = np.cross(B_om_BW, self.B_p_CB, axis=0)
+        
+        B_acc_BW = R_BW @ W_acc_CW_s \
+                        - self.B_acc_CB \
+                        - np.cross(B_alp_BW, self.B_p_CB, axis=0) \
+                        - 2 * np.cross(B_om_BW, self.BB_v_CB, axis=0) \
+                        - np.cross(B_om_BW, cross_omBW_pCB, axis=0)
+
+        # IMU data
+        self.om_expr = B_om_BW
+        self.acc_expr = B_acc_BW
 
         # for trajectory reconstruction/plotting
         self.traj = None
         self._num_imu_between_frames = None
-
-        self._W_p0 = [0., 0., 0.]
-        self._W_v0 = [0., 0., 0.]
-        self._R_WB0 = np.zeros((3, 3))
 
         self._flag_interpolated = False
 
@@ -72,21 +84,6 @@ class Imu(object):
     @property
     def acc(self):
         return np.array(self._acc).T # 3xn
-
-    @property
-    def R_BW(self):
-        return self._R_BW
-    @R_BW.setter
-    def R_BW(self, val):
-        self._R_BW = val
-        self._R_WB = [R.T for R in self._R_BW]
-    @property
-    def R_WB(self):
-        return self._R_WB
-    @R_WB.setter
-    def R_WB(self, val):
-        self._R_WB = val
-        self._R_BW = [R.T for R in self._R_WB]
 
     def init_trajectory(self):
         if self.traj is None:
@@ -105,28 +102,6 @@ class Imu(object):
         return self._num_imu_between_frames
 
     @property
-    def W_p0(self):
-        return self._W_p0
-    @W_p0.setter
-    def W_p0(self, val):
-        self._W_p0 = val
-        self.traj.W_p0 = val
-    @property
-    def W_v0(self):
-        return self._W_v0
-    @W_v0.setter
-    def W_v0(self, val):
-        self._W_v0 = val
-        self.traj.W_v0 = val
-    @property
-    def R_WB0(self):
-        return self._R_WB0
-    @R_WB0.setter
-    def R_WB0(self, val):
-        self._R_WB0 = val
-        self.traj.R_WB0 = val
-
-    @property
     def flag_interpolated(self):
         self._flag_interpolated = self.cam.flag_interpolated
         return self._flag_interpolated
@@ -135,17 +110,17 @@ class Imu(object):
         for attr, value in self.__dict__.items():
             yield attr, value
 
-    def eval_expr(self, *dofs_array, filepath=''):
+    def eval_expr(self, append_array=False, filepath=''):
         for n in range(cam.max_vals):
             self.eval_expr_single(self.cam.t[n], self.cam.acc[:,n],
-                                self.cam.om[:,n], self.cam.alp[:,n],
-                                self.R_BW[n],
-                                *dofs_array[:,n],
-                                append_array=False,
+                                self.cam.R[n], self.cam.om[:,n],
+                                self.cam.alp[:,n],
+                                *self.probe.joint_dofs,
+                                append_array=append_array,
                                 filepath=filepath)
 
-    def eval_expr_single(self, t, W_acc_C, W_om_C, W_alp_C, R_BW, *dofs,
-            append_array=False, filepath=''):
+    def eval_expr_single(self, t, W_acc_C, R_WC, W_om_C, W_alp_C,
+        *dofs, append_array=False, filepath=''):
         """ Evaluates the symbolic expression using camera values and DOFs of the probe.
 
             Args:
@@ -162,10 +137,10 @@ class Imu(object):
         W_alp_C = self._correct_cam_dims(W_alp_C)
 
         func_om = sp.lambdify(params_s, self.om_expr, modules='sympy')
-        res_om = func_om(W_om_C, W_acc_C, W_alp_C, R_BW, *dofs)
+        res_om = func_om(W_acc_C, R_WC, W_om_C, W_alp_C, *dofs)
 
         func_acc = sp.lambdify(params_s, self.acc_expr, modules='sympy')
-        res_acc = func_acc(W_om_C, W_acc_C, W_alp_C, R_BW, *dofs)
+        res_acc = func_acc(W_acc_C, R_WC, W_om_C, W_alp_C, *dofs)
 
         res_om = np.array(res_om).reshape(3,)
         res_acc = np.array(res_acc).reshape(3,)
@@ -189,23 +164,31 @@ class Imu(object):
 
     def reconstruct_traj(self):
         assert(self.flag_interpolated == True)
-        self._get_IC()
-        self.traj.reconstruct_traj(self.R_BW)
+        R_WB = [R_WC @ self.R_BC.T for R_WC in self.cam.R]
+        IC = self._get_IC()
+        self.traj.reconstruct_traj(R_WB, *IC)
         return self.traj.reconstructed
 
     def _get_IC(self):
         """ For trajectory reconstruction.
             Obtains IMU IC based on initial camera values and
             the relative kinematics relations C to B.
-
-            W_p_B = W_p_C + W_p_BC
-            TODO: check velocity relations,
-                    check rel. to which frames are being differentiated!!!
         """
-        self.W_p0 = self.cam.p0.reshape(3,1) + self.p_BC
-        self.W_v0 = self.cam.v0.reshape(3,1) + self.v_BC \
-                    + np.cross(self.cam.om0, self.p_BC, axis=0)
-        self.R_WB0 = self.R_BW[0].T
+        # cam values
+        W_p_CW, WW_v_CW, W_acc_CW = self.cam.p0, self.cam.v0, self.cam.acc0
+        R_WC, W_om_CW, W_alp_CW = self.cam.R0, self.cam.om0, self.cam.alp0
+
+        R_WB_0 = R_WC @ self.R_BC.T
+        W_p_BW_0 = W_p_CW - R_WB_0 @ self.B_p_CB
+
+        W_om_BW_0 = R_WB_0 @ self.om[:,0].reshape(3,1)
+        WW_v_BW_0 = WW_v_CW - R_WB_0 @ self.BB_v_CB \
+                - np.cross(W_om_BW_0, R_WB_0 @ self.B_p_CB, axis=0)
+
+        W_alp_BW_0 = W_alp_CW - R_WB_0 @ self.B_alp_CB
+        W_acc_BW_0 = R_WB_0 @ self.acc[:,0].reshape(3,1)
+        
+        return W_p_BW_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0
 
     def write_array_to_file(self, filepath):
         """ Writes IMU trajectory, stored in the _om and _acc arrays,
