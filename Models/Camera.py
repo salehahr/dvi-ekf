@@ -37,6 +37,7 @@ class Camera(object):
         self.om0 = self.om[:,0]
 
         self._flag_interpolated = False
+        self._num_imu_between_frames = 0
 
     @property
     def p(self):
@@ -93,6 +94,11 @@ class Camera(object):
     def flag_interpolated(self):
         self._flag_interpolated = self.traj.flag_interpolated
         return self._flag_interpolated
+
+    @property
+    def num_imu_between_frames(self):
+        self._num_imu_between_frames = self.traj.num_imu_between_frames
+        return self._num_imu_between_frames
 
     def interpolate(self, num_imu_between_frames):
         self.traj.interpolate(num_imu_between_frames)

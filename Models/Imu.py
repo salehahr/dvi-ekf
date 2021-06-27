@@ -101,12 +101,8 @@ class Imu(object):
 
     @property
     def num_imu_between_frames(self):
+        self._num_imu_between_frames = self.cam.num_imu_between_frames
         return self._num_imu_between_frames
-
-    @num_imu_between_frames.setter
-    def num_imu_between_frames(self, val):
-        self._num_imu_between_frames = val
-        self.traj.num_imu_between_frames = val
 
     @property
     def W_p0(self):
@@ -245,5 +241,3 @@ class Imu(object):
         self.t = self.traj.t
         self._acc = np.array((self.traj.ax, self.traj.ay, self.traj.az)).T   #nx3
         self._om = np.array((self.traj.gx, self.traj.gy, self.traj.gz)).T    #nx3
-
-        self._num_imu_between_frames = self.traj.num_imu_between_frames

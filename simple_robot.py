@@ -70,7 +70,6 @@ else:
     imu.read_from_file(filepath_imu)
 
 # reconstruct camera trajectory from IMU data
-imu.num_imu_between_frames = num_imu_between_frames
 imu.reconstruct_traj()
 imu.traj.reconstructed.name = "imu (B) recon"
 

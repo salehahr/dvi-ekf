@@ -25,6 +25,7 @@ class Trajectory(object):
 
         self._nvals = 0
         self._flag_interpolated = False
+        self._num_imu_between_frames = 1
 
         self.clear()
         if filepath:
@@ -41,6 +42,14 @@ class Trajectory(object):
     @property
     def flag_interpolated(self):
         return self._flag_interpolated
+
+    @property
+    def num_imu_between_frames(self):
+        return self._num_imu_between_frames
+
+    @num_imu_between_frames.setter
+    def num_imu_between_frames(self, val):
+        self._num_imu_between_frames = val
 
     def __iter__(self):
         for attr, value in self.__dict__.items():
@@ -70,6 +79,7 @@ class Trajectory(object):
     def interpolate(self, old_t, num_imu_between_frames, interp_obj=None):
         """ Generates data points between frames. """
         interp_obj = self if (interp_obj is None) else interp_obj
+        interp_obj.num_imu_between_frames = num_imu_between_frames
 
         tmin = old_t[0]
         tmax = old_t[-1]
