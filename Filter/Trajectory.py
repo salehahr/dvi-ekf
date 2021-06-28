@@ -406,7 +406,6 @@ class ImuTraj(Trajectory):
         labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
         super().__init__(name, labels, filepath, cap)
         self.vis_data = vis_data
-        self.num_imu_between_frames = num_imu_between_frames
 
         # extra data
         self.noisy = None
@@ -570,7 +569,7 @@ class ImuTraj(Trajectory):
 
         return ImuMeasurement(t, acc, om)
 
-    def reconstruct_traj(self, R_WB_arr):
+    def reconstruct(self, R_WB, W_p_BW_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0):
         """ For validation.
             Generates trajectory from IMU data.
             The IMU trajectory is obtained via numerical integration
@@ -583,34 +582,35 @@ class ImuTraj(Trajectory):
         reconstructed.t = t
 
         # initial conditions in world coordinates
-        R_WB0 = R_WB_arr[0]
-        x0, y0, z0 = self.W_p0
-        vx0, vy0, vz0 = self.W_v0
-        rz0, ry0, rx0 = self.vis_data.quats[0].euler_zyx
+        x0, y0, z0 = W_p_BW_0
+        vx0, vy0, vz0 = WW_v_BW_0
+        rz0, ry0, rx0 = Quaternion(rot=R_WB[0]).euler_zyx
 
         # velocity in world coordinates
-        assert(len(R_WB_arr) == len(self.ax))
-        W_a = self._to_world_coords(R_WB_arr,
+        assert(len(R_WB) == len(self.ax))
+        W_acc = self._to_world_coords(R_WB,
                     np.asarray((self.ax,
                                 self.ay,
                                 self.az)).T )
 
-        W_vx = cumtrapz(W_a[:,0], t, initial=0) + vx0
-        W_vy = cumtrapz(W_a[:,1], t, initial=0) + vy0
-        W_vz = cumtrapz(W_a[:,2], t, initial=0) + vz0
+        W_vx = cumtrapz(W_acc[:,0], t, initial=0) + vx0
+        W_vy = cumtrapz(W_acc[:,1], t, initial=0) + vy0
+        W_vz = cumtrapz(W_acc[:,2], t, initial=0) + vz0
 
         # position in world coordinates
         reconstructed.x = cumtrapz(W_vx, t, initial=0) + x0
         reconstructed.y = cumtrapz(W_vy, t, initial=0) + y0
         reconstructed.z = cumtrapz(W_vz, t, initial=0) + z0
 
-        # integrating for orientation
-        om_BB = np.array((self.gx, self.gy, self.gz))
-        W_om_B = np.asarray([R_WB @ om_BB[:,i] for i, R_WB in enumerate(R_WB_arr)]).T
+        # orientation in world
+        W_om_B = self._to_world_coords(R_WB,
+                    np.asarray((self.gx,
+                                self.gy,
+                                self.gz)).T )
 
-        rx = cumtrapz(W_om_B[0,:], t, initial=0) + rx0
-        ry = cumtrapz(W_om_B[1,:], t, initial=0) + ry0
-        rz = cumtrapz(W_om_B[2,:], t, initial=0) + rz0
+        rx = cumtrapz(W_om_B[:,0], t, initial=0) + rx0
+        ry = cumtrapz(W_om_B[:,1], t, initial=0) + ry0
+        rz = cumtrapz(W_om_B[:,2], t, initial=0) + rz0
 
         euler_ang = np.asarray([rz, ry, rx]).T
         quats = np.asarray([R.from_euler('zyx', e).as_quat()

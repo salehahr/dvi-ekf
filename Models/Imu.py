@@ -162,11 +162,11 @@ class Imu(object):
     def _correct_cam_dims(self, cam_arg):
         return cam_arg.reshape(3, 1) if cam_arg.shape != (3, 1) else cam_arg
 
-    def reconstruct_traj(self):
+    def reconstruct(self):
         assert(self.flag_interpolated == True)
         R_WB = [R_WC @ self.R_BC.T for R_WC in self.cam.R]
         IC = self._get_IC()
-        self.traj.reconstruct_traj(R_WB, *IC)
+        self.traj.reconstruct(R_WB, *IC)
         return self.traj.reconstructed
 
     def _get_IC(self):

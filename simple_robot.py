@@ -68,7 +68,7 @@ else:
     imu.read_from_file(filepath_imu)
 
 # reconstruct camera trajectory from IMU data
-imu.reconstruct_traj()
+imu.reconstruct()
 imu.traj.reconstructed.name = "imu (B) recon"
 
 # distance
