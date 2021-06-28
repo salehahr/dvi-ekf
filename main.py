@@ -1,8 +1,9 @@
-import sys
-import numpy as np
 from Filter import States, Filter, VisualTraj, MatrixPlotter
+import numpy as np
 
 def parse_arguments():
+    import sys
+
     def print_usage():
         print(f"Usage: {__file__} <prop> <noise> [<vel>]")
         print("\t <prop>  - prop / all")
@@ -26,9 +27,8 @@ def parse_arguments():
 do_prop_only, use_noisy_imu, do_plot_vel = parse_arguments()
 
 # load data
-from generate_data import mono_traj, stereoGT_traj, imu_gt_traj
+from generate_data import cam, cam_interp
 from generate_data import IC, cov0, min_t, max_t, gen_noise_matrices
-imu_traj = (imu_gt_traj.noisy if use_noisy_imu else imu_gt_traj)
 
 def init_kf(current_imu):
     num_meas, num_control = 7, 6

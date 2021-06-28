@@ -1,31 +1,26 @@
 from Filter import VisualTraj, ImuTraj, States
+from Models import RigidSimpleProbe, Camera, Imu
 import numpy as np
 
 """ Generates visual trajectory data as well as fake IMU data """
 
-max_vals = None
-num_imu_between_frames = 300
-imu_covariance = [0.01, 0.03, 0.01, 0.03, 0.005, 0.005]
+# data generation params
+max_vals = 50
+num_imu_between_frames = 10
+# imu_covariance = [0.01, 0.03, 0.01, 0.03, 0.005, 0.005]
+
+# initialise robot
+probe_BtoC = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
 
 # SLAM data
-stereoGT_traj = VisualTraj("stereoGT",
-        "./trajs/offline_mandala0_gt.txt",
-        cap=max_vals)
-mono_traj = VisualTraj("mono",
-        "./trajs/offline_mandala0_mono.txt",
-        cap=max_vals)
+# filepath_cam = './trajs/offline_mandala0_gt.txt' # stereo
+filepath_cam = './trajs/offline_mandala0_mono.txt' # mono
+cam = Camera(filepath=filepath_cam, max_vals=max_vals)
+cam_interp = cam.interpolate(num_imu_between_frames)
+min_t, max_t = cam. t[0], cam.t[-1]
 
-# IMU data
-imu_gt_traj = ImuTraj(name='imu gt',
-        vis_data=stereoGT_traj,
-        cap=max_vals,
-        num_imu_between_frames=num_imu_between_frames,
-        covariance=imu_covariance)
-imu_mono_traj = ImuTraj(name='imu mono',
-        vis_data=mono_traj,
-        cap=max_vals,
-        num_imu_between_frames=num_imu_between_frames,
-        covariance=imu_covariance)
+# imu
+imu = Imu(probe_BtoC, cam_interp)
 
 # noise matrices
 def gen_noise_matrices(Q, Rp, Rq):
@@ -42,15 +37,10 @@ def gen_noise_matrices(Q, Rp, Rq):
 
     return Qc, R
 
-# for plotting
-min_t = imu_gt_traj.t[0]
-max_t = imu_gt_traj.t[-1]
-
 # initial states
-p0 = [mono_traj.x[0], mono_traj.y[0], mono_traj.z[0]]
-v0 = [stereoGT_traj.vx[0], stereoGT_traj.vy[0], stereoGT_traj.vz[0]]
-q0 = [mono_traj.qx[0], mono_traj.qy[0], mono_traj.qz[0],
-        mono_traj.qw[0]]
+p0 = cam.p0
+v0 = cam.v0
+q0 = cam.q0
 
 IC = States(p0, v0, q0)
 
