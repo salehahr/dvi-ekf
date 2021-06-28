@@ -85,17 +85,6 @@ class Imu(object):
     def acc(self):
         return np.array(self._acc).T # 3xn
 
-    def init_trajectory(self):
-        if self.traj is None:
-            self.traj = ImuTraj()
-        self.traj.t = self.t
-        self.traj.ax = self.acc[0,:]
-        self.traj.ay = self.acc[1,:]
-        self.traj.az = self.acc[2,:]
-        self.traj.gx = self.om[0,:]
-        self.traj.gy = self.om[1,:]
-        self.traj.gz = self.om[2,:]
-
     @property
     def num_imu_between_frames(self):
         self._num_imu_between_frames = self.cam.num_imu_between_frames
@@ -109,15 +98,6 @@ class Imu(object):
     def __iter__(self):
         for attr, value in self.__dict__.items():
             yield attr, value
-
-    def eval_expr(self, append_array=False, filepath=''):
-        for n in range(cam.max_vals):
-            self.eval_expr_single(self.cam.t[n], self.cam.acc[:,n],
-                                self.cam.R[n], self.cam.om[:,n],
-                                self.cam.alp[:,n],
-                                *self.probe.joint_dofs,
-                                append_array=append_array,
-                                filepath=filepath)
 
     def eval_expr_single(self, t, W_acc_C, R_WC, W_om_C, W_alp_C,
         *dofs, append_array=False, filepath=''):
@@ -159,8 +139,50 @@ class Imu(object):
 
         return res_om, res_acc
 
+    def _eval_expr(self, append_array=False, filepath=''):
+        for n in range(self.cam.max_vals):
+            self.eval_expr_single(self.cam.t[n], self.cam.acc[:,n],
+                                self.cam.R[n], self.cam.om[:,n],
+                                self.cam.alp[:,n],
+                                *self.probe.joint_dofs,
+                                append_array=append_array,
+                                filepath=filepath)
+
     def _correct_cam_dims(self, cam_arg):
         return cam_arg.reshape(3, 1) if cam_arg.shape != (3, 1) else cam_arg
+
+    def generate_traj(self, filepath, do_regenerate):
+        if do_regenerate:
+            self._generate_new_traj(filepath)
+        else:
+            self._read_from_file(filepath)
+
+    def _generate_new_traj(self, filepath):
+        import time, os
+
+        t_start = time.process_time()
+
+        print(f"Generating IMU data ({self.cam.max_vals} values) and saving to {filepath}...")
+
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+        self._eval_expr(append_array=True, filepath=filepath)
+
+        self._init_trajectory()
+
+        print(f"Time taken to generate data ({self.cam.max_vals} vals): {time.process_time() - t_start:.4f} s.")
+
+    def _init_trajectory(self):
+        if self.traj is None:
+            self.traj = ImuTraj()
+        self.traj.t = self.t
+        self.traj.ax = self.acc[0,:]
+        self.traj.ay = self.acc[1,:]
+        self.traj.az = self.acc[2,:]
+        self.traj.gx = self.om[0,:]
+        self.traj.gy = self.om[1,:]
+        self.traj.gz = self.om[2,:]
 
     def reconstruct(self):
         assert(self.flag_interpolated == True)
@@ -216,7 +238,8 @@ class Imu(object):
                 data_str = f"{t:.6f} " + a_str + g_str
                 f.write(data_str + '\n')
 
-    def read_from_file(self, filepath):
+    def _read_from_file(self, filepath):
+        print(f"Reading IMU data from {filepath}...")
         self.traj = ImuTraj(filepath=filepath)
         self._update_from_trajectory()
 

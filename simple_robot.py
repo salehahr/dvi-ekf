@@ -1,6 +1,6 @@
 from Models import RigidSimpleProbe, Camera, Imu
 
-import os, sys
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
@@ -44,28 +44,7 @@ R_BC = probe_BtoC.R
 # generate IMU data
 filepath_imu = './trajs/offline_mandala0_gt_imugen.txt'
 imu = Imu(probe_BtoC, cam_interp)
-if do_regenerate:
-    import time
-    t_start = time.process_time()
-
-    print(f"Generating IMU data ({cam_interp.max_vals} values) and saving to {filepath_imu}...")
-
-    if os.path.exists(filepath_imu):
-        os.remove(filepath_imu)
-
-    for n in range(cam_interp.max_vals):
-        imu.eval_expr_single(cam_interp.t[n],
-                cam_interp.acc[:,n], cam_interp.R[n], cam_interp.om[:,n], cam_interp.alp[:,n],
-                *probe_BtoC.joint_dofs,
-                append_array=True,
-                filepath=filepath_imu)
-
-    imu.init_trajectory()
-
-    print(f"Time taken to generate data ({cam.traj.interpolated.nvals} vals): {time.process_time() - t_start:.4f} s.")
-else:
-    print(f"Reading IMU data from {filepath_imu}...")
-    imu.read_from_file(filepath_imu)
+imu.generate_traj(filepath_imu, do_regenerate)
 
 # reconstruct camera trajectory from IMU data
 imu.reconstruct()
