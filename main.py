@@ -27,26 +27,16 @@ def parse_arguments():
 do_prop_only, use_noisy_imu, do_plot_vel = parse_arguments()
 
 # load data
-from generate_data import cam, cam_interp
+from generate_data import probe_BtoC, cam, imu
 from generate_data import IC, cov0, min_t, max_t, gen_noise_matrices
-
-def init_kf(current_imu):
-    num_meas, num_control = 7, 6
-    kf = Filter(IC, cov0, num_meas, num_control)
-    kf.om_old, kf.acc_old = current_imu.om, current_imu.acc
-
-    # debugging
-    kf.P_mp = MatrixPlotter("P", min_t, kf.P, max_row=6, max_col=6)
-
-    return kf
-
-# initialisation
-current_imu = imu_traj.at_index(0)
-kf = init_kf(current_imu)
 
 # noise values
 Qval = 1e-3
 Rpval, Rqval = 1e3, 0.05
+
+# initialisation (t=0)
+kf = Filter(imu, IC, cov0, num_meas=7, num_control=6)
+kf.init_imu(*probe_BtoC.joint_dofs)
 kf.Qc, kf.R = gen_noise_matrices(Qval, Rpval, Rqval)
 
 # filter main loop -- start at 1 b/c we have initial values

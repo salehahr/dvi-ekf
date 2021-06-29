@@ -139,6 +139,14 @@ class Imu(object):
 
         return res_om, res_acc
 
+    def eval_init(self, *dofs0):
+        self.eval_expr_single(self.cam.t[0], self.cam.acc[:,0],
+                                self.cam.R[0], self.cam.om[:,0],
+                                self.cam.alp[:,0],
+                                *dofs0,
+                                append_array=True)
+        self._init_trajectory()
+
     def _eval_expr(self, append_array=False, filepath=''):
         for n in range(self.cam.max_vals):
             self.eval_expr_single(self.cam.t[n], self.cam.acc[:,n],

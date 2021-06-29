@@ -41,7 +41,7 @@ class ErrorStates(object):
         self.dq = Quaternion(v=theta/2, w=1.)
 
 class Filter(object):
-    def __init__(self, IC, P0, num_meas, num_control):
+    def __init__(self, imu, IC, P0, num_meas, num_control):
         self.num_states = IC.size
         self.num_error_states = IC.size - 1
         self.num_meas = num_meas
@@ -54,6 +54,7 @@ class Filter(object):
         self.states = IC
 
         # imu
+        self.imu = imu
         self.om_old = None
         self.acc_old = None
 
@@ -73,6 +74,12 @@ class Filter(object):
         X_deltx[-4:,-3:] = Q_deltth
 
         return X_deltx
+
+    def init_imu(self, *joint_dofs0):
+        self.imu.eval_init(*joint_dofs0)
+
+        self.om_old = self.imu.om
+        self.acc_old = self.imu.acc
 
     def propagate(self, t, imu, do_prop_only=False):
         self._predict_nominal()
