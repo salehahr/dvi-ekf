@@ -39,21 +39,27 @@ kf = Filter(imu, IC, cov0, num_meas=7, num_control=6)
 kf.init_imu(*probe_BtoC.joint_dofs)
 kf.Qc, kf.R = gen_noise_matrices(Qval, Rpval, Rqval)
 
-# filter main loop -- start at 1 b/c we have initial values
+# filter main loop (t>=1)
 old_t = min_t
-for i, t in enumerate(imu_traj.t[1:]):
+for i, t in enumerate(cam.t[1:]):
 
-    current_imu = imu_traj.at_index(i)
-    kf.dt = t - old_t
-    
-    kf.propagate(t, current_imu)
-    kf.P_mp.append(t, kf.P)  # for plotting matrices
-    
+    current_vis = cam.traj.at_index(i)
+
+    # propagate
+    imu_queue = imu.traj.get_queue(old_t, t)
+    if imu_queue:
+        old_ti = t
+        for ii, ti in enumerate(imu_queue.t):
+            current_imu = imu_queue.at_index(ii)
+            kf.dt = ti - old_ti
+
+            kf.propagate(ti, current_imu)
+
+            old_ti = ti
+
+    # update
     if not do_prop_only:
-        current_vis = mono_traj.get_meas(old_t, t)
-
-        if current_vis:
-            kf.update(current_vis)
+        kf.update(current_vis)
 
     old_t = t
 
