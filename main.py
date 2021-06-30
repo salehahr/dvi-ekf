@@ -5,26 +5,19 @@ def parse_arguments():
     import sys
 
     def print_usage():
-        print(f"Usage: {__file__} <prop> <noise> [<vel>]")
+        print(f"Usage: {__file__} <prop> <noise>")
         print("\t <prop>  - prop / all")
         print("\t <noise> - noise / nonoise")
-        print("Optional arguments:")
-        print("\t <vel>   - vel")
         sys.exit()
 
     try:
         do_prop_only = False or (sys.argv[1] == 'prop')
         use_noisy_imu = False or (sys.argv[2] == 'noise')
-    except:
+    except IndexError:
         print_usage()
 
-    try:
-        do_plot_vel =  (sys.argv[3] == 'vel')
-    except:
-        do_plot_vel = False
-
-    return do_prop_only, use_noisy_imu, do_plot_vel
-do_prop_only, use_noisy_imu, do_plot_vel = parse_arguments()
+    return do_prop_only, use_noisy_imu
+do_prop_only, use_noisy_imu = parse_arguments()
 
 # load data
 from generate_data import probe_BtoC, cam, imu
