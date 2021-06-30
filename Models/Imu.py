@@ -184,13 +184,13 @@ class Imu(object):
     def _init_trajectory(self):
         if self.traj is None:
             self.traj = ImuTraj()
-        self.traj.t = self.t
-        self.traj.ax = self.acc[0,:]
-        self.traj.ay = self.acc[1,:]
-        self.traj.az = self.acc[2,:]
-        self.traj.gx = self.om[0,:]
-        self.traj.gy = self.om[1,:]
-        self.traj.gz = self.om[2,:]
+        self.traj.t = np.array(self.t)
+        self.traj.ax = np.array(self.acc[0,:])
+        self.traj.ay = np.array(self.acc[1,:])
+        self.traj.az = np.array(self.acc[2,:])
+        self.traj.gx = np.array(self.om[0,:])
+        self.traj.gy = np.array(self.om[1,:])
+        self.traj.gz = np.array(self.om[2,:])
 
     def reconstruct(self):
         assert(self.flag_interpolated == True)
