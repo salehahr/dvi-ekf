@@ -41,7 +41,8 @@ class VerySimpleRigidProbe(rtb.DHRobot):
             pass # default view
 
         # robots
-        env.add(self, jointlabels=True)
+        env.add(self, jointlabels=True, jointaxes=False,
+                    eeframe=True, shadow=False)
 
         # save gif
         loop = True if (movie is None) else False
