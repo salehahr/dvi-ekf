@@ -53,7 +53,7 @@ for i, t in enumerate(cam.t[1:]):
             current_imu = imu_queue.at_index(ii)
             kf.dt = ti - old_ti
 
-            kf.propagate(ti, current_imu)
+            kf.propagate(ti, om, acc)
 
             old_ti = ti
 

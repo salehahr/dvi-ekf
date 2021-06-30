@@ -25,8 +25,8 @@ class States(object):
         self.size = len(p) + len(v) + 4
 
     def apply_correction(self, err):
-        self.p += err.dp
-        self.v += err.dv
+        self.p += err.dp.reshape(3,1)
+        self.v += err.dv.reshape(3,1)
         self.q = self.q * err.dq
         self.q.normalise()
 
@@ -55,11 +55,29 @@ class Filter(object):
 
         # imu
         self.imu = imu
-        self.om_old = None
-        self.acc_old = None
+        self._om_old = None
+        self._acc_old = None
 
         # covariance
         self.P = P0
+
+    @property
+    def om_old(self):
+        return self._om_old
+    @property
+    def acc_old(self):
+        return self._acc_old
+
+    @om_old.setter
+    def om_old(self, val):
+        if isinstance(val, np.ndarray):
+            val = val.squeeze()
+        self._om_old = val
+    @acc_old.setter
+    def acc_old(self, val):
+        if isinstance(val, np.ndarray):
+            val = val.squeeze()
+        self._acc_old = val
 
     @property
     def jac_X_deltx(self):
@@ -81,28 +99,30 @@ class Filter(object):
         self.om_old = self.imu.om
         self.acc_old = self.imu.acc
 
-    def propagate(self, t, imu, do_prop_only=False):
+    def propagate(self, t, om, acc, do_prop_only=False):
         self._predict_nominal()
         self._predict_error()
         self._predict_error_covariance()
 
         # IMU buffer
-        self.om_old = imu.om
-        self.acc_old = imu.acc
+        self.om_old = om
+        self.acc_old = acc
 
         # for plotting
         self.traj.append_state(t, self.states)
 
     def _predict_nominal(self):
         self.R_WB_old = self.states.q.rot
+        W_acc_B_old = (self.R_WB_old @ self.acc_old).reshape(3,1)
 
         # position p
-        self.states.p += \
-            self.dt * self.states.v \
-            + self.dt**2/2. * self.R_WB_old @ self.acc_old
+        self.states.p = self.states.p \
+                + self.dt * self.states.v \
+                + self.dt**2/2. * W_acc_B_old
 
         # velocity v
-        self.states.v += self.R_WB_old @ self.acc_old * self.dt
+        self.states.v = self.states.v \
+                + W_acc_B_old * self.dt
 
         # orientation q: Solà
         Om = Quaternion(w=1., v=(0.5 * self.dt * self.om_old) ) #works but the 0.5 wasn't in the paper.....
