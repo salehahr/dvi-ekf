@@ -4,6 +4,8 @@ import unittest
 from Models import SimpleProbe, RigidSimpleProbe
 from Models import Camera, Imu, n_dofs
 
+from Filter import Quaternion
+
 import numpy as np
 import sympy as sp
 t = sp.Symbol('t')
@@ -234,6 +236,11 @@ class TestImu(TestRigidSimpleRobot):
         if os.path.exists(cls.filepath):
             os.remove(cls.filepath)
         super().tearDownClass()
+
+class TestQuaternions(unittest.TestCase):
+    def setUp(self):
+        self.q1 = Quaternion(x=0, y=-0.002, z=-0.001, w=1)
+        self.q2 = Quaternion(x=0, y=0, z=0, w=1)
 
 def suite():
     suite = unittest.TestSuite()

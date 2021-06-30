@@ -125,7 +125,7 @@ class Filter(object):
                 + W_acc_B_old * self.dt
 
         # orientation q: Solà
-        Om = Quaternion(w=1., v=(0.5 * self.dt * self.om_old) ) #works but the 0.5 wasn't in the paper.....
+        Om = Quaternion(w=1., v=(0.5 * self.dt * self.om_old) )
         self.states.q = self.states.q * Om
 
         # # orientation q: Kok
