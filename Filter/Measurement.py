@@ -11,7 +11,7 @@ class Measurement(object):
 
     def __init__(self, t, v1, v2):
         self.t = t
-        self.vec = np.vstack((v1, v2))
+        self.vec = np.hstack((v1, v2))
 
 class VisualMeasurement(Measurement):
     """ Visual measurements from SLAM
