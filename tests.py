@@ -144,11 +144,11 @@ class TestSimpleProbeBC(unittest.TestCase):
         view_selector(self.probe, self.q_0)
         do_plot(self.probe, self.q_0)
 
-    def test_lambdify_omBC(self):
+    def test_lambdify_R(self):
         """ Ensures correct substitutions of D.O.F.s in the expression
-            for om_BC. """
-        q9_dot = sp.Symbol('q9_dot')
-        om_BC_func = sp.lambdify(q9_dot, self.om_BC, 'numpy')
+            for R. """
+        q7 = sp.Symbol('q7')
+        R_func = sp.lambdify(q7, self.probe.R, 'numpy')
 
 class TestRigidSimpleProbe(unittest.TestCase):
 

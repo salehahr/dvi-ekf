@@ -1,4 +1,5 @@
 import roboticstoolbox as rtb
+from spatialmath import SE3
 import spatialmath.base.symbolic as sym
 
 import numpy as np
@@ -7,6 +8,9 @@ from sympy.physics.vector import dynamicsymbols
 t = sp.symbols('t')
 
 import matplotlib.pyplot as plt
+
+# just so that the plot is orientated correctly...
+plot_rotation = SE3.Ry(-180, 'deg')
 
 def dummify_undefined_functions(expr):
     mapping = {}
@@ -44,7 +48,7 @@ class Probe(rtb.DHRobot):
         """ Initialises robot links. """
 
         links = self._gen_links(scope_length, theta_cam)
-        super().__init__(links, name='probe')
+        super().__init__(links, name='probe', base=plot_rotation)
 
         self.q_sym = [dynamicsymbols(f"q{i+1}") for i in range(self.nlinks)]
         self.q_dot_sym = [sp.diff(q, t) for q in self.q_sym]
@@ -53,25 +57,25 @@ class Probe(rtb.DHRobot):
 
     def _gen_links(self, scope_length, theta_cam):
         """ Generates robot links according to chosen configuration. """
-
-        links = [
+        links_imu_to_cam = [
             # imu orientation
+            rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
             rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
-            rtb.RevoluteDH(alpha=sp.pi/2, offset=-sp.pi/2),
-            rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
-            # imu translation
-            rtb.PrismaticDH(theta=sp.pi/2, alpha=-sp.pi/2),
-            rtb.PrismaticDH(theta=-sp.pi/2, alpha=-sp.pi/2),
-            rtb.PrismaticDH(),
-            # pivot rotations
-            rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
-            rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
-            rtb.RevoluteDH(d=scope_length),
-            # cam
-            rtb.RevoluteDH(alpha=theta_cam),
+            rtb.RevoluteDH(alpha=0, offset=0),
+            # # imu translation
+            rtb.PrismaticDH(theta=0, alpha=sp.pi/2),
+            rtb.PrismaticDH(theta=sp.pi/2, alpha=sp.pi/2),
+            rtb.PrismaticDH(theta=-sp.pi/2, alpha=sp.pi/2),
             ]
 
-        return links
+        links_cam_to_slam = [
+            # cam to scope end
+            rtb.RevoluteDH(d=scope_length, a=0, alpha=theta_cam, offset=0),
+            # scope end to virtual slam
+            rtb.RevoluteDH(d=0*scope_length, a=0, alpha=0, offset=0),
+            ]
+
+        return links_imu_to_cam + links_cam_to_slam
 
     @property
     def T(self):
@@ -178,10 +182,8 @@ class SimpleProbe(Probe):
 
     ROT1, ROT2, ROT3 = 0., 0., 0.
     TRANS4, TRANS5, TRANS6 = 0., 0., 0.2
-    ROT7, ROT8 = 0., 0.
 
-    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
-                    None, 0.]
+    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, None, 0.]
 
     def __init__(self, scope_length, theta_cam):
         """ Initialises probe as normal and sets the generalised
@@ -205,10 +207,8 @@ class RigidSimpleProbe(SimpleProbe):
 
     ROT1, ROT2, ROT3 = 0., 0., 0.
     TRANS4, TRANS5, TRANS6 = 0., 0., 0.2
-    ROT7, ROT8, ROT9 = 0., 0., 0.
 
-    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
-                    ROT9, 0.]
+    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, 0., 0.]
 
     def __init__(self, scope_length, theta_cam):
         super().__init__(scope_length, theta_cam)
