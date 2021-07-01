@@ -57,6 +57,12 @@ def distance(cam, imu):
     return [math.sqrt(x) for x in norm]
 dist = distance(cam.traj.interpolated, imu.traj.reconstructed)
 
+print(probe_BtoC)
+
+print(f"q: {probe_BtoC.q}")
+print(f"q_sym: {probe_BtoC.q_sym}")
+print(f"q_dot: {probe_BtoC.q_dot_sym}\n")
+
 if do_plot:
     recon_axes_2d = cam.traj.plot(min_t=min_t, max_t=max_t)
     recon_axes_2d = imu.traj.reconstructed.plot(recon_axes_2d,
@@ -64,16 +70,5 @@ if do_plot:
 
     recon_axes_3d = cam.traj.plot_3d()
     recon_axes_3d = imu.traj.reconstructed.plot_3d(ax=recon_axes_3d)
-
-    plt.legend()
-    plt.show()
-
-# print and plot
-if __name__ == '__main__':
-    print(probe_BtoC)
-
-    print(f"q: {probe_BtoC.q}")
-    print(f"q_sym: {probe_BtoC.q_sym}")
-    print(f"q_dot: {probe_BtoC.q_dot_sym}\n")
 
     probe_BtoC.plot(probe_BtoC.q)
