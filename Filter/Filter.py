@@ -20,6 +20,7 @@ class States(object):
     def __init__(self, p, v, q):
         self.p = np.asarray(p)
         self.v = np.asarray(v)
+
         self.q = Quaternion(xyzw=q, do_normalise=True)
 
         self.size = len(p) + len(v) + 4
@@ -92,12 +93,6 @@ class Filter(object):
         X_deltx[-4:,-3:] = Q_deltth
 
         return X_deltx
-
-    def init_imu(self, *joint_dofs0):
-        self.imu.eval_init(*joint_dofs0)
-
-        self.om_old = self.imu.om
-        self.acc_old = self.imu.acc
 
     def propagate(self, t, om, acc, do_prop_only=False):
         self._predict_nominal()
