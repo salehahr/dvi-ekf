@@ -27,14 +27,14 @@ def parse_arguments():
 do_regenerate, do_plot = parse_arguments()
 
 # data generation params
-num_imu_between_frames = 10
+num_imu_between_frames = 3
 
 # initialise robot, joint variables
 probe_BtoC = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
 
 # parameters from camera
 filepath_cam = './trajs/offline_mandala0_gt.txt'
-cam = Camera(filepath=filepath_cam, max_vals=50)
+cam = Camera(filepath=filepath_cam, max_vals=20)
 cam_interp = cam.interpolate(num_imu_between_frames)
 min_t, max_t = cam. t[0], cam.t[-1]
 
