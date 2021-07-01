@@ -65,14 +65,5 @@ for i, t in enumerate(cam.t[1:]):
 
 
 # plots
-import matplotlib.pyplot as plt
-from plotter import plot_savefig, plot_trajectories, plot_velocities, plot_noise_sensitivity
-
+from plotter import plot_trajectories
 plot_trajectories(kf.traj, do_prop_only)
-# plot_velocities(kf.traj, do_plot_vel)
-# plot_noise_sensitivity(kf.traj, Qval, Rpval, Rqval)
-
-P_mp_axes = kf.P_mp.plot(min_t=min_t, max_t=max_t)
-
-plt.legend()
-plt.show()

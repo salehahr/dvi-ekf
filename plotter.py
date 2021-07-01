@@ -1,15 +1,19 @@
 from generate_data import IC, cov0, min_t, max_t
-from generate_data import stereoGT_traj, mono_traj
+from generate_data import cam, cam_interp
+
+import matplotlib.pyplot as plt
 
 def plot_savefig(fig, figname):
     print(f"Saving file \"{figname}\". ")
     fig.savefig(figname)
     
 def plot_trajectories(kf_traj, do_prop_only):
-    axes = stereoGT_traj.plot()
-    if not do_prop_only:
-        axes = mono_traj.plot(axes)
+    axes = cam.traj.plot()
+    # if not do_prop_only:
+        # axes = mono_traj.plot(axes)
     axes = kf_traj.plot(axes, min_t=min_t, max_t=max_t)
+    plt.legend()
+    plt.show()
 
 def plot_velocities(kf_traj, do_plot_vel):
     if do_plot_vel:
