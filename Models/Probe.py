@@ -160,23 +160,6 @@ class Probe(rtb.DHRobot):
         alp = self._calc_acceleration()[-3:]
         return dummify_array(alp).reshape(3,1)
 
-    ## --- reversed kinematic relations --- ##
-    def get_reversed_kin(self):
-        """ Get reversed kinematics relations (i.e. B relative to C) """
-        om_p_cross = np.cross(self.om, self.p,axis=0)
-
-        p_rev = -self.p
-        v_rev = -self.v + om_p_cross
-        acc_rev = -self.acc \
-                    + np.cross(self.acc, self.p, axis=0) \
-                    + 2 * np.cross(self.om, self.v, axis=0) \
-                    - np.cross(self.om, om_p_cross, axis=0)
-
-        om_rev = -self.om
-        alp_rev = -self.alp
-
-        return p_rev, v_rev, acc_rev, om_rev, alp_rev
-
 class SimpleProbe(Probe):
     """ Simple probe with ROT9 as the only degree of freedom. """
 

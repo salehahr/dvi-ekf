@@ -136,7 +136,6 @@ class TestSimpleProbeBC(unittest.TestCase):
         cls.probe = SimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
         cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_sym]
 
-        cls.p_BC, cls.v_BC, cls.acc_BC, cls.om_BC, alp_BC = cls.probe.get_reversed_kin()
         cls.R_BW = calc_R_BW(cls.probe.R)
 
     @unittest.skip("Skip plot.")
@@ -163,7 +162,6 @@ class TestRigidSimpleProbe(unittest.TestCase):
 
         # parameters from fwkin
         cls.R_BC = cls.probe.R
-        cls.p_BC, cls.v_BC, cls.acc_BC, cls.om_BC, cls.alp_BC = cls.probe.get_reversed_kin()
 
     @unittest.skip("Skip plot.")
     def test_plot(self):
