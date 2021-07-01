@@ -128,7 +128,7 @@ class TestSymbolic(unittest.TestCase):
         res = func(*self.q_s, *self.q_dot_s, *self.q_ddot_s)
         print(res)
 
-class TestSimpleRobotBC(unittest.TestCase):
+class TestSimpleProbeBC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -150,21 +150,7 @@ class TestSimpleRobotBC(unittest.TestCase):
         q9_dot = sp.Symbol('q9_dot')
         om_BC_func = sp.lambdify(q9_dot, self.om_BC, 'numpy')
 
-class TestSimpleRobotCB(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        """ Initialise probe and joint variables. """
-        cls.probe = SimpleProbe(scope_length=0.5, theta_cam=sp.pi/6,
-                config='CB')
-        cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_sym]
-
-    @unittest.skip("Skip plot.")
-    def test_plot(self):
-        view_selector(self.probe, self.q_0)
-        do_plot(self.probe, self.q_0)
-
-class TestRigidSimpleRobot(unittest.TestCase):
+class TestRigidSimpleProbe(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -184,7 +170,7 @@ class TestRigidSimpleRobot(unittest.TestCase):
         # view_selector(self.probe, self.q_0)
         do_plot(self.probe, self.q_0)
 
-class TestImu(TestRigidSimpleRobot):
+class TestImu(TestRigidSimpleProbe):
 
     @classmethod
     def setUpClass(cls):
@@ -244,7 +230,7 @@ class TestQuaternions(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-    # suite.addTest(TestSimpleRobotBC(''))
+    # suite.addTest(TestSimpleProbeBC(''))
     return suite
 
 if __name__ == '__main__':

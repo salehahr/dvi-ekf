@@ -40,11 +40,10 @@ def dummify_array(expr):
         return dummify_undefined_functions(expr)
 
 class Probe(rtb.DHRobot):
-    def __init__(self, scope_length, theta_cam, config='BC'):
+    def __init__(self, scope_length, theta_cam):
         """ Initialises robot links. """
-        self.config = config
 
-        links = self._gen_links(config, scope_length, theta_cam)
+        links = self._gen_links(scope_length, theta_cam)
         super().__init__(links, name='probe')
 
         self.q_sym = [dynamicsymbols(f"q{i+1}") for i in range(self.nlinks)]
@@ -52,47 +51,25 @@ class Probe(rtb.DHRobot):
         self.q_ddot_sym = [sp.diff(q, t) for q in self.q_dot_sym]
         self.q_sym = [sp.Symbol(f'q{i+1}') for i in range(self.nlinks)]
 
-    def _gen_links(self, config, scope_length, theta_cam):
+    def _gen_links(self, scope_length, theta_cam):
         """ Generates robot links according to chosen configuration. """
 
-        print(f"Initialising the probe in the configuration {config}...")
-
-        if config == 'BC':
-            links = [
-                # imu orientation
-                rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
-                rtb.RevoluteDH(alpha=sp.pi/2, offset=-sp.pi/2),
-                rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
-                # imu translation
-                rtb.PrismaticDH(theta=sp.pi/2, alpha=-sp.pi/2),
-                rtb.PrismaticDH(theta=-sp.pi/2, alpha=-sp.pi/2),
-                rtb.PrismaticDH(),
-                # pivot rotations
-                rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
-                rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
-                rtb.RevoluteDH(d=scope_length),
-                # cam
-                rtb.RevoluteDH(alpha=theta_cam),
-                ]
-        elif config == 'CB':
-            links = [
-                # angled tip
-                rtb.RevoluteDH(alpha=-theta_cam),
-                # rod to camera coupling
-                rtb.RevoluteDH(alpha=-sp.pi/2, d=-scope_length),
-                rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
-                rtb.RevoluteDH(alpha=0, offset=-sp.pi/2),
-                # imu translation
-                rtb.PrismaticDH(alpha=sp.pi/2, theta=0),
-                rtb.PrismaticDH(alpha=sp.pi/2, theta=sp.pi/2),
-                rtb.PrismaticDH(alpha=-sp.pi/2, theta=-sp.pi/2),
-                # imu orientation
-                rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
-                rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
-                rtb.RevoluteDH(),
-                ]
-        else:
-            print("Invalid configuration!")
+        links = [
+            # imu orientation
+            rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
+            rtb.RevoluteDH(alpha=sp.pi/2, offset=-sp.pi/2),
+            rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
+            # imu translation
+            rtb.PrismaticDH(theta=sp.pi/2, alpha=-sp.pi/2),
+            rtb.PrismaticDH(theta=-sp.pi/2, alpha=-sp.pi/2),
+            rtb.PrismaticDH(),
+            # pivot rotations
+            rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
+            rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
+            rtb.RevoluteDH(d=scope_length),
+            # cam
+            rtb.RevoluteDH(alpha=theta_cam),
+            ]
 
         return links
 
@@ -203,24 +180,18 @@ class SimpleProbe(Probe):
     TRANS4, TRANS5, TRANS6 = 0., 0., 0.2
     ROT7, ROT8 = 0., 0.
 
-    constraints_BC = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
+    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
                     None, 0.]
 
-    constraints_CB = [0.,
-                    None, ROT8, ROT7,
-                    -TRANS6, TRANS5, TRANS4,
-                    ROT3, ROT2, ROT1
-                    ]
-
-    def __init__(self, scope_length, theta_cam, config='BC'):
+    def __init__(self, scope_length, theta_cam):
         """ Initialises probe as normal and sets the generalised
             coordinates, which are to be constrained, to the
             corresponding constant values. """
 
-        super().__init__(scope_length, theta_cam, config)
+        super().__init__(scope_length, theta_cam)
 
         # redefine q and qdot (symbolic)
-        constraints = eval(f"self.__class__.constraints_{config}")
+        constraints = self.__class__.constraints
         assert(len(constraints) == len(self.q_sym))
 
         for i, c in enumerate(constraints):
@@ -236,11 +207,11 @@ class RigidSimpleProbe(SimpleProbe):
     TRANS4, TRANS5, TRANS6 = 0., 0., 0.2
     ROT7, ROT8, ROT9 = 0., 0., 0.
 
-    constraints_BC = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
+    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, ROT7, ROT8,
                     ROT9, 0.]
 
     def __init__(self, scope_length, theta_cam):
-        super().__init__(scope_length, theta_cam, 'BC')
+        super().__init__(scope_length, theta_cam)
 
         # set all joint values to 0
         self.q = [q if not isinstance(q, sp.Expr) else 0. for q in self.q_sym]
