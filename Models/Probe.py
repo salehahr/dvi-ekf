@@ -116,18 +116,75 @@ class Probe(rtb.DHRobot):
 
         return s
 
-    def plot(self, config, block=True):
+    def plot(self, config, block=True, limits=None, movie=None, is_static=True, dt=0.05):
         """ Modified to allow 'hold' of figure. """
 
+        from roboticstoolbox.backends.PyPlot import PyPlot
         import tkinter
         print(f"Plotting robot with the configuration:\n\t {config}")
 
-        # handles error when closing the window
+        env = PyPlot()
+
+        # visuals
+        limit_x = [-0.1, 0.1]
+        limit_y = [-0.7, 0.1]
+        limit_z = [0., 0.7]
+        limits = [*limit_x, *limit_y, *limit_z] if (limits is None) else limits
+
+        env.launch(limits=limits)
+        ax = env.fig.axes[0]
         try:
-            plt_obj = super().plot(config, block=block)
-            return plt_obj
-        except tkinter.TclError:
-            return None
+            ax.view_init(azim=azim, elev=elev)
+        except NameError:
+            pass # default view
+
+        # robots
+        env.add(self, jointlabels=True, jointaxes=False,
+                    eeframe=True, shadow=False)
+
+        # save gif
+        loop = True if (movie is None) else False
+        images = []
+
+        if not is_static:
+            try:
+                while True:
+                    for qk in config:
+                        self.q = qk
+                        env.step(dt)
+
+                        if movie is not None:
+                            images.append(env.getframe())
+
+                    if movie is not None:
+                        # save it as an animated gif
+                        images[0].save(
+                            movie,
+                            save_all=True,
+                            append_images=images[1:],
+                            optimize=False,
+                            duration=dt,
+                            loop=0,
+                        )
+                    if not loop:
+                        break
+
+                if block:
+                    env.hold()
+
+            except tkinter.TclError:
+                # handles error when closing the window
+                return None
+        else:
+            try:
+                self.q = config
+                env.step(dt)
+
+                if block:
+                    env.hold()
+            except tkinter.TclError:
+                # handles error when closing the window
+                return None
 
     ## ---  velocity calculations --- ##
     def _calc_velocity(self):
