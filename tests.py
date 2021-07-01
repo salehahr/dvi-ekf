@@ -71,7 +71,7 @@ class TestSymbolic(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.probe = SimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
-        cls.acc_CB = -cls.probe.acc
+        # cls.acc_CB = -cls.probe.acc
         cls.R_s = sp.MatrixSymbol('R_BW', 3, 3)
         cls.acc_C_s = sp.MatrixSymbol('acc_C', 3, 1)
 
@@ -81,26 +81,13 @@ class TestSymbolic(unittest.TestCase):
 
         cls.params = [*cls.q_s, *cls.q_dot_s, *cls.q_ddot_s]
 
-    def full_expr(self):
-        """ Expression for acc_B in IMU coordinates. """
-        res = self.R_s @ (
-                    self.acc_C_s + self.acc_CB
-                    )
-        return res[0][0]
-
-    def gen_full_expr(self):
-        return self.full_expr()
-
     def gen_partial_expr(self):
         q1dd = sp.symbols('q1_ddot')
         q5dd = sp.symbols('q5_ddot')
         q9 = sp.symbols('q9')
-        # acc_C = sp.MatrixSymbol('acc_C', 3, 1)
-        # R_BW = sp.MatrixSymbol('R_BW', 3, 3)
 
         return -q1dd*sp.sqrt(3)*sp.sin(q9) \
-                + 1.0*q5dd \
-                # + acc_C[0, 0]*R_BW[0, 0]
+                + 1.0*q5dd 
 
     def custom_sin(self, arg):
         return sp.sin(arg)
@@ -108,18 +95,6 @@ class TestSymbolic(unittest.TestCase):
     def test_partial_expr(self):
         partial_expr = self.gen_partial_expr()
         func = sp.lambdify(self.params, partial_expr,
-                # modules=[{'sin': custom_sin}, 'math'],
-                # modules='math',
-                modules='sympy',
-                )
-
-        res = func(*self.q_s, *self.q_dot_s, *self.q_ddot_s)
-        print(res)
-
-    def test_full_expr(self):
-        full_expr = self.gen_partial_expr()
-        print(full_expr)
-        func = sp.lambdify(self.params, full_expr,
                 # modules=[{'sin': custom_sin}, 'math'],
                 # modules='math',
                 modules='sympy',
