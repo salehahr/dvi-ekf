@@ -195,11 +195,11 @@ class Imu(object):
     def reconstruct(self):
         assert(self.flag_interpolated == True)
         R_WB = [R_WC @ self.R_BC.T for R_WC in self.cam.R]
-        IC = self._get_IC()
-        self.traj.reconstruct(R_WB, *IC)
+        IC = self.get_IC()
+        self.traj.reconstruct(R_WB, IC[0], *IC[2:])
         return self.traj.reconstructed
 
-    def _get_IC(self):
+    def get_IC(self):
         """ For trajectory reconstruction.
             Obtains IMU IC based on initial camera values and
             the relative kinematics relations C to B.
@@ -218,7 +218,7 @@ class Imu(object):
         W_alp_BW_0 = W_alp_CW - R_WB_0 @ self.B_alp_CB
         W_acc_BW_0 = R_WB_0 @ self.acc[:,0].reshape(3,1)
         
-        return W_p_BW_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0
+        return W_p_BW_0, R_WB_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0
 
     def write_array_to_file(self, filepath):
         """ Writes IMU trajectory, stored in the _om and _acc arrays,
