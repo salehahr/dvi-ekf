@@ -20,8 +20,9 @@ class States(object):
     def __init__(self, p, v, q):
         self.p = np.asarray(p)
         self.v = np.asarray(v)
+        self._q = None
 
-        self.q = Quaternion(xyzw=q, do_normalise=True)
+        self.q = q
 
         self.size = len(p) + len(v) + 4
 
@@ -30,6 +31,22 @@ class States(object):
         self.v += err.dv.reshape(3,1)
         self.q = self.q * err.dq
         self.q.normalise()
+
+    @property
+    def q(self):
+        return self._q
+
+    @q.setter
+    def q(self, val):
+        if isinstance(val, np.ndarray):
+            if val.shape == (3,3):
+                self._q = Quaternion(rot=val)
+            else:
+                self._q = Quaternion(xyzw=q, do_normalise=True)
+        elif isinstance(val, Quaternion):
+            self._q = val
+        else:
+            self._q = Quaternion(xyzw=val, do_normalise=True)
 
 class ErrorStates(object):
     def __init__(self, vec):
