@@ -16,11 +16,11 @@ probe_BtoC = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
 # filepath_cam = './trajs/offline_mandala0_gt.txt' # stereo
 filepath_cam = './trajs/offline_mandala0_mono.txt' # mono
 cam = Camera(filepath=filepath_cam, max_vals=max_vals)
-# cam_interp = cam.interpolate(num_imu_between_frames)
+cam_interp = cam.interpolate(num_imu_between_frames)
 min_t, max_t = cam.t[0], cam.t[-1]
 
 # imu
-imu = Imu(probe_BtoC, cam)
+imu = Imu(probe_BtoC, cam_interp)
 
 # noise matrices
 def gen_noise_matrices(Q, Rp, Rq):

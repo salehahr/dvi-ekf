@@ -20,7 +20,7 @@ def parse_arguments():
 do_prop_only, use_noisy_imu = parse_arguments()
 
 # load data
-from generate_data import probe_BtoC, cam, imu
+from generate_data import probe_BtoC, cam, cam_interp, imu
 from generate_data import IC, cov0, min_t, max_t, gen_noise_matrices
 
 # noise values
@@ -39,16 +39,21 @@ for i, t in enumerate(cam.t[1:]):
     current_vis = cam.traj.at_index(i)
 
     # propagate
-    imu_queue = imu.traj.get_queue(old_t, t)
-    if imu_queue:
-        old_ti = t
-        for ii, ti in enumerate(imu_queue.t):
-            current_imu = imu_queue.at_index(ii)
-            kf.dt = ti - old_ti
+    # queue = imu.traj.get_queue(old_t, t) # real imu data
+    # simulate imu queue
+    queue = cam_interp.generate_queue(old_t, t)
+    old_ti = t
 
-            kf.propagate(ti, om, acc)
+    print(f"Predicting... t={queue.t[0]}")
+    for i, ti in enumerate(queue.t):
+        interp = queue.at_index(i)
+        om, acc = imu.eval_expr_single(ti, interp.acc, interp.R,
+            interp.om, interp.alp, *probe_BtoC.joint_dofs)
 
-            old_ti = ti
+        kf.dt = ti - old_ti
+        kf.propagate(ti, om, acc)
+
+        old_ti = ti
 
     # update
     if not do_prop_only:

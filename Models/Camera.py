@@ -107,3 +107,42 @@ class Camera(object):
         self.traj.interpolate(num_imu_between_frames)
         traj_interp = self.traj.interpolated
         return Camera(filepath='', traj=self.traj.interpolated)
+
+    def generate_queue(self, old_t, new_t):
+        """ After old_t, up till new_t. """
+        old_i = self._get_index_at(old_t)
+        new_i = self._get_index_at(new_t)
+
+        queue = Queue()
+        queue.t = self.t[old_i+1:new_i+1]
+        queue.p = self.p[:,old_i+1:new_i+1]
+        queue.R = self.R[old_i+1:new_i+1]
+        queue.v = self.v[:,old_i+1:new_i+1]
+        queue.om = self.om[:,old_i+1:new_i+1]
+        queue.acc = self.acc[:,old_i+1:new_i+1]
+        queue.alp = self.alp[:,old_i+1:new_i+1]
+
+        return queue
+
+    def _get_index_at(self, T):
+        """ Get index of camera data whose timestamp matches the argument T. """
+        return max([i for i, t in enumerate(self.t) if t <= T])
+
+class Queue(object):
+    def __init__(self):
+        pass
+
+    def __iter__(self):
+        for attr, value in self.__dict__.items():
+            yield attr, value
+
+    def at_index(self, i):
+        queue_item = Queue()
+        queue_item.t = self.t[i]
+        queue_item.p = self.p[:,i]
+        queue_item.R = self.R[i]
+        queue_item.v = self.v[:,i]
+        queue_item.om = self.om[:,i]
+        queue_item.acc = self.acc[:,i]
+        queue_item.alp = self.alp[:,i]
+        return queue_item
