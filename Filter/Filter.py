@@ -17,14 +17,16 @@ def skew(x):
                      [-x[1], x[0],    0]])
 
 class States(object):
-    def __init__(self, p, v, q):
-        self.p = np.asarray(p)
-        self.v = np.asarray(v)
+    def __init__(self, p, v, q, dofs):
+        self.p = np.asarray(p).reshape(3,1)
+        self.v = np.asarray(v).reshape(3,1)
         self._q = None
+        self.dofs = dofs
 
         self.q = q
 
-        self.size = len(p) + len(v) + 4
+        self.size = len(p) + len(v) + len(self.q.xyzw) + len(dofs)
+        assert(self.size == 16)
 
     def apply_correction(self, err):
         self.p += err.dp.reshape(3,1)
@@ -145,6 +147,9 @@ class Filter(object):
         # self.states.q += Om * self.states.q
 
         self.states.q.normalise()
+
+        # dofs
+        # self.states.dofs = self.states.dofs (random walk)
 
         self.Om_old = Om
 

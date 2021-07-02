@@ -261,3 +261,7 @@ class RigidSimpleProbe(SimpleProbe):
     @property
     def joint_dofs(self):
         return [*self.q, *self.qd, *self.qdd]
+
+    @property
+    def imu_dofs(self):
+        return [*self.q[:6]]
