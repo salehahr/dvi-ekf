@@ -10,6 +10,9 @@ import numpy as np
 import sympy as sp
 t = sp.Symbol('t')
 
+from aux_symbolic import sympy2casadi
+from casadi import *
+
 from roboticstoolbox.backends.PyPlot import PyPlot
 
 cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=5)
@@ -127,6 +130,24 @@ class TestSymbolic(unittest.TestCase):
         expr = self.probe.acc
         expr = self.probe.alp
 
+class TestCasadi(unittest.TestCase):
+    def setUp(self):
+        """ Initialise probe and joint variables. """
+        self.probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+
+    def test_sympy2casadi(self):
+        x,y = sp.symbols("x y")
+        xy = sp.Matrix([x,y])
+        e = sp.Matrix([x*sp.sqrt(y),sp.sin(x+y),abs(x-y)])
+
+        X = SX.sym("xc")
+        Y = SX.sym("yc")
+        XY = casadi.vertcat(X,Y)
+
+        res = sympy2casadi(e, [x, y], XY)
+        print(res)
+        # print(self.probe.q_cas)
+
 class TestSimpleProbeBC(unittest.TestCase):
 
     @classmethod
@@ -140,6 +161,7 @@ class TestSimpleProbeBC(unittest.TestCase):
         view_selector(self.probe, self.q_0)
         do_plot(self.probe, self.q_0)
 
+    @unittest.skip("Not necessary after implementing CasADi.")
     def test_lambdify_R(self):
         """ Ensures correct substitutions of D.O.F.s in the expression
             for R. """

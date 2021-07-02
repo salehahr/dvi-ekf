@@ -2,46 +2,17 @@ import roboticstoolbox as rtb
 from spatialmath import SE3
 import spatialmath.base.symbolic as sym
 
+from casadi import *
 import numpy as np
 import sympy as sp
 from sympy.tensor.array import tensorproduct, tensorcontraction
 
 from .params import q_s, qd_s, qdd_s
 from .params import q_cas, qd_cas, qdd_cas
+from aux_symbolic import sympy2casadi, dummify_array
 
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Ry(-180, 'deg')
-
-def dummify_undefined_functions(expr):
-    mapping = {}
-
-    # replace all Derivative terms
-    for der in expr.atoms(sp.Derivative):
-        f_name = der.expr.func.__name__
-        der_count = der.derivative_count
-        ds = 'd' * der_count
-        # var_names = [var.name for var in der.variables]
-        # name = "d%s_d%s" % (f_name, 'd'.join(var_names))
-        name = f"{f_name}_{ds}ot"# % (f_name, 'd'.join(var_names))
-        mapping[der] = sp.Symbol(name)
-
-    # replace undefined functions
-    from sympy.core.function import AppliedUndef
-    for f in expr.atoms(AppliedUndef):
-        f_name = f.func.__name__
-        mapping[f] = sp.Symbol(f_name)
-
-    return expr.subs(mapping)
-
-def dummify_array(expr):
-    is_array = isinstance(expr, (list, np.ndarray))
-
-    if is_array:
-        for i, a in enumerate(expr):
-            expr[i] = dummify_undefined_functions(a)
-        return expr
-    else:
-        return dummify_undefined_functions(expr)
 
 class Probe(rtb.DHRobot):
     def __init__(self, scope_length, theta_cam):
@@ -75,6 +46,16 @@ class Probe(rtb.DHRobot):
             ]
 
         return links_imu_to_cam + links_cam_to_slam
+
+    @property
+    def q_cas(self):
+        return casadi.SX(self.q_s)
+    @property
+    def qd_cas(self):
+        return casadi.SX(self.qd_s)
+    @property
+    def qdd_cas(self):
+        return casadi.SX(self.qdd_s)
 
     @property
     def qd_s_arr(self):
