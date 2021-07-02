@@ -4,6 +4,7 @@ import spatialmath.base.symbolic as sym
 
 import numpy as np
 import sympy as sp
+from sympy.tensor.array import tensorproduct, tensorcontraction
 from sympy.physics.vector import dynamicsymbols
 t = sp.symbols('t')
 
@@ -78,6 +79,10 @@ class Probe(rtb.DHRobot):
         return links_imu_to_cam + links_cam_to_slam
 
     @property
+    def q_dot_sym_arr(self):
+        return sp.MutableDenseNDimArray(self.q_dot_sym, (self.n, 1))
+
+    @property
     def T(self):
         return self.fkine(self.q_sym)
 
@@ -112,10 +117,32 @@ class Probe(rtb.DHRobot):
         return dummify_array(om).reshape(3,1)
 
     ## --- acceleration calculations --- ##
+    def hessian_symbolic(self, J0):
+        n = self.n
+        H = sp.MutableDenseNDimArray([0]*(6*n*n), (6, n, n))
+
+        for j in range(n):
+            for i in range(j, n):
+                H[:3, i, j] = np.cross(J0[3:, j], J0[:3, i])
+                H[3:, i, j] = np.cross(J0[3:, j], J0[3:, i])
+
+                if i != j:
+                    H[:3, j, i] = H[:3, i, j]
+
+        return H
+
+    ## --- acceleration calculations --- ##
     def _calc_acceleration(self):
-        J = self.jacob0(self.q_sym)
-        H = self.hessian0(q=self.q_sym)
-        return H @ self.q_dot_sym @ self.q_dot_sym + J @ self.q_ddot_sym
+        J0 = self.jacob0(self.q_sym)
+        H = self.hessian_symbolic(J0)
+
+        tp1 = tensorcontraction(tensorproduct(H, self.q_dot_sym_arr), (2,3)) # 6x8x8x8x1
+        tp1 = tp1[:,:,0] # 6x8
+
+        tp2 = tensorcontraction(tensorproduct(tp1, self.q_dot_sym_arr), (1,2)) # 6x1
+
+        # H @ qd @ qd + J @ qdd
+        return sp.Array(tp2 + (J0 @ self.q_ddot_sym).reshape(6,1))
 
     @property
     def acc(self):

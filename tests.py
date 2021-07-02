@@ -83,7 +83,7 @@ class TestSymbolic(unittest.TestCase):
         q9 = sp.symbols('q9')
 
         return -q1dd*sp.sqrt(3)*sp.sin(q9) \
-                + 1.0*q5dd 
+                + 1.0*q5dd
 
     def custom_sin(self, arg):
         return sp.sin(arg)
@@ -98,6 +98,34 @@ class TestSymbolic(unittest.TestCase):
 
         res = func(*self.q_s, *self.q_dot_s, *self.q_ddot_s)
         print(res)
+
+    def test_tensor_mult(self):
+        from sympy.abc import a, b, c, d, e, f, g, h, i, j, k, l, m, n, o
+        from sympy.tensor.array import tensorproduct
+        from sympy.tensor.array import tensorcontraction
+
+        H = sp.MutableDenseNDimArray([0]*(2*3*4), (2,3,4))
+        H[0,:,:] = sp.Matrix([[a, b, c, d], [e, f, g, h], [m, n, c, d]])
+        H[1,:,:] = sp.Matrix([[e, f, g, h], [a, b, c, d], [e, f, g, h]])
+
+        qd1 = sp.MutableDenseNDimArray([i, j, k, l], (4,1))
+
+        tp1 = tensorproduct(H, qd1)
+        assert(tp1.shape == (2, 3, 4, 4, 1))
+        tp1 = tensorcontraction(tp1, (2,3))
+        assert(tp1.shape == (2, 3, 1))
+        tp1 = tp1[:,:,0]
+        assert(tp1.shape == (2, 3))
+
+        qd2 = sp.MutableDenseNDimArray([m, n, o], (3,1))
+        tp2 = tensorproduct(tp1, qd2)
+        assert(tp2.shape == (2, 3, 3, 1))
+        tp2 = tensorcontraction(tp2, (1,2))
+        assert(tp2.shape == (2, 1))
+
+    def test_expr_with_acc(self):
+        expr = self.probe.acc
+        expr = self.probe.alp
 
 class TestSimpleProbeBC(unittest.TestCase):
 
