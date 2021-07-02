@@ -443,15 +443,15 @@ class TestFilter(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-    test_class = TestSimpleProbeBC
+    test_class = TestFilter
     for t in test_class.__dict__.keys():
         if t.startswith('test'):
             suite.addTest(test_class(t))
     return suite
 
 if __name__ == '__main__':
-    # run all tests
-    unittest.main(verbosity=2)
+    # # run all tests
+    # unittest.main(verbosity=2)
 
     # run only certain tests
     runner = unittest.TextTestRunner()
