@@ -133,7 +133,7 @@ class TestSimpleProbeBC(unittest.TestCase):
     def setUpClass(cls):
         # probe and joint variables.
         cls.probe = SimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
-        cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_sym]
+        cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_s]
 
     @unittest.skip("Skip plot.")
     def test_plot(self):
@@ -152,7 +152,7 @@ class TestRigidSimpleProbe(unittest.TestCase):
     def setUpClass(cls):
         """ Initialise probe and joint variables. """
         cls.probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
-        cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_sym]
+        cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_s]
         cls.qd = [sp.diff(q, t) for q in cls.q_0]
         cls.qdd = [sp.diff(q, t) for q in cls.qd]
         cls.joint_dofs = [*cls.q_0, *cls.qd, *cls.qdd]

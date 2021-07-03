@@ -57,8 +57,8 @@ dist = distance(cam.traj.interpolated, imu.traj.reconstructed)
 print(probe_BtoC)
 
 print(f"q: {probe_BtoC.q}")
-print(f"q_sym: {probe_BtoC.q_sym}")
-print(f"q_dot: {probe_BtoC.q_dot_sym}\n")
+print(f"q_sym: {probe_BtoC.q_s}")
+print(f"q_dot: {probe_BtoC.qd_s}\n")
 
 if do_plot:
     recon_axes_2d = cam.traj.plot(min_t=min_t, max_t=max_t)

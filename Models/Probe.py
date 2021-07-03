@@ -5,10 +5,9 @@ import spatialmath.base.symbolic as sym
 import numpy as np
 import sympy as sp
 from sympy.tensor.array import tensorproduct, tensorcontraction
-from sympy.physics.vector import dynamicsymbols
-t = sp.symbols('t')
 
-import matplotlib.pyplot as plt
+from .params import q_s, qd_s, qdd_s
+from .params import q_cas, qd_cas, qdd_cas
 
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Ry(-180, 'deg')
@@ -51,10 +50,9 @@ class Probe(rtb.DHRobot):
         links = self._gen_links(scope_length, theta_cam)
         super().__init__(links, name='probe', base=plot_rotation)
 
-        self.q_sym = [dynamicsymbols(f"q{i+1}") for i in range(self.nlinks)]
-        self.q_dot_sym = [sp.diff(q, t) for q in self.q_sym]
-        self.q_ddot_sym = [sp.diff(q, t) for q in self.q_dot_sym]
-        self.q_sym = [sp.Symbol(f'q{i+1}') for i in range(self.nlinks)]
+        self.q_s = q_s.copy()
+        self.qd_s = qd_s.copy()
+        self.qdd_s = qdd_s.copy()
 
     def _gen_links(self, scope_length, theta_cam):
         """ Generates robot links according to chosen configuration. """
@@ -79,12 +77,12 @@ class Probe(rtb.DHRobot):
         return links_imu_to_cam + links_cam_to_slam
 
     @property
-    def q_dot_sym_arr(self):
-        return sp.MutableDenseNDimArray(self.q_dot_sym, (self.n, 1))
+    def qd_s_arr(self):
+        return sp.MutableDenseNDimArray(self.qd_s, (self.n, 1))
 
     @property
     def T(self):
-        return self.fkine(self.q_sym)
+        return self.fkine(self.q_s)
 
     @property
     def R(self):
@@ -103,8 +101,8 @@ class Probe(rtb.DHRobot):
 
     ## ---  velocity calculations --- ##
     def _calc_velocity(self):
-        J = self.jacob0(self.q_sym)
-        return J @ self.q_dot_sym
+        J = self.jacob0(self.q_s)
+        return J @ self.qd_s
 
     @property
     def v(self):
@@ -133,16 +131,16 @@ class Probe(rtb.DHRobot):
 
     ## --- acceleration calculations --- ##
     def _calc_acceleration(self):
-        J0 = self.jacob0(self.q_sym)
+        J0 = self.jacob0(self.q_s)
         H = self.hessian_symbolic(J0)
 
-        tp1 = tensorcontraction(tensorproduct(H, self.q_dot_sym_arr), (2,3)) # 6x8x8x8x1
+        tp1 = tensorcontraction(tensorproduct(H, self.qd_s_arr), (2,3)) # 6x8x8x8x1
         tp1 = tp1[:,:,0] # 6x8
 
-        tp2 = tensorcontraction(tensorproduct(tp1, self.q_dot_sym_arr), (1,2)) # 6x1
+        tp2 = tensorcontraction(tensorproduct(tp1, self.qd_s_arr), (1,2)) # 6x1
 
         # H @ qd @ qd + J @ qdd
-        return sp.Array(tp2 + (J0 @ self.q_ddot_sym).reshape(6,1))
+        return sp.Array(tp2 + (J0 @ self.qdd_s).reshape(6,1))
 
     @property
     def acc(self):
@@ -261,12 +259,13 @@ class SimpleProbe(Probe):
 
         # redefine q and qdot (symbolic)
         constraints = self.__class__.constraints
-        assert(len(constraints) == len(self.q_sym))
+        assert(len(constraints) == len(self.q_s))
 
         for i, c in enumerate(constraints):
             if c is not None:
-                self.q_sym[i] = c
-        self.q_dot_sym = [sp.diff(q, t) for q in self.q_sym]
+                self.q_s[i] = c
+                self.qd_s[i] = 0
+                self.qdd_s[i] = 0
 
 class RigidSimpleProbe(SimpleProbe):
     """ Simple probe with non-rotating, non-translating parts.
@@ -281,9 +280,9 @@ class RigidSimpleProbe(SimpleProbe):
         super().__init__(scope_length, theta_cam)
 
         # set all joint values to 0
-        self.q = [q if not isinstance(q, sp.Expr) else 0. for q in self.q_sym]
-        self.qd = [sp.diff(q, t) for q in self.q_sym]
-        self.qdd = [sp.diff(q, t) for q in self.q_dot_sym]
+        self.q = [q if not isinstance(q, sp.Expr) else 0. for q in self.q_s]
+        self.qd = [0] * self.n
+        self.qdd = [0] * self.n
 
     @property
     def joint_dofs(self):
