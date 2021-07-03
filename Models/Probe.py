@@ -7,8 +7,9 @@ import numpy as np
 import sympy as sp
 from sympy.tensor.array import tensorproduct, tensorcontraction
 
-from .params import q_s, qd_s, qdd_s
-from .params import q_cas, qd_cas, qdd_cas
+from .params import q_s, qd_s, qdd_s, dofs_s, dofs_cas
+dofs_cas_list = casadi.vertsplit(dofs_cas)
+
 from aux_symbolic import sympy2casadi, dummify_array
 
 # just so that the plot is orientated correctly...
@@ -68,17 +69,12 @@ class Probe(rtb.DHRobot):
     @property
     def R(self):
         R = self.T.R
-
-        # evaluate sp expressions -- might break
-        for i, row in enumerate(R):
-            for j, col in enumerate(row):
-                R[i,j] = R[i,j].evalf()
-
-        return R
+        return self._to_casadi(R)
 
     @property
     def p(self):
-        return self.T.t.reshape(3,1)
+        p = self.T.t
+        return self._to_casadi(p)
 
     ## ---  velocity calculations --- ##
     def _calc_velocity(self):
@@ -88,12 +84,12 @@ class Probe(rtb.DHRobot):
     @property
     def v(self):
         v = self._calc_velocity()[:3]
-        return dummify_array(v).reshape(3,1)
+        return self._to_casadi(v)
 
     @property
     def om(self):
         om = self._calc_velocity()[-3:]
-        return dummify_array(om).reshape(3,1)
+        return self._to_casadi(om)
 
     ## --- acceleration calculations --- ##
     def hessian_symbolic(self, J0):
@@ -119,19 +115,39 @@ class Probe(rtb.DHRobot):
         tp1 = tp1[:,:,0] # 6x8
 
         tp2 = tensorcontraction(tensorproduct(tp1, self.qd_s_arr), (1,2)) # 6x1
+        tp2 = tp2.reshape(6,)
 
         # H @ qd @ qd + J @ qdd
-        return sp.Array(tp2 + (J0 @ self.qdd_s).reshape(6,1))
+        res = tp2 + J0 @ self.qdd_s
+        # res = sp.Array(tp2 + (J0 @ self.qdd_s).reshape(6,1))
+        return res
 
     @property
     def acc(self):
-        a = self._calc_acceleration()[:3]
-        return dummify_array(a).reshape(3,1)
+        acc = self._calc_acceleration()[:3]
+        return self._to_casadi(acc)
 
     @property
     def alp(self):
         alp = self._calc_acceleration()[-3:]
-        return dummify_array(alp).reshape(3,1)
+        return self._to_casadi(alp)
+
+    def _to_casadi(self, var):
+        is_1dim = var.ndim == 1
+        cs = casadi.SX(var.shape[0], 1) if is_1dim \
+                else casadi.SX(*var.shape)
+
+        if is_1dim:
+            for i, v in enumerate(var):
+                f = sp.lambdify(dofs_s, dummify_array(v))
+                cs[i,0] = f(*dofs_cas_list)
+        else:
+            for i, r in enumerate(var):
+                for j, c in enumerate(r):
+                    f = sp.lambdify(dofs_s, dummify_array(c))
+                    cs[i,j] = f(*dofs_cas_list)
+
+        return cs
 
     def __str__(self):
         """ Modified to enable printing of table with symbolic offsets."""

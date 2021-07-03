@@ -3,6 +3,7 @@ from Filter import ImuTraj
 
 import numpy as np
 import sympy as sp
+import casadi
 
 from .params import *
 
@@ -54,10 +55,10 @@ class Imu(object):
         self.R_BC, self.B_om_CB, self.B_alp_CB = probe_BtoC.R, probe_BtoC.om, probe_BtoC.alp
 
         # derived
-        R_BW = self.R_BC @ R_WC_s.T
-        B_om_BW = R_BW @ W_om_CW_s - self.B_om_CB
+        R_BW = self.R_BC @ R_WC_cas.T
+        B_om_BW = R_BW @ W_om_CW_cas - self.B_om_CB
         B_alp_BW = R_BW @ W_alp_CW_s - self.B_alp_CB \
-                        - np.cross(B_om_BW, self.B_om_CB, axis=0)
+                        - casadi.cross(B_om_BW, self.B_om_CB)
 
         cross_omBW_pCB = np.cross(B_om_BW, self.B_p_CB, axis=0)
         

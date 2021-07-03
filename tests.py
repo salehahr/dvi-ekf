@@ -2,7 +2,7 @@ import os
 import unittest
 
 from Models import SimpleProbe, RigidSimpleProbe
-from Models import Camera, Imu, n_dofs
+from Models import Camera, Imu, n_dofs, dofs_s, dofs_cas
 
 from Filter import Quaternion
 
@@ -133,7 +133,7 @@ class TestSymbolic(unittest.TestCase):
 class TestCasadi(unittest.TestCase):
     def setUp(self):
         """ Initialise probe and joint variables. """
-        self.probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+        self.probe = SimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
 
     def test_sympy2casadi(self):
         x,y = sp.symbols("x y")
@@ -146,7 +146,14 @@ class TestCasadi(unittest.TestCase):
 
         res = sympy2casadi(e, [x, y], XY)
         print(res)
-        # print(self.probe.q_cas)
+
+    def test_probe2casadi(self):
+        T = self.probe.R
+        T = self.probe.p
+        J = self.probe.jacob0(self.probe.q_s)
+        T = J @ dofs_s[n_dofs:2*n_dofs]
+        T = self.probe._calc_acceleration()
+        T = sympy2casadi(T, dofs_s, dofs_cas)
 
 class TestSimpleProbeBC(unittest.TestCase):
 
