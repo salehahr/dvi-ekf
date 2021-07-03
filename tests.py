@@ -14,10 +14,6 @@ from roboticstoolbox.backends.PyPlot import PyPlot
 
 cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=5)
 
-def calc_R_BW(R_BC):
-    """ From forward kinematics and camera data. """
-    return [R_BC @ R_WC.T for R_WC in cam.R]
-
 def do_plot(robot, q, elev=None, azim=None):
     env = PyPlot()
     env.launch()
@@ -111,8 +107,6 @@ class TestSimpleProbeBC(unittest.TestCase):
         cls.probe = SimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
         cls.q_0 = [q if not isinstance(q, sp.Expr) else 0. for q in cls.probe.q_sym]
 
-        cls.R_BW = calc_R_BW(cls.probe.R)
-
     @unittest.skip("Skip plot.")
     def test_plot(self):
         view_selector(self.probe, self.q_0)
@@ -149,7 +143,6 @@ class TestImu(TestRigidSimpleProbe):
     def setUpClass(cls):
         super().setUpClass()
         cls.filepath = './trajs/imu_test.txt'
-        cls.R_BW = calc_R_BW(cls.probe.R)
 
         if os.path.exists(cls.filepath):
             os.remove(cls.filepath)
