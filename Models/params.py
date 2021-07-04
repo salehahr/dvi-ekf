@@ -27,3 +27,5 @@ q_cas = casadi.SX.sym('q', n_dofs)
 qd_cas = casadi.SX.sym('qd', n_dofs)
 qdd_cas = casadi.SX.sym('qdd', n_dofs)
 dofs_cas = casadi.vertcat(q_cas, qd_cas, qdd_cas)
+
+dofs_cas_list = casadi.vertsplit(dofs_cas)

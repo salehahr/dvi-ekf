@@ -8,7 +8,7 @@ import sympy as sp
 from sympy.tensor.array import tensorproduct, tensorcontraction
 
 from .params import q_s, qd_s, qdd_s, dofs_s, dofs_cas
-dofs_cas_list = casadi.vertsplit(dofs_cas)
+from .params import dofs_cas_list
 
 from aux_symbolic import sympy2casadi, dummify_array
 
@@ -283,7 +283,7 @@ class RigidSimpleProbe(SimpleProbe):
 
     @property
     def joint_dofs(self):
-        return [*self.q, *self.qd, *self.qdd]
+        return [self.q_cas, self.qd_cas, self.qdd_cas]
 
     @property
     def imu_dofs(self):

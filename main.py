@@ -47,8 +47,9 @@ for i, t in enumerate(cam.t[1:]):
     print(f"Predicting... t={queue.t[0]}")
     for i, ti in enumerate(queue.t):
         interp = queue.at_index(i)
-        om, acc = imu.eval_expr_single(ti, interp.acc, interp.R,
-            interp.om, interp.alp, *probe_BtoC.joint_dofs)
+        om, acc = imu.eval_expr_single(ti, *probe_BtoC.joint_dofs,
+            interp.acc, interp.R,
+            interp.om, interp.alp, )
 
         kf.dt = ti - old_ti
         kf.propagate(ti, om, acc)

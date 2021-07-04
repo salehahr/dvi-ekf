@@ -57,20 +57,29 @@ class Imu(object):
         # derived
         R_BW = self.R_BC @ R_WC_cas.T
         B_om_BW = R_BW @ W_om_CW_cas - self.B_om_CB
-        B_alp_BW = R_BW @ W_alp_CW_s - self.B_alp_CB \
+        B_alp_BW = R_BW @ W_alp_CW_cas - self.B_alp_CB \
                         - casadi.cross(B_om_BW, self.B_om_CB)
 
-        cross_omBW_pCB = np.cross(B_om_BW, self.B_p_CB, axis=0)
+        cross_omBW_pCB = casadi.cross(B_om_BW, self.B_p_CB)
         
-        B_acc_BW = R_BW @ W_acc_CW_s \
+        B_acc_BW = R_BW @ W_acc_CW_cas \
                         - self.B_acc_CB \
-                        - np.cross(B_alp_BW, self.B_p_CB, axis=0) \
-                        - 2 * np.cross(B_om_BW, self.BB_v_CB, axis=0) \
-                        - np.cross(B_om_BW, cross_omBW_pCB, axis=0)
+                        - casadi.cross(B_alp_BW, self.B_p_CB) \
+                        - 2 * casadi.cross(B_om_BW, self.BB_v_CB) \
+                        - casadi.cross(B_om_BW, cross_omBW_pCB)
 
         # IMU data
-        self.om_expr = B_om_BW
-        self.acc_expr = B_acc_BW
+        self.om_expr = casadi.Function('f_B_om_BW',
+                [q_cas, qd_cas, R_WC_cas, W_om_CW_cas],
+                [B_om_BW],
+                    ['q', 'qd', 'R_WC', 'om_C'],
+                    ['B_om_BW'])
+        self.acc_expr = casadi.Function('f_B_acc_BW',
+                [q_cas, qd_cas, qdd_cas,
+                    R_WC_cas, W_om_CW_cas, W_acc_CW_cas, W_alp_CW_cas],
+                [B_acc_BW],
+                    ['q', 'qd', 'qdd', 'R_WC', 'om_C', 'acc_C', 'alp_C'],
+                    ['B_acc_BW'])
 
         # for trajectory reconstruction/plotting
         self.traj = None
@@ -100,8 +109,9 @@ class Imu(object):
         for attr, value in self.__dict__.items():
             yield attr, value
 
-    def eval_expr_single(self, t, W_acc_C, R_WC, W_om_C, W_alp_C,
-        *dofs, append_array=False, filepath=''):
+    def eval_expr_single(self, t, q, qd, qdd,
+        W_acc_C, R_WC, W_om_C, W_alp_C,
+        append_array=False, filepath=''):
         """ Evaluates the symbolic expression using camera values and DOFs of the probe.
 
             Args:
@@ -117,14 +127,9 @@ class Imu(object):
         W_om_C = self._correct_cam_dims(W_om_C)
         W_alp_C = self._correct_cam_dims(W_alp_C)
 
-        func_om = sp.lambdify(params_s, self.om_expr, modules='sympy')
-        res_om = func_om(W_acc_C, R_WC, W_om_C, W_alp_C, *dofs)
-
-        func_acc = sp.lambdify(params_s, self.acc_expr, modules='sympy')
-        res_acc = func_acc(W_acc_C, R_WC, W_om_C, W_alp_C, *dofs)
-
-        res_om = np.array(res_om).reshape(3,)
-        res_acc = np.array(res_acc).reshape(3,)
+        res_om = casadi.DM(self.om_expr(q, qd, R_WC, W_om_C)).full().reshape(3,)
+        res_acc = casadi.DM(self.acc_expr(q, qd, qdd,
+                        R_WC, W_om_C, W_acc_C, W_alp_C)).full().reshape(3,)
 
         if append_array:
             self.t.append(t)
@@ -140,11 +145,11 @@ class Imu(object):
 
         return res_om, res_acc
 
-    def eval_init(self, *dofs0):
-        self.eval_expr_single(self.cam.t[0], self.cam.acc[:,0],
+    def eval_init(self, q, qd, qdd):
+        self.eval_expr_single(self.cam.t[0], q, qd, qdd,
+                                self.cam.acc[:,0],
                                 self.cam.R[0], self.cam.om[:,0],
                                 self.cam.alp[:,0],
-                                *dofs0,
                                 append_array=True)
         self._init_trajectory()
 
