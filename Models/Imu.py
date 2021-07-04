@@ -155,12 +155,11 @@ class Imu(object):
 
     def _eval_expr(self, append_array=False, filepath=''):
         for n in range(self.cam.max_vals):
-            self.eval_expr_single(self.cam.t[n], self.cam.acc[:,n],
-                                self.cam.R[n], self.cam.om[:,n],
-                                self.cam.alp[:,n],
-                                *self.probe.joint_dofs,
-                                append_array=append_array,
-                                filepath=filepath)
+            self.eval_expr_single(self.cam.t[n], self.probe.q_cas,
+                self.probe.qd_cas, self.probe.qdd_cas,
+                self.cam.acc[:,n], self.cam.R[n],
+                self.cam.om[:,n], self.cam.alp[:,n],
+                append_array=append_array, filepath=filepath)
 
     def _correct_cam_dims(self, cam_arg):
         return cam_arg.reshape(3, 1) if cam_arg.shape != (3, 1) else cam_arg
@@ -200,7 +199,7 @@ class Imu(object):
 
     def reconstruct(self):
         assert(self.flag_interpolated == True)
-        R_WB = [R_WC @ self.R_BC.T for R_WC in self.cam.R]
+        R_WB = [casadi.DM(R_WC @ self.R_BC.T).full() for R_WC in self.cam.R]
         IC = self.get_IC()
         self.traj.reconstruct(R_WB, IC[0], *IC[2:])
         return self.traj.reconstructed
@@ -214,16 +213,16 @@ class Imu(object):
         W_p_CW, WW_v_CW, W_acc_CW = self.cam.p0, self.cam.v0, self.cam.acc0
         R_WC, W_om_CW, W_alp_CW = self.cam.R0, self.cam.om0, self.cam.alp0
 
-        R_WB_0 = R_WC @ self.R_BC.T
-        W_p_BW_0 = W_p_CW - R_WB_0 @ self.B_p_CB
+        R_WB_0 = casadi.DM(R_WC @ self.R_BC.T).full()
+        W_p_BW_0 = casadi.DM(W_p_CW - R_WB_0 @ self.B_p_CB).full()
 
-        W_om_BW_0 = R_WB_0 @ self.om[:,0].reshape(3,1)
-        WW_v_BW_0 = WW_v_CW - R_WB_0 @ self.BB_v_CB \
-                - np.cross(W_om_BW_0, R_WB_0 @ self.B_p_CB, axis=0)
+        W_om_BW_0 = casadi.DM(R_WB_0 @ self.om[:,0].reshape(3,1)).full()
+        WW_v_BW_0 = casadi.DM(WW_v_CW - R_WB_0 @ self.BB_v_CB \
+                - casadi.cross(W_om_BW_0, R_WB_0 @ self.B_p_CB)).full()
 
-        W_alp_BW_0 = W_alp_CW - R_WB_0 @ self.B_alp_CB
-        W_acc_BW_0 = R_WB_0 @ self.acc[:,0].reshape(3,1)
-        
+        W_alp_BW_0 = casadi.DM(W_alp_CW - R_WB_0 @ self.B_alp_CB).full()
+        W_acc_BW_0 = casadi.DM(R_WB_0 @ self.acc[:,0].reshape(3,1)).full()
+
         return W_p_BW_0, R_WB_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0
 
     def write_array_to_file(self, filepath):
