@@ -96,6 +96,37 @@ class Probe(rtb.DHRobot):
     def p(self):
         return self.T.t.reshape(3,1)
 
+    ## ---  velocity calculations --- ##
+    def _calc_velocity(self):
+        J = self.jacob0(self.q_sym)
+        return J @ self.q_dot_sym
+
+    @property
+    def v(self):
+        v = self._calc_velocity()[:3]
+        return dummify_array(v).reshape(3,1)
+
+    @property
+    def om(self):
+        om = self._calc_velocity()[-3:]
+        return dummify_array(om).reshape(3,1)
+
+    ## --- acceleration calculations --- ##
+    def _calc_acceleration(self):
+        J = self.jacob0(self.q_sym)
+        H = self.hessian0(q=self.q_sym)
+        return H @ self.q_dot_sym @ self.q_dot_sym + J @ self.q_ddot_sym
+
+    @property
+    def acc(self):
+        a = self._calc_acceleration()[:3]
+        return dummify_array(a).reshape(3,1)
+
+    @property
+    def alp(self):
+        alp = self._calc_acceleration()[-3:]
+        return dummify_array(alp).reshape(3,1)
+
     def __str__(self):
         """ Modified to enable printing of table with symbolic offsets."""
 
@@ -185,37 +216,6 @@ class Probe(rtb.DHRobot):
             except tkinter.TclError:
                 # handles error when closing the window
                 return None
-
-    ## ---  velocity calculations --- ##
-    def _calc_velocity(self):
-        J = self.jacob0(self.q_sym)
-        return J @ self.q_dot_sym
-
-    @property
-    def v(self):
-        v = self._calc_velocity()[:3]
-        return dummify_array(v).reshape(3,1)
-
-    @property
-    def om(self):
-        om = self._calc_velocity()[-3:]
-        return dummify_array(om).reshape(3,1)
-
-    ## --- acceleration calculations --- ##
-    def _calc_acceleration(self):
-        J = self.jacob0(self.q_sym)
-        H = self.hessian0(q=self.q_sym)
-        return H @ self.q_dot_sym @ self.q_dot_sym + J @ self.q_ddot_sym
-
-    @property
-    def acc(self):
-        a = self._calc_acceleration()[:3]
-        return dummify_array(a).reshape(3,1)
-
-    @property
-    def alp(self):
-        alp = self._calc_acceleration()[-3:]
-        return dummify_array(alp).reshape(3,1)
 
 class SimpleProbe(Probe):
     """ Simple probe with ROT9 as the only degree of freedom. """
