@@ -584,7 +584,7 @@ class ImuTraj(Trajectory):
         # initial conditions in world coordinates
         x0, y0, z0 = W_p_BW_0
         vx0, vy0, vz0 = WW_v_BW_0
-        rz0, ry0, rx0 = Quaternion(rot=R_WB[0]).euler_zyx
+        rz0, ry0, rx0 = Quaternion(val=R_WB[0], do_normalise=True).euler_zyx
 
         # velocity in world coordinates
         assert(len(R_WB) == len(self.ax))
@@ -613,12 +613,14 @@ class ImuTraj(Trajectory):
         rz = cumtrapz(W_om_B[:,2], t, initial=0) + rz0
 
         euler_ang = np.asarray([rz, ry, rx]).T
-        quats = np.asarray([R.from_euler('zyx', e).as_quat()
-            for e in euler_ang])
-        reconstructed.qx = quats[:,0]
-        reconstructed.qy = quats[:,1]
-        reconstructed.qz = quats[:,2]
-        reconstructed.qw = quats[:,3]
+        rots = [R.from_euler('zyx', e).as_matrix()
+            for e in euler_ang]
+        quats = [Quaternion(val=R_i, do_normalise=True) for R_i in rots]
+
+        reconstructed.qx = [q.x for q in quats]
+        reconstructed.qy = [q.y for q in quats]
+        reconstructed.qz = [q.z for q in quats]
+        reconstructed.qw = [q.w for q in quats]
 
         self.reconstructed = reconstructed
 

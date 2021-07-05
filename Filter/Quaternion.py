@@ -6,19 +6,39 @@ from scipy.spatial.transform import Rotation as R
 class Quaternion(object):
     """ Quaternion convenience class. """
 
-    def __init__(self, xyzw=None, x=None, y=None, z=None, w=None, v=None, rot=None, do_normalise=False):
+    def __init__(self, val=None, x=None, y=None, z=None, w=None, v=None, do_normalise=False):
         self.x = x
         self.y = y
         self.z = z
         self.w = w
 
         # parsing
-        if xyzw is not None:
-            self.x, self.y, self.z, self.w = xyzw
-        elif rot is not None:
-            self.x, self.y, self.z, self.w = R.from_matrix(rot).as_quat()
-        elif v is not None:
+        if val is not None:
+            if isinstance(val, np.ndarray):
+                if val.shape == (3,3):
+                    self.x, self.y, self.z, self.w = R.from_matrix(val).as_quat()
+                elif val.shape == (4,1) or val.shape == (4,):
+                    self.x, self.y, self.z, self.w = val
+                else:
+                    print("Wrong dimensions of np.ndarray for Quaternion!")
+                    raise ValueError
+            elif isinstance(val, Quaternion):
+                self.x = val.x
+                self.y = val.y
+                self.z = val.z
+                self.w = val.w
+            else:
+                print("Wrong input type to Quaternion!")
+                raise TypeError
+
+        elif v is not None and w is not None:
             self.x, self.y, self.z = v.reshape(3,)
+
+        elif x is not None and y is not None and z is not None and w is not None:
+            pass
+        else:
+            print("Wrong input type to Quaternion!")
+            raise TypeError
 
         # normalize
         if do_normalise:
@@ -90,10 +110,8 @@ class Quaternion(object):
         self.z = self.z/d
         self.w = self.w/d
 
-        # # constrain scalar part to be positive
-        # w, _, _, _ = quaternion.as_float_array(quat)
-        # if w < 0:
-            # quat = -quat
-
-        # self.__init__(wxyz=quat)
+        # constrain scalar part to be positive
+        if self.w < 0:
+            xyzw = -self.xyzw
+            self.__init__(val=xyzw)
 

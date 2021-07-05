@@ -41,15 +41,7 @@ class States(object):
 
     @q.setter
     def q(self, val):
-        if isinstance(val, np.ndarray):
-            if val.shape == (3,3):
-                self._q = Quaternion(rot=val)
-            else:
-                self._q = Quaternion(xyzw=q, do_normalise=True)
-        elif isinstance(val, Quaternion):
-            self._q = val
-        else:
-            self._q = Quaternion(xyzw=val, do_normalise=True)
+        self._q = Quaternion(val=val, do_normalise=True)
 
 class ErrorStates(object):
     def __init__(self, vec):

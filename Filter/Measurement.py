@@ -30,7 +30,7 @@ class VisualMeasurement(Measurement):
         self.qy = rot[1]
         self.qz = rot[2]
         self.qw = rot[3]
-        self.qrot = Quaternion(xyzw=rot)
+        self.qrot = Quaternion(val=rot)
 
 class ImuMeasurement(Measurement):
     """ IMU measurements containing acceleration and angular velocity.
