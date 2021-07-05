@@ -3,6 +3,11 @@ import math
 # import quaternion # convenient for quat multiplication, normalisation
 from scipy.spatial.transform import Rotation as R
 
+def skew(x):
+    return np.array([[0,    -x[2], x[1]],
+                     [x[2],    0, -x[0]],
+                     [-x[1], x[0],    0]])
+
 class Quaternion(object):
     """ Quaternion convenience class. """
 
