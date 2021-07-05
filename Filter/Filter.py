@@ -102,8 +102,11 @@ class Filter(object):
 
         # imu
         self.imu = imu
+
+        # buffer
         self._om_old = imu.om.squeeze()
         self._acc_old = imu.acc.squeeze()
+        self.R_WB_old = self.states.q.rot
 
         # covariance
         self.P = P0
@@ -143,15 +146,16 @@ class Filter(object):
         self._predict_error()
         self._predict_error_covariance()
 
-        # IMU buffer
+        # Buffer
         self.om_old = om
         self.acc_old = acc
+        self.R_WB_old = self.states.q.rot
+        self.Om_old = Quaternion(w=1., v=(0.5 * self.dt * self.om_old) ) # Exp(perturbation)
 
         # for plotting
         self.traj.append_state(t, self.states)
 
     def _predict_nominal(self):
-        self.R_WB_old = self.states.q.rot
         W_acc_B_old = (self.R_WB_old @ self.acc_old).reshape(3,1)
 
         # position p
@@ -164,8 +168,8 @@ class Filter(object):
                 + W_acc_B_old * self.dt
 
         # orientation q: Solà
-        Om = Quaternion(w=1., v=(0.5 * self.dt * self.om_old) )
-        self.states.q = self.states.q * Om
+        self.Om_old = Quaternion(w=1., v=(0.5 * self.dt * self.om_old) )
+        self.states.q = self.states.q * self.Om_old
 
         # # orientation q: Kok
         # Om = Quaternion(w=0., v=(0.5 * self.dt * self.om_old) )
@@ -175,8 +179,6 @@ class Filter(object):
 
         # dofs
         # self.states.dofs = self.states.dofs (random walk)
-
-        self.Om_old = Om
 
     def _predict_error(self):
         F = np.eye(9)
