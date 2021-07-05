@@ -260,8 +260,13 @@ class SimpleProbe(Probe):
 
         for i, c in enumerate(constraints):
             if c is not None:
+                self.q[i] = c
                 self.q_s[i] = c
+
+                self.qd[i] = 0
                 self.qd_s[i] = 0
+
+                self.qdd[i] = 0
                 self.qdd_s[i] = 0
 
 class RigidSimpleProbe(SimpleProbe):
@@ -276,7 +281,7 @@ class RigidSimpleProbe(SimpleProbe):
     def __init__(self, scope_length, theta_cam):
         super().__init__(scope_length, theta_cam)
 
-        # set all joint values to 0
+        # set all joint values to 0 except for the given constant values
         self.q = [q if not isinstance(q, sp.Expr) else 0. for q in self.q_s]
         self.qd = [0] * self.n
         self.qdd = [0] * self.n
