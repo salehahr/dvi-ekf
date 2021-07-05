@@ -29,6 +29,7 @@ Rpval, Rqval = 1e3, 0.05
 
 # initialisation (t=0): IC, IMU buffer, noise matrices
 kf = Filter(imu, IC, cov0, num_meas=7, num_control=6)
+kf.traj.append_state(cam.t[0], kf.states)
 kf.Qc, kf.R = gen_noise_matrices(Qval, Rpval, Rqval)
 
 # filter main loop (t>=1)
