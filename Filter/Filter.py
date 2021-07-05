@@ -85,20 +85,18 @@ class Filter(object):
     @property
     def om_old(self):
         return self._om_old
+
+    @om_old.setter
+    def om_old(self, val):
+        self._om_old = val.squeeze()
+
     @property
     def acc_old(self):
         return self._acc_old
 
-    @om_old.setter
-    def om_old(self, val):
-        if isinstance(val, np.ndarray):
-            val = val.squeeze()
-        self._om_old = val
     @acc_old.setter
     def acc_old(self, val):
-        if isinstance(val, np.ndarray):
-            val = val.squeeze()
-        self._acc_old = val
+        self._acc_old = val.squeeze()
 
     @property
     def jac_X_deltx(self):
