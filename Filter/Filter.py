@@ -18,16 +18,18 @@ def skew(x):
                      [-x[1], x[0],    0]])
 
 class States(object):
-    def __init__(self, p, v, q, dofs):
+    def __init__(self, p, v, q, dofs, p_cam):
         self._p = np.asarray(p).reshape(3,1)
         self._v = np.asarray(v).reshape(3,1)
         self._q = None
         self._dofs = dofs
+        self._p_cam = p_cam
 
         self.q = q
 
-        self.size = len(p) + len(v) + len(self.q.xyzw) + len(dofs)
-        assert(self.size == 16)
+        self.size = len(p) + len(v) + len(self.q.xyzw) \
+                    + len(dofs) + len(p_cam)
+        assert(self.size == 19)
 
     def apply_correction(self, err):
         self.p += err.dp.reshape(3,1)
@@ -66,6 +68,14 @@ class States(object):
     @dofs.setter
     def dofs(self, val):
         self._dofs = val
+
+    @property
+    def p_cam(self):
+        return self._p_cam.copy()
+
+    @p_cam.setter
+    def p_cam(self, val):
+        self._p_cam = val
 
 class ErrorStates(object):
     def __init__(self, vec):

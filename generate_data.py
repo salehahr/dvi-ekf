@@ -43,7 +43,7 @@ imu_dofs0 = probe_BtoC.imu_dofs
 
 imu.eval_init(*dofs0)
 W_p_BW_0, R_WB_0, _, WW_v_BW_0, _, _ = imu.get_IC()
-IC = States(W_p_BW_0, WW_v_BW_0, R_WB_0, imu_dofs0)
+IC = States(W_p_BW_0, WW_v_BW_0, R_WB_0, imu_dofs0, cam.p0)
 
 # initial covariances
 stdev_p = [0.1, 0.1, 0.1]
