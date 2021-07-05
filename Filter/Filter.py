@@ -1,3 +1,4 @@
+from copy import copy
 from math import factorial
 import numpy as np
 
@@ -71,7 +72,7 @@ class Filter(object):
         self.traj = VisualTraj("kf")
 
         # states
-        self.states = IC
+        self.states = copy(IC)
 
         # imu
         self.imu = imu
