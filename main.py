@@ -29,7 +29,6 @@ Rpval, Rqval = 1e3, 0.05
 
 # initialisation (t=0): IC, IMU buffer, noise matrices
 kf = Filter(imu, IC, cov0, num_meas=7, num_control=6)
-kf.om_old, kf.acc_old = imu.om, imu.acc
 kf.Qc, kf.R = gen_noise_matrices(Qval, Rpval, Rqval)
 
 # filter main loop (t>=1)

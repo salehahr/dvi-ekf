@@ -75,8 +75,8 @@ class Filter(object):
 
         # imu
         self.imu = imu
-        self._om_old = None
-        self._acc_old = None
+        self._om_old = imu.om.squeeze()
+        self._acc_old = imu.acc.squeeze()
 
         # covariance
         self.P = P0
