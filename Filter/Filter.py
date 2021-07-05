@@ -19,10 +19,10 @@ def skew(x):
 
 class States(object):
     def __init__(self, p, v, q, dofs):
-        self.p = np.asarray(p).reshape(3,1)
-        self.v = np.asarray(v).reshape(3,1)
+        self._p = np.asarray(p).reshape(3,1)
+        self._v = np.asarray(v).reshape(3,1)
         self._q = None
-        self.dofs = dofs
+        self._dofs = dofs
 
         self.q = q
 
@@ -36,12 +36,36 @@ class States(object):
         self.q.normalise()
 
     @property
+    def p(self):
+        return self._p.copy()
+
+    @p.setter
+    def p(self, val):
+        self._p = val
+
+    @property
+    def v(self):
+        return self._v.copy()
+
+    @v.setter
+    def v(self, val):
+        self._v = val
+
+    @property
     def q(self):
-        return self._q
+        return copy(self._q)
 
     @q.setter
     def q(self, val):
         self._q = Quaternion(val=val, do_normalise=True)
+
+    @property
+    def dofs(self):
+        return self._dofs.copy()
+
+    @dofs.setter
+    def dofs(self, val):
+        self._dofs = val
 
 class ErrorStates(object):
     def __init__(self, vec):
