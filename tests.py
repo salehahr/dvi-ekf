@@ -5,6 +5,7 @@ from Models import SimpleProbe, RigidSimpleProbe
 from Models import Camera, Imu, n_dofs, dofs_s, dofs_cas
 
 from Filter import Quaternion
+from Filter.symbols import *
 
 import numpy as np
 import sympy as sp
@@ -292,11 +293,11 @@ class TestFilter(unittest.TestCase):
         v_B = casadi.SX.sym('v_B', 3)
         R_WB = casadi.SX.sym('R_WB', 3, 3)
         dofs = casadi.SX.sym('q', 6)
-        dofs_tr, dofs_rot = casadi.vertsplit(dofs, [0, 3, 6])
+        dofs_t, dofs_r = casadi.vertsplit(dofs, [0, 3, 6])
         p_C = casadi.SX.sym('p_C', 6)
 
-        cls.x = [p_B, v_B, R_WB, dofs_tr, dofs_rot, p_C]
-        cls.x_str = ['p_B', 'v_B', 'R_WB', 'dofs_tr', 'dofs_rot', 'p_C']
+        cls.x = [p_B, v_B, R_WB, dofs_t, dofs_r, p_C]
+        cls.x_str = ['p_B', 'v_B', 'R_WB', 'dofs_t', 'dofs_r', 'p_C']
 
         for i, x in enumerate(cls.x):
             globals()[cls.x_str[i]] = x
@@ -333,9 +334,11 @@ class TestFilter(unittest.TestCase):
     def noise(cls):
         n_v = casadi.SX.sym('n_v', 3)
         n_om = casadi.SX.sym('n_om', 3)
+        n_dofs_t = casadi.SX.sym('n_dofs_t', 3)
+        n_dofs_r = casadi.SX.sym('n_dofs_r', 3)
 
-        cls.n = [n_v, n_om]
-        cls.n_str = ['n_v', 'n_om']
+        cls.n = [n_v, n_om, n_dofs_t, n_dofs_r]
+        cls.n_str = ['n_v', 'n_om', 'n_dofs_t', 'n_dofs_r']
 
         for i, n in enumerate(cls.n):
             globals()[cls.n_str[i]] = n
@@ -363,6 +366,90 @@ class TestFilter(unittest.TestCase):
                             acc = casadi.DM(self.imu.acc),
                          )
         p_B_next = res['p_B_next']
+
+    def _derive_err_pc_dot(self):
+        """
+            Example derivation of err_p_B:
+
+            [In continuous time]
+            p_B_tr_dot = p_B_dot + err_p_B_dot
+            v_B_tr = v_B + err_v_B
+
+            err_p_B_dot = v_B_tr - v_B
+                        = v_B + err_v_B - v_B
+                        = err_v_B
+
+            [Discretised]
+            err_p_B_next = err_p_B + dt * err_v_B
+        """
+
+        # deriving err_p_C_dot -- define the true values
+        v_B_tr = v_B + err_v_B
+        R_WB_tr = R_WB @ (casadi.DM.eye(3) + casadi.skew(err_theta))
+        dofs_t_tr = dofs_t + err_dofs_t
+        dofs_r_tr = dofs_r + err_dofs_r # this is a placeholder ## TODO
+        dofs_tr = casadi.vertcat(dofs_t_tr, dofs_r_tr)
+        om_tr = om - n_om
+
+        # deriving err_p_C_dot -- continuous time
+        p_CB_dot = R_WB @ self.v_CB \
+                + casadi.skew(om) @ R_WB @ self.p_CB
+        p_CB_dot_tr = R_WB_tr @ self.v_CB \
+                + casadi.skew(om_tr) @ R_WB_tr @ self.p_CB
+
+        p_C_dot = v_B + p_CB_dot
+        p_C_dot_tr = v_B_tr + p_CB_dot_tr
+
+        # err_p_C_dot = p_C_dot_tr - p_C_dot # results in free variables v_B
+        err_p_C_dot = err_v_B + p_CB_dot_tr - p_CB_dot
+
+        return err_p_C_dot
+
+    def test_fun_error(self):
+        err_p_C_dot = self._derive_err_pc_dot()
+
+        fun_error = casadi.Function('f_err',
+            [self.dt, *self.err_x, *self.u, *self.n, R_WB],
+            [   err_p_B + self.dt * err_v_B,
+                err_v_B + self.dt * (-R_WB @ casadi.skew(acc) @ err_theta) + n_v,
+                -casadi.cross(om, err_theta) + n_om,
+                n_dofs_t,
+                n_dofs_r,
+                err_p_C + self.dt * err_p_C_dot ],
+            ['dt', *self.err_x_str, *self.u_str,
+                *self.n_str, 'R_WB'],
+            ['err_p_B_next', 'err_v_B_next', 'err_theta_next',
+                'err_dofs_t_next', 'err_dofs_r_next',
+                'err_p_C_next'])
+
+        res = fun_error(  dt  = 0.1,
+                        err_p_B = casadi.DM([1.2, 3.9, 2.]),
+                        err_v_B = casadi.DM([0.01, 0.02, 0.003]),
+                        R_WB = casadi.DM.eye(3),
+                        om = casadi.DM(self.imu.om),
+                        acc = casadi.DM(self.imu.acc),
+                         )
+        err_p_B_next = res['err_p_B_next']
+
+        index_x = [fun_error.index_in(x) for x in self.err_x_str]
+        index_n = [fun_error.index_in(n) for n in self.n_str]
+        index_err_p_C = fun_error.index_out('err_p_C_next')
+
+        jac_pc_x = []
+        for idx in index_x:
+            name = 'jac_pc_' + self.err_x_str[idx - index_x[0]]
+
+            jac = fun_error.jacobian_old(idx, index_err_p_C)
+            jac = jac.slice(name, range(0,jac.n_in()), [0])
+            jac_pc_x.append(jac)
+
+        jac_pc_n = []
+        for idn in index_n:
+            name = 'jac_pc_' + self.n_str[idn - index_n[0]]
+
+            jac = fun_error.jacobian_old(idn, index_err_p_C)
+            jac = jac.slice(name, range(0,jac.n_in()), [0])
+            jac_pc_n.append(jac)
 
 def suite():
     suite = unittest.TestSuite()
