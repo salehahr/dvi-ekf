@@ -108,11 +108,12 @@ class Trajectory(object):
         """ Creates a two column plot of the states/data. """
 
         num_labels = len(self.labels) - 1
-        num_rows = math.ceil( num_labels / 2 )
+        num_cols = 2
+        num_rows = math.ceil( num_labels / num_cols )
         offset = num_labels % 2 # 0 if even, 1 if odd number of labels
 
         if axes is None:
-            fig, axes = plt.subplots(num_rows, 2)
+            fig, axes = plt.subplots(num_rows, num_cols)
             fig.tight_layout()
 
         if offset == 1 and dist is None:
@@ -161,11 +162,12 @@ class Trajectory(object):
         """ Creates a two column plot of the states/data. """
 
         num_labels = len(self.labels) - 1
-        num_rows = math.ceil( num_labels / 2 )
+        num_cols = 3
+        num_rows = math.ceil( num_labels / num_cols )
         offset = num_labels % 2 # 0 if even, 1 if odd number of labels
 
         if axes is None:
-            fig, axes = plt.subplots(num_rows, 3)
+            fig, axes = plt.subplots(num_rows, num_cols)
             fig.tight_layout()
 
         if offset == 1 and dist is None:
@@ -261,6 +263,40 @@ class Trajectory(object):
 
         return axes
 
+    def plot_pc(self, axes=None, min_t=None, max_t=None):
+        num_labels = 3
+        num_rows = 3
+
+        if axes is None:
+            fig, axes = plt.subplots(num_rows, 1)
+            fig.tight_layout()
+
+        for row, label in enumerate(['cx', 'cy', 'cz']):
+            if 'imu' in self.name:
+                t = self.t
+            elif 'kf' in self.name:
+                t = self.t
+            else:
+                t = self.interpolated.t
+
+            axes[row].plot(t, self.__dict__[label],
+                label=self.name)
+
+            latex_label = self._get_latex_label(label)
+            axes[row].set_title(latex_label)
+            axes[row].set_xlim(left=min_t, right=max_t)
+            axes[row].grid(True)
+
+        # late setting of line styles
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
+
+        # legend on last plot
+        axes[row].legend()
+
+        return axes
+
     def plot_sens_noise(self, Rp, Rq, Q, axes=None, min_t=None, max_t=None):
         num_labels = 4
         num_rows = 4
@@ -299,16 +335,8 @@ class Trajectory(object):
 
     def _get_plot_rc(self, ai, num_rows):
         """ Returns current row and column for plotting. """
-
-        if ai <= (num_rows - 1):
-            row = ai
-            col = 0
-        elif ai <= (2*num_rows - 1):
-            row = ai - num_rows
-            col = 1
-        else:
-            row = ai - 2*num_rows
-            col = 2
+        col = math.floor(ai / num_rows)
+        row = ai - col * num_rows
 
         return row, col
 
@@ -317,6 +345,8 @@ class Trajectory(object):
 
         if len(label) == 1:
             return '$' + label + '$'
+        elif 'dof' in label:
+            return 'dof$_' + label[-1] + '$'
         else:
             return '$' + label[0] + '_' + label[1] + '$'
 
@@ -361,23 +391,6 @@ class VisualTraj(Trajectory):
         rot = np.array([qx, qy, qz, qw])
 
         return VisualMeasurement(t, pos, rot)
-
-    def append_state(self, t, state):
-        """ Appends new measurement from current state. """
-
-        x, y, z = state.p
-        vx, vy, vz = state.v
-        qx, qy, qz, qw = state.q.xyzw
-        data = [t, x, y, z, qx, qy, qz, qw]
-
-        for i, label in enumerate(self.labels):
-            self.__dict__[label].append(data[i])
-
-        for i, label in enumerate(['vx', 'vy', 'vz']):
-            if label not in self.__dict__:
-                self.__dict__[label] = [eval(label)]
-            else:
-                self.__dict__[label].append(eval(label))
 
     def append_data(self, t, data_labels, data):
         """ Appends new data not already belonging to the existing
@@ -471,6 +484,158 @@ class VisualTraj(Trajectory):
             rot = np.vstack((qx, qy, qz, qw))
 
             return VisualMeasurement(t, pos, rot)
+
+class FilterTraj(Trajectory):
+    def __init__(self, name):
+        self.labels_imu = ['x', 'y', 'z',
+                    'vx', 'vy', 'vz',
+                    'rx', 'ry', 'rz',
+                    'qw', 'qx', 'qy', 'qz']
+        self.labels_imu_dofs = [ 'dof1', 'dof2', 'dof3',
+                    'dof4', 'dof5', 'dof6']
+        self.labels_camera = ['xc', 'yc', 'zc',
+                    'rxc', 'rxy', 'rxz',
+                    'qwc', 'qxc', 'qyc', 'qzc']
+        labels = ['t', *self.labels_imu,
+                    *self.labels_imu_dofs, *self.labels_camera]
+        super().__init__(name, labels)
+
+    def append_state(self, t, state):
+        """ Appends new measurement from current state. """
+
+        euler_angs = R.from_quat(state.q.xyzw).as_euler('xyz', degrees=True)
+        data = [t, *state.p, *state.v, *euler_angs, *state.q.xyzw,
+                *state.dofs, *state.p_cam]
+
+        for i, label in enumerate(self.labels[:-7]):
+            self.__dict__[label].append(data[i])
+
+    def plot(self, labels, num_cols, offset, filename='', cam=None, axes=None, min_t=None, max_t=None):
+        num_labels = len(labels)
+        num_rows = math.ceil( num_labels / num_cols )
+
+        if axes is None:
+            fig, axes = plt.subplots(num_rows, num_cols)
+            fig.tight_layout()
+
+        for row in range(num_rows):
+            for col in range(num_cols):
+                axes[row,col].set_visible(False)
+
+        ai = offset
+        for i, label in enumerate(labels):
+            if label in ['vx', 'rx', 'dof1', 'dof4', 'rxc']:
+                ai += 1
+
+            row, col = self._get_plot_rc(ai, num_rows)
+
+            val_filt = self.__dict__[label]
+            val_cam = cam.__dict__[label[:-1]] if cam else []
+            min_val, max_val = min(*val_filt, *val_cam), max(*val_filt, *val_cam)
+
+            # display of very small values
+            if max_val - min_val < 0.001:
+                min_val = min_val - 1
+                max_val = max_val + 1
+
+            axes[row][col].set_visible(True)
+            if val_filt:
+                axes[row][col].plot(self.t, val_filt, label=self.name)
+            if val_cam != []:
+                axes[row][col].plot(cam.t, val_cam, label=cam.name)
+
+            latex_label = self._get_latex_label(label)
+            axes[row][col].set_title(latex_label)
+            axes[row][col].set_xlim(left=min_t, right=max_t)
+            axes[row][col].set_ylim(bottom=min_val, top=max_val)
+            axes[row][col].grid(True)
+
+            ai += 1
+
+        # late setting of line styles
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
+
+        # legend on last plot
+        axes[row][col].legend()
+
+        # save img
+        if filename:
+            plt.savefig(filename, dpi=200)
+
+        return axes
+
+    def plot_imu(self, filename='', axes=None, min_t=None, max_t=None):
+        """ Creates plot of the IMU positioning parameters on the probe. """
+
+        labels = self.labels_imu + self.labels_imu_dofs
+        num_cols = 6
+        offset = len(labels) % 2
+        return self.plot(labels, num_cols, offset, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
+
+    def plot_dofs(self, axes=None, min_t=None, max_t=None):
+        """ Creates plot of the IMU positioning parameters on the probe. """
+
+        labels = self.labels_imu_dofs
+
+        num_labels = len(labels)
+        num_cols = 2
+        num_rows = math.ceil( num_labels / num_cols )
+
+        if axes is None:
+            fig, axes = plt.subplots(num_rows, num_cols)
+            fig.tight_layout()
+
+        for i, label in enumerate(labels):
+            row, col = self._get_plot_rc(i, num_rows)
+
+            val = self.__dict__[label]
+            min_val, max_val = min(val), max(val)
+
+            # display of very small values
+            if max_val - min_val < 0.001:
+                min_val = min_val - 1
+                max_val = max_val + 1
+
+            axes[row][col].plot(self.t, val,
+                label=self.name)
+
+            latex_label = self._get_latex_label(label)
+            axes[row][col].set_title(latex_label)
+            axes[row][col].set_xlim(left=min_t, right=max_t)
+            axes[row][col].set_ylim(bottom=min_val, top=max_val)
+            axes[row][col].grid(True)
+
+        # late setting of line styles
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
+
+        # legend on last plot
+        axes[row][col].legend()
+
+        return axes
+
+    def plot_camera(self, filename, cam, axes=None, min_t=None, max_t=None):
+        """ Creates plot of the camera states/data. """
+
+        labels = self.labels_camera
+        num_cols = 3
+        offset = 1
+        return self.plot(labels, num_cols, offset, cam=cam, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
+
+    def _set_plot_line_style(self, line):
+        """ Defines line styles for IMU plot. """
+
+        label = line.get_label()
+        if label == 'kf':
+            line.set_linewidth(0.75)
+            line.set_linestyle('-')
+            line.set_color('blue')
+        else:
+            line.set_color('darkgrey')
+            line.set_linewidth(0.8)
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and

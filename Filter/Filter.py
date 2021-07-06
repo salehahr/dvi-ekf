@@ -3,7 +3,7 @@ from math import factorial
 import numpy as np
 
 from .Quaternion import Quaternion, skew
-from .Trajectory import VisualTraj
+from .Trajectory import FilterTraj
 from .States import States, ErrorStates
 
 import casadi
@@ -20,7 +20,7 @@ class Filter(object):
         self._u = []
 
         self.dt = 0.
-        self.traj = VisualTraj("kf")
+        self.traj = FilterTraj("kf")
 
         # imu
         self.imu = imu
