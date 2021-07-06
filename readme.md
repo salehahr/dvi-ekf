@@ -2,6 +2,15 @@
 Implementation of a loosely-coupled VI-ESKF SLAM to estimate
 the calibration parameters in a camera-IMU sensor probe setup.
 
+[Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
+
+## Current results
+![](img/kf.png)
+
+- [ ] Shown are IMU positions and rotations, I still need to work on
+proper plot functions for the rest of the states.
+- [ ] Equations/Jacobian stuff still needs checking.
+
 ## Probe
 ```
 python3 vsimpleprobe.py
@@ -10,7 +19,7 @@ Unconstrained SLAM end | Constrained SLAM end
 --- | ---
 ![](img/probe_uncon.gif) | ![](img/probe_con.gif)
 
-## Current results
+## Fake IMU data generation
 ```
 python3 simple_robot.py regen plot
 ```
@@ -24,4 +33,5 @@ the camera and the IMU. Shown here: for the first 50 camera values.
 ## Table of contents
 * [Probe](#probe)
 * [Current results](#current-results)
+* [Fake IMU data](#fake-imu-data-generation)
 * [Old tests](/old-tests)
