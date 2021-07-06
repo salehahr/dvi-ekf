@@ -10,7 +10,7 @@ from sympy.tensor.array import tensorproduct, tensorcontraction
 from .params import q_s, qd_s, qdd_s, dofs_s, dofs_cas
 from .params import dofs_cas_list
 
-from aux_symbolic import sympy2casadi, dummify_array
+from aux_symbolic import dummify_array
 
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Ry(-180, 'deg')
@@ -50,7 +50,7 @@ class Probe(rtb.DHRobot):
 
     @property
     def q_cas(self):
-        return casadi.SX(self.q_s)
+        return self._to_casadi(self.q_s)
     @property
     def qd_cas(self):
         return casadi.SX(self.qd_s)
@@ -133,14 +133,21 @@ class Probe(rtb.DHRobot):
         return self._to_casadi(alp)
 
     def _to_casadi(self, var):
-        is_1dim = var.ndim == 1
-        cs = casadi.SX(var.shape[0], 1) if is_1dim \
-                else casadi.SX(*var.shape)
+        if isinstance(var, np.ndarray):
+            is_1dim = var.ndim == 1
+            cs = casadi.SX(var.shape[0], 1) if is_1dim \
+                    else casadi.SX(*var.shape)
+        elif isinstance(var, list):
+            is_1dim = True
+            cs = casadi.SX(len(var), 1)
 
         if is_1dim:
             for i, v in enumerate(var):
-                f = sp.lambdify(dofs_s, dummify_array(v))
-                cs[i,0] = f(*dofs_cas_list)
+                if isinstance(v, sp.Expr):
+                    f = sp.lambdify(dofs_s, dummify_array(v))
+                    cs[i,0] = f(*dofs_cas_list)
+                else:
+                    cs[i,0] = v
         else:
             for i, r in enumerate(var):
                 for j, c in enumerate(r):
