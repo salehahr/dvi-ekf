@@ -20,6 +20,8 @@ class States(object):
         self.v += err.dv.reshape(3,1)
         self.q = self.q * err.dq
         self.q.normalise()
+        self.dofs += err.ddofs.reshape(6,1)
+        self.p_cam += err.dpc.reshape(3,1)
 
     @property
     def p(self):
@@ -66,7 +68,11 @@ class ErrorStates(object):
         p = vec[0:3]
         v = vec[3:6]
         theta = vec[6:9]
+        dofs = vec[9:15]
+        p_c = vec[15:]
 
         self.dp = np.asarray(p)
         self.dv = np.asarray(v)
         self.dq = Quaternion(v=theta/2, w=1.)
+        self.ddofs = np.asarray(dofs)
+        self.dpc = np.asarray(p_c)

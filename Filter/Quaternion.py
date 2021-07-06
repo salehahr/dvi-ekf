@@ -94,6 +94,10 @@ class Quaternion(object):
         elif isinstance(other, float) or isinstance(other, int):
             w = other * self.w
             v = other * self.v
+        elif isinstance(other, np.ndarray) and other.shape == (3,3):
+            q_other = Quaternion(val=other, do_normalise=True)
+            w = self.w * q_other.w - self.v @ q_other.v
+            v = self.w * q_other.v + q_other.w * self.v + np.cross(self.v, q_other.v)
         else:
             raise TypeError
         return Quaternion(w=w, v=v)

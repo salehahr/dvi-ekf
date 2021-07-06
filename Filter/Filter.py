@@ -190,14 +190,15 @@ class Filter(object):
 
     def update(self, camera):
         # compute gain        
-        H = self.Hx @ self.jac_X_deltx
-        S = H @ self.P @ H.T + self.R
+        H = self.Hx @ self.jac_X_deltx # 7x18
+        S = H @ self.P @ H.T + self.R # 7x7
         K = self.P @ H.T @ np.linalg.inv(S) # 18x7
 
         # compute error state
-        res_p = camera.pos.reshape((3,)) - self.states.p.reshape((3,))
-        res_q = (camera.qrot - self.states.q).xyzw
-        res = np.hstack((res_p, res_q))
+        R_BC = casadi.DM(self.probe.R).full()
+        res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
+        res_q = (camera.qrot - self.states.q * R_BC).xyzw
+        res = np.hstack((res_p_cam, res_q))
         err = ErrorStates(K @ res)
 
         # correct predicted state and covariance
