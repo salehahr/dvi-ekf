@@ -49,6 +49,8 @@ IC = States(W_p_BW_0, WW_v_BW_0, R_WB_0, imu_dofs0, cam.p0)
 stdev_p = [0.1, 0.1, 0.1]
 stdev_v = [0.1, 0.1, 0.1]
 stdev_q = [0.05, 0.04, 0.025]
+stdev_dofs = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+stdev_p_cam = [0.1, 0.1, 0.1]
 
-stdevs0 = np.hstack((stdev_p, stdev_v, stdev_q))
+stdevs0 = np.hstack((stdev_p, stdev_v, stdev_q, stdev_dofs, stdev_p_cam))
 cov0 = np.square(np.diag(stdevs0))
