@@ -257,6 +257,113 @@ class TestQuaternions(unittest.TestCase):
         self.q1 = Quaternion(x=0, y=-0.002, z=-0.001, w=1)
         self.q2 = Quaternion(x=0, y=0, z=0, w=1)
 
+class TestFilter(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.dt = casadi.SX.sym('dt')
+
+        cls.probe = SimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+        print(cls.probe)
+        print(f'q: {cls.probe.q}\n')
+
+        # camera and imu sensors
+        # num_imu_between_frames = 1
+        # cam_interp = cam.interpolate(num_imu_between_frames)
+        min_t, max_t = cam.t[0], cam.t[-1]
+
+        # imu
+        imu = Imu(cls.probe, cam)
+        imu.eval_init(cls.probe.q, cls.probe.qd, cls.probe.qdd)
+        cls.imu = imu
+
+        # fwkin
+        cls.p_CB, cls.v_CB, cls.acc_CB = cls.probe.p, cls.probe.v, cls.probe.acc
+        cls.R_BC, cls.om_CB, cls.alp_CB = cls.probe.R, cls.probe.om, cls.probe.alp
+
+        cls.states()
+        cls.error_states()
+        cls.inputs()
+        cls.noise()
+
+    @classmethod
+    def states(cls):
+        p_B = casadi.SX.sym('p_B', 3)
+        v_B = casadi.SX.sym('v_B', 3)
+        R_WB = casadi.SX.sym('R_WB', 3, 3)
+        dofs = casadi.SX.sym('q', 6)
+        dofs_tr, dofs_rot = casadi.vertsplit(dofs, [0, 3, 6])
+        p_C = casadi.SX.sym('p_C', 6)
+
+        cls.x = [p_B, v_B, R_WB, dofs_tr, dofs_rot, p_C]
+        cls.x_str = ['p_B', 'v_B', 'R_WB', 'dofs_tr', 'dofs_rot', 'p_C']
+
+        for i, x in enumerate(cls.x):
+            globals()[cls.x_str[i]] = x
+
+    @classmethod
+    def error_states(cls):
+        err_p_B = casadi.SX.sym('err_p_B', 3)
+        err_v_B = casadi.SX.sym('err_v_B', 3)
+        err_theta = casadi.SX.sym('err_theta', 3)
+        err_dofs_t = casadi.SX.sym('err_dofs_t', 3)
+        err_dofs_r = casadi.SX.sym('err_dofs_r', 3)
+        err_p_C = casadi.SX.sym('err_p_C', 3)
+
+        cls.err_x = [err_p_B, err_v_B, err_theta,
+                    err_dofs_t, err_dofs_r, err_p_C]
+        cls.err_x_str = ['err_p_B', 'err_v_B', 'err_theta',
+                    'err_dofs_t', 'err_dofs_r', 'err_p_C']
+
+        for i, err_x in enumerate(cls.err_x):
+            globals()[cls.err_x_str[i]] = err_x
+
+    @classmethod
+    def inputs(cls):
+        acc = casadi.SX.sym('acc', 3)
+        om = casadi.SX.sym('om', 3)
+
+        cls.u = [om, acc]
+        cls.u_str = ['om', 'acc']
+
+        for i, u in enumerate(cls.u):
+            globals()[cls.u_str[i]] = u
+
+    @classmethod
+    def noise(cls):
+        n_v = casadi.SX.sym('n_v', 3)
+        n_om = casadi.SX.sym('n_om', 3)
+
+        cls.n = [n_v, n_om]
+        cls.n_str = ['n_v', 'n_om']
+
+        for i, n in enumerate(cls.n):
+            globals()[cls.n_str[i]] = n
+
+    def test_fun_nominal(self):
+        p_B_next = p_B + self.dt * v_B + self.dt**2 / 2 * R_WB @ acc
+
+        fun_nominal = casadi.Function('f_nom',
+            [self.dt, *self.x, *self.u],
+            [   p_B_next,
+                v_B + self.dt * R_WB @ acc,
+                R_WB + R_WB @ casadi.skew(self.dt * om),
+                dofs_t,
+                dofs_r,
+                p_B_next + R_WB @ self.p_CB ],
+            ['dt', *self.x_str, *self.u_str],
+            ['p_B_next', 'v_B_next', 'R_WB_next',
+                'dofs_t_next', 'dofs_r_next', 'p_C_next'])
+
+        res = fun_nominal(  dt  = 0.1,
+                            p_B = casadi.DM([1.2, 3.9, 2.]),
+                            v_B = casadi.DM([0.01, 0.02, 0.003]),
+                            R_WB = casadi.DM.eye(3),
+                            om = casadi.DM(self.imu.om),
+                            acc = casadi.DM(self.imu.acc),
+                         )
+        p_B_next = res['p_B_next']
+
 def suite():
     suite = unittest.TestSuite()
     test_class = TestSimpleProbeBC
