@@ -202,6 +202,40 @@ class Trajectory(object):
 
         return axes
 
+    def plot_pc(self, axes=None, min_t=None, max_t=None):
+        num_labels = 3
+        num_rows = 3
+
+        if axes is None:
+            fig, axes = plt.subplots(num_rows, 1)
+            fig.tight_layout()
+
+        for row, label in enumerate(['cx', 'cy', 'cz']):
+            if 'imu' in self.name:
+                t = self.t
+            elif 'kf' in self.name:
+                t = self.t
+            else:
+                t = self.interpolated.t
+
+            axes[row].plot(t, self.__dict__[label],
+                label=self.name)
+
+            latex_label = self._get_latex_label(label)
+            axes[row].set_title(latex_label)
+            axes[row].set_xlim(left=min_t, right=max_t)
+            axes[row].grid(True)
+
+        # late setting of line styles
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
+
+        # legend on last plot
+        axes[row].legend()
+
+        return axes
+
     def plot_sens_noise(self, Rp, Rq, Q, axes=None, min_t=None, max_t=None):
         num_labels = 4
         num_rows = 4
@@ -306,12 +340,14 @@ class VisualTraj(Trajectory):
         x, y, z = state.p
         vx, vy, vz = state.v
         qx, qy, qz, qw = state.q.xyzw
-        data = [t, x, y, z, qx, qy, qz, qw]
+        
+        cx, cy, cz = state.p_cam
 
+        data = [t, x, y, z, qx, qy, qz, qw]
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
 
-        for i, label in enumerate(['vx', 'vy', 'vz']):
+        for i, label in enumerate(['vx', 'vy', 'vz', 'cx', 'cy','cz']):
             if label not in self.__dict__:
                 self.__dict__[label] = [eval(label)]
             else:

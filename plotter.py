@@ -20,6 +20,12 @@ def plot_velocities(kf_traj, do_plot_vel):
         axes = stereoGT_traj.plot_velocities()
         axes = kf_traj.plot_velocities(axes, min_t=min_t, max_t=max_t)
 
+def plot_pc(kf_traj):
+    axes = cam.traj.plot()
+    axes = kf_traj.plot_pc(min_t=min_t, max_t=max_t)
+    plt.legend()
+    plt.show()
+
 def plot_noise_sensitivity(kf_traj, Q, Rp, Rq):
     """ plots sensitivity to measurement noise R and process noise Q """
     axes = stereoGT_traj.plot_sens_noise(Rp, Rq, Q)

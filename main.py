@@ -64,5 +64,6 @@ for i, t in enumerate(cam.t[1:]):
 
 
 # plots
-from plotter import plot_trajectories
+from plotter import plot_trajectories, plot_pc
 plot_trajectories(kf.traj, do_prop_only)
+plot_pc(kf.traj)
