@@ -9,10 +9,6 @@ from .States import States, ErrorStates
 import casadi
 from .symbols import *
 
-H_x = np.zeros([7, 10])
-H_x[:3,:3] = np.eye(3)
-H_x[3:,-4:] = np.eye(4) # part of measurement model jacobian
-
 class Filter(object):
     def __init__(self, imu, IC, P0, num_meas, num_control):
         self.num_states = IC.size
@@ -74,6 +70,13 @@ class Filter(object):
         self._acc_old = val.squeeze()
 
     @property
+    def Hx(self):
+        Hx = np.zeros([7, self.num_states])
+        Hx[:3,-3:] = np.eye(3)
+        # Hx[6:10,-4:] = np.eye(4) # part of measurement model jacobian # TODO
+        return Hx
+
+    @property
     def jac_X_deltx(self):
         x, y, z, w = self.states.q.xyzw
         Q_deltth = 0.5 * np.array([[-x, -y, -z],
@@ -81,7 +84,7 @@ class Filter(object):
                                    [ z,  w, -x],
                                    [-y,  x,  w]])
 
-        X_deltx = np.zeros([10, 9])
+        X_deltx = np.zeros([self.num_states, self.num_error_states])
         X_deltx[:6,:6] = np.eye(6)
         X_deltx[-4:,-3:] = Q_deltth
 
@@ -188,9 +191,9 @@ class Filter(object):
 
     def update(self, camera):
         # compute gain        
-        H = H_x @ self.jac_X_deltx
+        H = self.Hx @ self.jac_X_deltx
         S = H @ self.P @ H.T + self.R
-        K = self.P @ H.T @ np.linalg.inv(S)
+        K = self.P @ H.T @ np.linalg.inv(S) # 18x7
 
         # compute error state
         res_p = camera.pos.reshape((3,)) - self.states.p.reshape((3,))
@@ -200,4 +203,4 @@ class Filter(object):
 
         # correct predicted state and covariance
         self.states.apply_correction(err)
-        self.P = (np.eye(9) - K @ H) @ self.P
+        self.P = (np.eye(self.num_error_states) - K @ H) @ self.P
