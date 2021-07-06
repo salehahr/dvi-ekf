@@ -259,7 +259,10 @@ class TestQuaternions(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-    # suite.addTest(TestSimpleProbeBC(''))
+    test_class = TestSimpleProbeBC
+    for t in test_class.__dict__.keys():
+        if t.startswith('test'):
+            suite.addTest(test_class(t))
     return suite
 
 if __name__ == '__main__':
