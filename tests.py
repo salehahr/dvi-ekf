@@ -5,7 +5,6 @@ from Models import SimpleProbe, RigidSimpleProbe
 from Models import Camera, Imu, n_dofs, dofs_s, dofs_cas
 
 from Filter import Quaternion
-from Filter.symbols import *
 
 import numpy as np
 import sympy as sp
@@ -289,71 +288,61 @@ class TestFilter(unittest.TestCase):
 
     @classmethod
     def states(cls):
-        p_B = casadi.SX.sym('p_B', 3)
-        v_B = casadi.SX.sym('v_B', 3)
-        R_WB = casadi.SX.sym('R_WB', 3, 3)
+        cls.p_B = casadi.SX.sym('p_B', 3)
+        cls.v_B = casadi.SX.sym('v_B', 3)
+        cls.R_WB = casadi.SX.sym('R_WB', 3, 3)
         dofs = casadi.SX.sym('q', 6)
-        dofs_t, dofs_r = casadi.vertsplit(dofs, [0, 3, 6])
-        p_C = casadi.SX.sym('p_C', 6)
+        cls.dofs_t, cls.dofs_r = casadi.vertsplit(dofs, [0, 3, 6])
+        cls.p_C = casadi.SX.sym('p_C', 6)
 
-        cls.x = [p_B, v_B, R_WB, dofs_t, dofs_r, p_C]
+        cls.x = [cls.p_B, cls.v_B, cls.R_WB, cls.dofs_t, cls.dofs_r, cls.p_C]
         cls.x_str = ['p_B', 'v_B', 'R_WB', 'dofs_t', 'dofs_r', 'p_C']
-
-        for i, x in enumerate(cls.x):
-            globals()[cls.x_str[i]] = x
 
     @classmethod
     def error_states(cls):
-        err_p_B = casadi.SX.sym('err_p_B', 3)
-        err_v_B = casadi.SX.sym('err_v_B', 3)
-        err_theta = casadi.SX.sym('err_theta', 3)
-        err_dofs_t = casadi.SX.sym('err_dofs_t', 3)
-        err_dofs_r = casadi.SX.sym('err_dofs_r', 3)
-        err_p_C = casadi.SX.sym('err_p_C', 3)
+        cls.err_p_B = casadi.SX.sym('err_p_B', 3)
+        cls.err_v_B = casadi.SX.sym('err_v_B', 3)
+        cls.err_theta = casadi.SX.sym('err_theta', 3)
+        cls.err_dofs_t = casadi.SX.sym('err_dofs_t', 3)
+        cls.err_dofs_r = casadi.SX.sym('err_dofs_r', 3)
+        cls.err_p_C = casadi.SX.sym('err_p_C', 3)
 
-        cls.err_x = [err_p_B, err_v_B, err_theta,
-                    err_dofs_t, err_dofs_r, err_p_C]
+        cls.err_x = [cls.err_p_B, cls.err_v_B, cls.err_theta,
+                    cls.err_dofs_t, cls.err_dofs_r, cls.err_p_C]
         cls.err_x_str = ['err_p_B', 'err_v_B', 'err_theta',
                     'err_dofs_t', 'err_dofs_r', 'err_p_C']
 
-        for i, err_x in enumerate(cls.err_x):
-            globals()[cls.err_x_str[i]] = err_x
-
     @classmethod
     def inputs(cls):
-        acc = casadi.SX.sym('acc', 3)
-        om = casadi.SX.sym('om', 3)
+        cls.acc = casadi.SX.sym('acc', 3)
+        cls.om = casadi.SX.sym('om', 3)
 
-        cls.u = [om, acc]
+        cls.u = [cls.om, cls.acc]
         cls.u_str = ['om', 'acc']
-
-        for i, u in enumerate(cls.u):
-            globals()[cls.u_str[i]] = u
 
     @classmethod
     def noise(cls):
-        n_v = casadi.SX.sym('n_v', 3)
-        n_om = casadi.SX.sym('n_om', 3)
-        n_dofs_t = casadi.SX.sym('n_dofs_t', 3)
-        n_dofs_r = casadi.SX.sym('n_dofs_r', 3)
+        cls.n_v = casadi.SX.sym('n_v', 3)
+        cls.n_om = casadi.SX.sym('n_om', 3)
+        cls.n_dofs_t = casadi.SX.sym('n_dofs_t', 3)
+        cls.n_dofs_r = casadi.SX.sym('n_dofs_r', 3)
 
-        cls.n = [n_v, n_om, n_dofs_t, n_dofs_r]
+        cls.n = [cls.n_v, cls.n_om, cls.n_dofs_t, cls.n_dofs_r]
         cls.n_str = ['n_v', 'n_om', 'n_dofs_t', 'n_dofs_r']
 
-        for i, n in enumerate(cls.n):
-            globals()[cls.n_str[i]] = n
-
     def test_fun_nominal(self):
-        p_B_next = p_B + self.dt * v_B + self.dt**2 / 2 * R_WB @ acc
+        p_B_next = self.p_B \
+                + self.dt * self.v_B \
+                + self.dt**2 / 2 * self.R_WB @ self.acc
 
         fun_nominal = casadi.Function('f_nom',
             [self.dt, *self.x, *self.u],
             [   p_B_next,
-                v_B + self.dt * R_WB @ acc,
-                R_WB + R_WB @ casadi.skew(self.dt * om),
-                dofs_t,
-                dofs_r,
-                p_B_next + R_WB @ self.p_CB ],
+                self.v_B + self.dt * self.R_WB @ self.acc,
+                self.R_WB + self.R_WB @ casadi.skew(self.dt * self.om),
+                self.dofs_t,
+                self.dofs_r,
+                p_B_next + self.R_WB @ self.p_CB ],
             ['dt', *self.x_str, *self.u_str],
             ['p_B_next', 'v_B_next', 'R_WB_next',
                 'dofs_t_next', 'dofs_r_next', 'p_C_next'])
@@ -384,24 +373,25 @@ class TestFilter(unittest.TestCase):
         """
 
         # deriving err_p_C_dot -- define the true values
-        v_B_tr = v_B + err_v_B
-        R_WB_tr = R_WB @ (casadi.DM.eye(3) + casadi.skew(err_theta))
-        dofs_t_tr = dofs_t + err_dofs_t
-        dofs_r_tr = dofs_r + err_dofs_r # this is a placeholder ## TODO
+        v_B_tr = self.v_B + self.err_v_B
+        R_WB_tr = self.R_WB @ (casadi.DM.eye(3) \
+                    + casadi.skew(self.err_theta))
+        dofs_t_tr = self.dofs_t + self.err_dofs_t
+        dofs_r_tr = self.dofs_r + self.err_dofs_r # this is a placeholder ## TODO
         dofs_tr = casadi.vertcat(dofs_t_tr, dofs_r_tr)
-        om_tr = om - n_om
+        om_tr = self.om - self.n_om
 
         # deriving err_p_C_dot -- continuous time
-        p_CB_dot = R_WB @ self.v_CB \
-                + casadi.skew(om) @ R_WB @ self.p_CB
+        p_CB_dot = self.R_WB @ self.v_CB \
+                + casadi.skew(self.om) @ self.R_WB @ self.p_CB
         p_CB_dot_tr = R_WB_tr @ self.v_CB \
                 + casadi.skew(om_tr) @ R_WB_tr @ self.p_CB
 
-        p_C_dot = v_B + p_CB_dot
+        p_C_dot = self.v_B + p_CB_dot
         p_C_dot_tr = v_B_tr + p_CB_dot_tr
 
         # err_p_C_dot = p_C_dot_tr - p_C_dot # results in free variables v_B
-        err_p_C_dot = err_v_B + p_CB_dot_tr - p_CB_dot
+        err_p_C_dot = self.err_v_B + p_CB_dot_tr - p_CB_dot
 
         return err_p_C_dot
 
@@ -409,13 +399,13 @@ class TestFilter(unittest.TestCase):
         err_p_C_dot = self._derive_err_pc_dot()
 
         fun_error = casadi.Function('f_err',
-            [self.dt, *self.err_x, *self.u, *self.n, R_WB],
-            [   err_p_B + self.dt * err_v_B,
-                err_v_B + self.dt * (-R_WB @ casadi.skew(acc) @ err_theta) + n_v,
-                -casadi.cross(om, err_theta) + n_om,
-                n_dofs_t,
-                n_dofs_r,
-                err_p_C + self.dt * err_p_C_dot ],
+            [self.dt, *self.err_x, *self.u, *self.n, self.R_WB],
+            [   self.err_p_B + self.dt * self.err_v_B,
+                self.err_v_B + self.dt * (-self.R_WB @ casadi.skew(self.acc) @ self.err_theta) + self.n_v,
+                -casadi.cross(self.om, self.err_theta) + self.n_om,
+                self.n_dofs_t,
+                self.n_dofs_r,
+                self.err_p_C + self.dt * err_p_C_dot ],
             ['dt', *self.err_x_str, *self.u_str,
                 *self.n_str, 'R_WB'],
             ['err_p_B_next', 'err_v_B_next', 'err_theta_next',
