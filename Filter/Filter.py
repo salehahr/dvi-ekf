@@ -10,11 +10,10 @@ import casadi
 from .symbols import *
 
 class Filter(object):
-    def __init__(self, imu, IC, P0, num_meas, num_control):
+    def __init__(self, imu, IC, P0, num_meas):
         self.num_states = IC.size
         self.num_error_states = IC.size - 1
         self.num_meas = num_meas
-        self.num_control = num_control
 
         self.states = copy(IC)
         self._x = []
