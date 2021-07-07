@@ -36,8 +36,6 @@ kf.Qc, kf.R = gen_noise_matrices(Qval, Rpval, Rqval)
 old_t = min_t
 for i, t in enumerate(cam.t[1:]):
 
-    current_vis = cam.traj.at_index(i)
-
     # propagate
     # queue = imu.traj.get_queue(old_t, t) # real imu data
     # simulate imu queue
@@ -58,6 +56,7 @@ for i, t in enumerate(cam.t[1:]):
 
     # update
     if not do_prop_only:
+        current_vis = cam.traj.at_index(i)
         kf.update(current_vis)
 
     old_t = t
