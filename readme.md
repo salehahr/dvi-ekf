@@ -4,7 +4,22 @@ the calibration parameters in a camera-IMU sensor probe setup.
 
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
-## Current results
+## Simple camera trajectory
+Camera moves in x
+![](img/fakecam-x.png)
+Camera moves in y
+![](img/fakecam-y.png)
+Camera moves in z
+![](img/fakecam-z.png)
+
+Camera rotates around its x-axis (90 deg)
+![](img/fakecam-rx-90.png)
+Camera rotates around its x-axis (270 deg)
+![](img/fakecam-rx-270-qwnotpos.png)
+Camera rotates around its x-axis (270 deg -- constrained `q_w` to be positive)
+![](img/fakecam-rx-270-qwpos.png)
+
+## Filter
 ![](img/kf.png)
 
 - [ ] Shown are IMU positions and rotations, I still need to work on
@@ -32,6 +47,7 @@ the camera and the IMU. Shown here: for the first 50 camera values.
 
 ## Table of contents
 * [Probe](#probe)
-* [Current results](#current-results)
+* [Simple camera trajectory](#simple-camera-trajectory)
+* [Filter](#filter)
 * [Fake IMU data](#fake-imu-data-generation)
 * [Old tests](/old-tests)

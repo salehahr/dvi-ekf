@@ -33,13 +33,15 @@ num_imu_between_frames = 3
 probe_BtoC = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
 
 # parameters from camera
-filepath_cam = './trajs/offline_mandala0_gt.txt'
-cam = Camera(filepath=filepath_cam, max_vals=20)
+# filepath_cam = './trajs/offline_mandala0_gt.txt'
+filepath_cam = './trajs/simple_cam_traj.txt'
+cam = Camera(filepath=filepath_cam, max_vals=None)
 cam_interp = cam.interpolate(num_imu_between_frames)
 min_t, max_t = cam. t[0], cam.t[-1]
 
 # generate IMU data
-filepath_imu = './trajs/offline_mandala0_gt_imugen.txt'
+# filepath_imu = './trajs/offline_mandala0_gt_imugen.txt'
+filepath_imu = './trajs/simple_imu_traj.txt'
 imu = Imu(probe_BtoC, cam_interp)
 imu.generate_traj(filepath_imu, do_regenerate)
 

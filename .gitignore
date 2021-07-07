@@ -1,5 +1,6 @@
 *pycache*
 trajs/mandala0*.txt
 trajs/archive/*.txt
+trajs/simple*.txt
 diff.py
 *.swp
