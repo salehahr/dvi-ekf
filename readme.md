@@ -5,6 +5,21 @@ the calibration parameters in a camera-IMU sensor probe setup.
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
 ## Current results
+```
+python3 main.py <prop/update> nonoise
+```
+
+### Simple trajectory
+Camera moves in x direction, no rotations.
+
+Propagation only | Propagation + Update
+--- | ---
+&nbsp;  | `R_p = 1e3`  
+&nbsp;  | `R_q = 0.05` 
+![](img/kf_transx_prop_imu.png) | ![](img/kf_transx_upd_Rp1000.0_Rq0.05_imu.png)
+![](img/kf_transx_prop_cam.png) | ![](img/kf_transx_upd_Rp1000.0_Rq0.05_cam.png)
+
+### Monocular SLAM trajectory
 P only  | P + U | P + U | P + U
 ---     | ---   | ---   | --- |
 &nbsp;  | `stdev_a, stdev_om = 1e-3`  | `stdev_a, stdev_om = 1e-3` | `stdev_a, stdev_om = 1e-3`  

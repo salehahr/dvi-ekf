@@ -68,7 +68,7 @@ for i, t in enumerate(cam.t[1:]):
 
 # plots
 from plotter import plot_trajectories
-traj_name = 'mono'
+traj_name = 'transx'
 
 if do_prop_only:
     traj_name = traj_name + '_prop'
