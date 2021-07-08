@@ -8,10 +8,10 @@ def plot_savefig(fig, figname):
     fig.savefig(figname)
     
 def plot_trajectories(kf_traj, do_prop_only):
-    axes = cam.traj.plot()
+    axes = cam.traj.plot_allrots()
     # if not do_prop_only:
         # axes = mono_traj.plot(axes)
-    axes = kf_traj.plot(axes, min_t=min_t, max_t=max_t)
+    axes = kf_traj.plot_allrots(axes, min_t=min_t, max_t=max_t)
     plt.legend()
     plt.show()
 

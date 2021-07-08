@@ -61,11 +61,12 @@ print(f"q_sym: {probe_BtoC.q_s}")
 print(f"q_dot: {probe_BtoC.qd_s}\n")
 
 if do_plot:
-    recon_axes_2d = cam.traj.plot(min_t=min_t, max_t=max_t)
-    recon_axes_2d = imu.traj.reconstructed.plot(recon_axes_2d,
+    recon_axes_2d = cam.traj.plot_allrots(min_t=min_t, max_t=max_t)
+    recon_axes_2d = imu.traj.reconstructed.plot_allrots(recon_axes_2d,
             min_t=min_t, max_t=max_t, dist=dist)
 
     recon_axes_3d = cam.traj.plot_3d()
     recon_axes_3d = imu.traj.reconstructed.plot_3d(ax=recon_axes_3d)
 
     probe_BtoC.plot(probe_BtoC.q, is_static=True)
+    plt.show()
