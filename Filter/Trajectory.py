@@ -103,7 +103,8 @@ class Trajectory(object):
 
         interp_obj._flag_interpolated = True
 
-    def plot(self, axes=None, min_t=None, max_t=None, dist=None):
+    def plot(self, axes=None, min_t=None, max_t=None, dist=None,
+        plot_euler=False, euler_extrinsic=True):
         """ Creates a two column plot of the states/data. """
 
         num_labels = len(self.labels) - 1
@@ -121,8 +122,66 @@ class Trajectory(object):
             axes[0,0].plot(self.t, dist, label=self.name)
             axes[0,0].set_title('Euclidian distance B-C')
 
+        if plot_euler and offset == 1:
+            axes[0,1].set_visible(False)
+
         ai = offset
-        for i, label in enumerate(self.labels):
+        if plot_euler:
+            plot_labels = ['t', 'x', 'y', 'z', 'qw', 'rx', 'ry', 'rz'] if euler_extrinsic else ['t', 'x', 'y', 'z', 'qw', 'rX', 'rY', 'rZ']
+        else:
+            plot_labels = self.labels
+
+        for i, label in enumerate(plot_labels):
+            # skip time data
+            if label == 't':
+                continue
+
+            row, col = self._get_plot_rc(ai, num_rows)
+            axes[row][col].plot(self.t, self.__dict__[label],
+                label=self.name)
+
+            latex_label = self._get_latex_label(label)
+            axes[row][col].set_title(latex_label)
+            axes[row][col].set_xlim(left=min_t, right=max_t)
+            axes[row][col].grid(True)
+
+            ai += 1
+
+        # late setting of line styles
+        for ax in axes.reshape(-1):
+            for line in ax.get_lines():
+                self._set_plot_line_style(line)
+
+        # legend on last plot
+        axes[row][col].legend()
+
+        return axes
+
+    def plot_allrots(self, axes=None, min_t=None, max_t=None, dist=None):
+        """ Creates a two column plot of the states/data. """
+
+        num_labels = len(self.labels) - 1
+        num_rows = math.ceil( num_labels / 2 )
+        offset = num_labels % 2 # 0 if even, 1 if odd number of labels
+
+        if axes is None:
+            fig, axes = plt.subplots(num_rows, 3)
+            fig.tight_layout()
+
+        if offset == 1 and dist is None:
+            axes[0,0].set_visible(False)
+        elif dist:
+            axes[0,0].set_visible(True)
+            axes[0,0].plot(self.t, dist, label=self.name)
+            axes[0,0].set_title('Euclidian distance B-C')
+
+        if offset == 1:
+            axes[0,1].set_visible(False)
+
+        ai = offset
+        plot_labels = ['t', 'x', 'y', 'z', 'qw', 'rx', 'ry', 'rz', 'qw', 'qx', 'qy', 'qz']
+
+        for i, label in enumerate(plot_labels):
             # skip time data
             if label == 't':
                 continue
@@ -278,9 +337,12 @@ class Trajectory(object):
         if ai <= (num_rows - 1):
             row = ai
             col = 0
-        else:
+        elif ai <= (2*num_rows - 1):
             row = ai - num_rows
             col = 1
+        else:
+            row = ai - 2*num_rows
+            col = 2
 
         return row, col
 
@@ -310,7 +372,7 @@ class VisualTraj(Trajectory):
         self.quats = None
 
         if self.qx:
-            self._gen_quats_farray()
+            self.gen_angle_arrays()
 
     @property
     def R(self):
@@ -398,10 +460,28 @@ class VisualTraj(Trajectory):
             line.set_color('darkgrey')
             line.set_linewidth(0.5)
 
+    def gen_angle_arrays(self):
+        self._gen_quats_farray()
+        self._gen_euler_angles()
+
     def _gen_quats_farray(self):
         self.quats = [Quaternion(x=self.qx[i],
                         y=self.qy[i], z=self.qz[i], w=w)
                         for i, w in enumerate(self.qw)]
+
+    def _gen_euler_angles(self):
+        """ extrinsic: xyz: rotations about fixed CS
+            intrinsic: XYZ: rotations about moving CS """
+
+        euler = np.array([R.from_quat(q.xyzw).as_euler('xyz', degrees=True) for q in self.quats])
+        self.rx = euler[:,0]
+        self.ry = euler[:,1]
+        self.rz = euler[:,2]
+
+        euler = np.array([R.from_quat(q.xyzw).as_euler('XYZ', degrees=True) for q in self.quats])
+        self.rX = euler[:,0]
+        self.rY = euler[:,1]
+        self.rZ = euler[:,2]
 
     def get_meas(self, old_t, current_t):
         """ Gets measurement, if any, after old_t up to current_t. """
@@ -657,6 +737,7 @@ class ImuTraj(Trajectory):
         reconstructed.qy = [q.y for q in quats]
         reconstructed.qz = [q.z for q in quats]
         reconstructed.qw = [q.w for q in quats]
+        reconstructed.gen_angle_arrays()
 
         self.reconstructed = reconstructed
 
