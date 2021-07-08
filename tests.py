@@ -441,6 +441,85 @@ class TestFilter(unittest.TestCase):
             jac = jac.slice(name, range(0,jac.n_in()), [0])
             jac_pc_n.append(jac)
 
+
+import math
+from cam_fake_traj import translate, rotate, write_to_file
+
+class TestSimpleTrajectory(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+
+        cls._num_frames = 60
+        cls.t = np.linspace(0, cls._num_frames-1, cls._num_frames)
+
+        cls.num_imu_between_frames = 3
+
+        cls.cam = None
+        cls._cam_interp = None
+        cls.imu = None
+
+    def setUp(self):
+        self.filepath_cam = None
+        self.filepath_imu = None
+        self.do_retain_files = False
+
+    @property
+    def num_frames(self):
+        return self._num_frames
+    @num_frames.setter
+    def num_frames(self, new_num_frames):
+        self._num_frames = new_num_frames
+        self.t = np.linspace(0, new_num_frames-1, new_num_frames)
+
+    @property
+    def cam_interp(self):
+        self._cam_interp = self.cam.interpolate(self.num_imu_between_frames)
+        return self._cam_interp
+
+    def _save_data_to_cam(self, x, y, z, qx, qy, qz, qw):
+        write_to_file(self.filepath_cam, self.t, x, y, z, qx, qy, qz, qw)
+        self.cam = Camera(filepath=self.filepath_cam, max_vals=None)
+
+    def _gen_cam_trans_x(self):
+        x, y, z = translate('x', self.t, 0, 10, 0, 0)
+        qx, qy, qz, qw = rotate('x', self.t, 0, 0)
+        self._save_data_to_cam(x, y, z, qx, qy, qz, qw)
+
+    def _gen_long_rotation(self):
+        self.num_frames = 100
+        x, y, z = translate('x', self.t, 0, 10, 0, 0)
+        qx, qy, qz, qw = rotate('x', self.t, 0, 270*3)
+        self._save_data_to_cam(x, y, z, qx, qy, qz, qw)
+
+    def _gen_imu_data(self):
+        self.imu = Imu(self.probe, self.cam_interp)
+        self.imu.generate_traj(self.filepath_imu, do_regenerate=True)
+        self.imu.reconstruct()
+        self.imu.traj.reconstructed.name = "imu (B) recon"
+
+    def distance(self):
+        norm = (self.cam.x - self.imu.x)**2 + (self.cam.y - self.imu.y)**2 + (self.cam.z - self.imu.z)**2
+        return [math.sqrt(x) for x in norm]
+
+    def test_trans_x(self):
+        self.filepath_cam = 'trajs/test_cam_trans_x.txt'
+        self.filepath_imu = 'trajs/test_imu_trans_x.txt'
+        self._gen_cam_trans_x()
+        self._gen_imu_data()
+
+        min_t, max_t = self.cam.t[0], self.cam.t[-1]
+
+    def test_long_rot(self):
+        self.filepath_cam = 'trajs/long_rot.txt'
+        self._gen_long_rotation()
+        self.do_retain_files = True
+
+    def tearDown(self):
+        if not self.do_retain_files:
+            os.remove(os.path.join('.', self.filepath_cam))
+            self.do_retain_files = False
+
 def suite():
     suite = unittest.TestSuite()
     test_class = TestSimpleTrajectory
