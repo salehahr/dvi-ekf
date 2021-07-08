@@ -50,7 +50,7 @@ imu.traj.reconstructed.name = "imu (B) recon"
 # distance
 def distance(cam, imu):
     import math
-    norm = (cam.x - imu.x)**2 + (cam.z - imu.z)**2 + (cam.z - imu.z)**2
+    norm = (cam.x - imu.x)**2 + (cam.y - imu.y)**2 + (cam.z - imu.z)**2
     return [math.sqrt(x) for x in norm]
 dist = distance(cam.traj.interpolated, imu.traj.reconstructed)
 
