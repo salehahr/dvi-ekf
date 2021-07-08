@@ -443,7 +443,7 @@ class TestFilter(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-    test_class = TestFilter
+    test_class = TestSimpleTrajectory
     for t in test_class.__dict__.keys():
         if t.startswith('test'):
             suite.addTest(test_class(t))
