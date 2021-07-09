@@ -5,18 +5,22 @@ the calibration parameters in a camera-IMU sensor probe setup.
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
 ## Simple camera trajectory
-Camera moves in x
+Camera moves in x  
 ![](img/fakecam-x.png)
-Camera moves in y
-![](img/fakecam-y.png)
-Camera moves in z
+
+Camera moves in y  
+![](img/fakecam-y.png) 
+
+Camera moves in z  
 ![](img/fakecam-z.png)
 
-Camera rotates around its x-axis (90 deg)
+Camera rotates around its x-axis (90 deg)  
 ![](img/fakecam-rx-90.png)
-Camera rotates around its x-axis (270 deg)
+
+Camera rotates around its x-axis (270 deg)  
 ![](img/fakecam-rx-270-qwnotpos.png)
-Camera rotates around its x-axis (270 deg -- constrained `q_w` to be positive)
+
+Camera rotates around its x-axis (270 deg -- constrained `q_w` to be positive)  
 ![](img/fakecam-rx-270-qwpos.png)
 
 ## Filter
