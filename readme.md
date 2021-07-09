@@ -5,11 +5,8 @@ the calibration parameters in a camera-IMU sensor probe setup.
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
 ## Current results
-![](img/kf.png)
-
-- [ ] Shown are IMU positions and rotations, I still need to work on
-proper plot functions for the rest of the states.
-- [ ] Equations/Jacobian stuff still needs checking.
+![](img/kf_mono_imu.png)
+![](img/kf_mono_cam.png)
 
 ## Probe
 ```
