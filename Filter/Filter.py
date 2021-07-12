@@ -128,11 +128,11 @@ class Filter(object):
                         *self.x,
                         *self.u)]
 
-        self.states.p = res[0]
-        self.states.v = res[1]
-        self.states.q = res[2]
-        self.states.dofs = res[3]
-        self.states.p_cam = res[4]
+        self.states.p = res[0].squeeze()
+        self.states.v = res[1].squeeze()
+        self.states.q = res[2].squeeze()
+        self.states.dofs = res[3].squeeze()
+        self.states.p_cam = res[4].squeeze()
 
     def _predict_error(self):
         err_p_C_dot = get_err_pc_dot(self.probe)

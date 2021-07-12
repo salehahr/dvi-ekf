@@ -494,7 +494,7 @@ class FilterTraj(Trajectory):
         self.labels_imu_dofs = [ 'dof1', 'dof2', 'dof3',
                     'dof4', 'dof5', 'dof6']
         self.labels_camera = ['xc', 'yc', 'zc',
-                    'rxc', 'rxy', 'rxz',
+                    'rxc', 'ryc', 'rzc',
                     'qwc', 'qxc', 'qyc', 'qzc']
         labels = ['t', *self.labels_imu,
                     *self.labels_imu_dofs, *self.labels_camera]
@@ -504,10 +504,13 @@ class FilterTraj(Trajectory):
         """ Appends new measurement from current state. """
 
         euler_angs = R.from_quat(state.q.xyzw).as_euler('xyz', degrees=True)
+        euler_angs_C = R.from_quat(state.q_cam.xyzw).as_euler('xyz', degrees=True)
         data = [t, *state.p, *state.v, *euler_angs, *state.q.xyzw,
-                *state.dofs, *state.p_cam]
+                    *state.dofs,
+                    *state.p_cam, *euler_angs_C, *state.q_cam.xyzw]
 
-        for i, label in enumerate(self.labels[:-7]):
+        for i, label in enumerate(self.labels):
+            # print(f'{i} {label}: {data[i]}')
             self.__dict__[label].append(data[i])
 
     def plot(self, labels, num_cols, offset, filename='', cam=None, axes=None, min_t=None, max_t=None):
@@ -532,6 +535,10 @@ class FilterTraj(Trajectory):
             val_filt = self.__dict__[label]
             val_cam = cam.__dict__[label[:-1]] if cam else []
             min_val, max_val = min(*val_filt, *val_cam), max(*val_filt, *val_cam)
+
+            range_val = max_val - min_val
+            min_val = min_val - 0.2 * range_val
+            max_val = max_val + 0.2 * range_val
 
             # display of very small values
             if max_val - min_val < 0.001:
@@ -635,6 +642,7 @@ class FilterTraj(Trajectory):
             line.set_color('blue')
         else:
             line.set_color('darkgrey')
+            line.set_linestyle('--')
             line.set_linewidth(0.8)
 
 class ImuTraj(Trajectory):

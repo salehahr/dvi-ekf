@@ -16,12 +16,12 @@ class States(object):
         assert(self.size == 19)
 
     def apply_correction(self, err):
-        self.p += err.dp.reshape(3,1)
-        self.v += err.dv.reshape(3,1)
+        self.p += err.dp.reshape(3,)
+        self.v += err.dv.reshape(3,)
         self.q = self.q * err.dq
         self.q.normalise()
-        self.dofs += err.ddofs.reshape(6,1)
-        self.p_cam += err.dpc.reshape(3,1)
+        self.dofs += err.ddofs.reshape(6,)
+        self.p_cam += err.dpc.reshape(3,)
 
     @property
     def p(self):
