@@ -283,6 +283,7 @@ class TestFilter(unittest.TestCase):
 
         cls.states()
         cls.error_states()
+        cls.measurements()
         cls.inputs()
         cls.noise()
 
@@ -291,8 +292,11 @@ class TestFilter(unittest.TestCase):
         cls.p_B = casadi.SX.sym('p_B', 3)
         cls.v_B = casadi.SX.sym('v_B', 3)
         cls.R_WB = casadi.SX.sym('R_WB', 3, 3)
-        dofs = casadi.SX.sym('q', 6)
-        cls.dofs_t, cls.dofs_r = casadi.vertsplit(dofs, [0, 3, 6])
+
+         # note: creating cls.dofs via casadi.SX.sym results in free variables in the functions created later on -- therefore dofs_cas, which was used in Probe.py, has to be imported
+        cls.dofs, cls.ddofs, cls.dddofs = casadi.vertsplit(dofs_cas, [0, 8, 16, 24])
+        cls.dofs_t, cls.dofs_r, _ = casadi.vertsplit(cls.dofs, [0, 3, 6, 8])
+
         cls.p_C = casadi.SX.sym('p_C', 6)
 
         cls.x = [cls.p_B, cls.v_B, cls.R_WB, cls.dofs_t, cls.dofs_r, cls.p_C]
@@ -311,6 +315,13 @@ class TestFilter(unittest.TestCase):
                     cls.err_dofs_t, cls.err_dofs_r, cls.err_p_C]
         cls.err_x_str = ['err_p_B', 'err_v_B', 'err_theta',
                     'err_dofs_t', 'err_dofs_r', 'err_p_C']
+
+    @classmethod
+    def measurements(cls):
+        _, cls.q_notch, _ = casadi.vertsplit(cls.dofs, [0, 6, 7, 8])
+        _, cls.qd_notch, _ = casadi.vertsplit(cls.ddofs, [0, 6, 7, 8])
+        cls.notch_dof = [cls.q_notch, cls.qd_notch]
+        cls.notch_dof_str = ['q_notch', 'qd_notch']
 
     @classmethod
     def inputs(cls):
@@ -336,14 +347,14 @@ class TestFilter(unittest.TestCase):
                 + self.dt**2 / 2 * self.R_WB @ self.acc
 
         fun_nominal = casadi.Function('f_nom',
-            [self.dt, *self.x, *self.u],
+            [self.dt, *self.x, *self.u, *self.notch_dof],
             [   p_B_next,
                 self.v_B + self.dt * self.R_WB @ self.acc,
                 self.R_WB + self.R_WB @ casadi.skew(self.dt * self.om),
                 self.dofs_t,
                 self.dofs_r,
                 p_B_next + self.R_WB @ self.p_CB ],
-            ['dt', *self.x_str, *self.u_str],
+            ['dt', *self.x_str, *self.u_str, *self.notch_dof_str],
             ['p_B_next', 'v_B_next', 'R_WB_next',
                 'dofs_t_next', 'dofs_r_next', 'p_C_next'])
 
@@ -353,6 +364,8 @@ class TestFilter(unittest.TestCase):
                             R_WB = casadi.DM.eye(3),
                             om = casadi.DM(self.imu.om),
                             acc = casadi.DM(self.imu.acc),
+                            q_notch = casadi.DM(0.),
+                            qd_notch = casadi.DM(0.),
                          )
         p_B_next = res['p_B_next']
 
