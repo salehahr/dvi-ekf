@@ -43,7 +43,7 @@ for i, t in enumerate(cam.t[1:]):
     # queue = imu.traj.get_queue(old_t, t) # real imu data
     # simulate imu queue
     queue = cam_interp.generate_queue(old_t, t)
-    old_ti = t
+    old_ti = old_t
 
     print(f"Predicting... t={queue.t[0]}")
     for i, ti in enumerate(queue.t):
