@@ -485,6 +485,29 @@ class VisualTraj(Trajectory):
 
             return VisualMeasurement(t, pos, rot)
 
+class ImuDesTraj(Trajectory):
+    """ Desired traj of the IMU. """
+
+    def __init__(self, name, imu):
+        labels = ['t', 'x', 'y', 'z',
+                    'vx', 'vy', 'vz',
+                    'rx', 'ry', 'rz',
+                    'qw', 'qx', 'qy', 'qz']
+        super().__init__(name, labels)
+        self.imu = imu
+
+    def append_value(self, t, current_cam):
+        """ Appends new measurement from current state. """
+
+        p, R_WB, v = self.imu.desired_vals(current_cam)
+
+        euler_angs = R.from_matrix(R_WB).as_euler('xyz', degrees=True)
+        quats = R.from_matrix(R_WB).as_quat()
+        data = [t, *p, *v, *euler_angs, *quats]
+
+        for i, label in enumerate(self.labels):
+            self.__dict__[label].append(data[i])
+
 class FilterTraj(Trajectory):
     def __init__(self, name):
         self.labels_imu = ['x', 'y', 'z',
@@ -513,7 +536,8 @@ class FilterTraj(Trajectory):
             # print(f'{i} {label}: {data[i]}')
             self.__dict__[label].append(data[i])
 
-    def plot(self, labels, num_cols, offset, filename='', cam=None, axes=None, min_t=None, max_t=None):
+    def plot(self, labels, num_cols, offset, filename='',
+            cam=None, imu_des=None, axes=None, min_t=None, max_t=None):
         num_labels = len(labels)
         num_rows = math.ceil( num_labels / num_cols )
 
@@ -534,7 +558,9 @@ class FilterTraj(Trajectory):
 
             val_filt = self.__dict__[label]
             val_cam = cam.__dict__[label[:-1]] if cam else []
-            min_val, max_val = min(*val_filt, *val_cam), max(*val_filt, *val_cam)
+            val_des = imu_des.__dict__[label] if (imu_des and 'dof' not in label) else []
+
+            min_val, max_val = min(*val_filt, *val_cam, *val_des), max(*val_filt, *val_cam, *val_des)
 
             range_val = max_val - min_val
             min_val = min_val - 0.2 * range_val
@@ -550,6 +576,8 @@ class FilterTraj(Trajectory):
                 axes[row][col].plot(self.t, val_filt, label=self.name)
             if val_cam != []:
                 axes[row][col].plot(cam.t, val_cam, label=cam.name)
+            if val_des != []:
+                axes[row][col].plot(imu_des.t, val_des, label=imu_des.name)
 
             latex_label = self._get_latex_label(label)
             axes[row][col].set_title(latex_label)
@@ -564,8 +592,9 @@ class FilterTraj(Trajectory):
             for line in ax.get_lines():
                 self._set_plot_line_style(line)
 
-        # legend on last plot
-        axes[row][col].legend()
+        # legend on first plot
+        r0, c0 = self._get_plot_rc(offset, num_rows)
+        axes[r0][c0].legend()
 
         # save img
         if filename:
@@ -573,13 +602,13 @@ class FilterTraj(Trajectory):
 
         return axes
 
-    def plot_imu(self, filename='', axes=None, min_t=None, max_t=None):
+    def plot_imu(self, filename='', imu_des=None, axes=None, min_t=None, max_t=None):
         """ Creates plot of the IMU positioning parameters on the probe. """
 
         labels = self.labels_imu + self.labels_imu_dofs
         num_cols = 6
         offset = len(labels) % 2
-        return self.plot(labels, num_cols, offset, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
+        return self.plot(labels, num_cols, offset, imu_des=imu_des, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
 
     def plot_dofs(self, axes=None, min_t=None, max_t=None):
         """ Creates plot of the IMU positioning parameters on the probe. """
@@ -640,6 +669,10 @@ class FilterTraj(Trajectory):
             line.set_linewidth(0.75)
             line.set_linestyle('-')
             line.set_color('blue')
+        elif 'soll' in label:
+            line.set_linewidth(0.75)
+            line.set_linestyle('--')
+            line.set_color('green')
         else:
             line.set_color('darkgrey')
             line.set_linestyle('--')
