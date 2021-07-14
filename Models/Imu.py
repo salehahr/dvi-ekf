@@ -200,8 +200,8 @@ class Imu(object):
     def reconstruct(self):
         assert(self.flag_interpolated == True)
         R_WB = [casadi.DM(R_WC @ self.R_BC.T).full() for R_WC in self.cam.R]
-        IC = self.get_IC()
-        self.traj.reconstruct(R_WB, IC[0], *IC[2:])
+        W_p_BW_0, _, _, WW_v_BW_0, _, _ = self.get_IC()
+        self.traj.reconstruct(R_WB, W_p_BW_0, WW_v_BW_0)
         return self.traj.reconstructed
 
     def get_IC(self):

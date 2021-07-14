@@ -822,7 +822,7 @@ class ImuTraj(Trajectory):
 
         return ImuMeasurement(t, acc, om)
 
-    def reconstruct(self, R_WB, W_p_BW_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0):
+    def reconstruct(self, R_WB, W_p_BW_0, WW_v_BW_0):
         """ For validation.
             Generates trajectory from IMU data.
             The IMU trajectory is obtained via numerical integration
