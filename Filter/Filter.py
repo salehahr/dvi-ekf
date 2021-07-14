@@ -12,7 +12,7 @@ from .symbols import *
 class Filter(object):
     def __init__(self, imu, IC, P0):
         self.num_states = IC.size
-        self.num_error_states = IC.size - 1
+        self.num_error_states = IC.size - 2
         self.num_meas = 7
 
         self.states = copy(IC)
@@ -33,6 +33,7 @@ class Filter(object):
 
         # covariance
         self.P = P0
+        assert(self.P.shape == (self.num_error_states, self.num_error_states))
 
     @property
     def x(self):
@@ -40,7 +41,8 @@ class Filter(object):
                     self.states.v,
                     self.states.q.rot,
                     self.states.dofs,
-                    self.states.p_cam]
+                    self.states.p_cam,
+                    self.states.q_cam.rot]
         return self._x
 
     @property
@@ -110,7 +112,10 @@ class Filter(object):
         self.traj.append_state(t, self.states)
 
     def _predict_nominal(self):
+        R_BC = self.probe.R
+
         p_next = p_B + dt * v_B + dt**2 / 2 * R_WB @ acc
+        om_C = R_BC.T @ om + R_BC.T @ self.probe.om
 
         self.fun_nominal = casadi.Function('f_nom',
             [dt, *x, *u],
@@ -118,10 +123,12 @@ class Filter(object):
                 v_B + dt * R_WB @ acc,
                 R_WB + R_WB @ casadi.skew(dt * om),
                 dofs,
-                p_next + R_WB @ self.probe.p ], # TODO: p_BC as a function of DOFs
+                p_C + dt * v_B + dt**2 / 2 * R_WB @ acc
+                    + R_WB @ self.probe.p,
+                R_WC + R_WC @ casadi.skew(dt * om_C)], # TODO: p_BC as a function of DOFs
             ['dt', *x_str, *u_str],
             ['p_B_next', 'v_B_next', 'R_WB_next',
-                'dofs_next', 'p_C_next'])
+                'dofs_next', 'p_C_next', 'R_WC_next'])
 
         res = [casadi.DM(r).full() \
                     for r in self.fun_nominal(self.dt,
@@ -133,6 +140,7 @@ class Filter(object):
         self.states.q = res[2].squeeze()
         self.states.dofs = res[3].squeeze()
         self.states.p_cam = res[4].squeeze()
+        self.states.q_cam = res[5].squeeze()
 
     def _predict_error(self):
         err_p_C_dot = get_err_pc_dot(self.probe)

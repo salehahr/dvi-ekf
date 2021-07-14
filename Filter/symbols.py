@@ -8,9 +8,10 @@ v_B = casadi.SX.sym('v_B', 3)
 R_WB = casadi.SX.sym('R_WB', 3, 3)
 dofs = casadi.SX.sym('q', 6)
 p_C = casadi.SX.sym('p_C', 3)
+R_WC = casadi.SX.sym('p_C', 3, 3)
 
-x = [p_B, v_B, R_WB, dofs, p_C]
-x_str = ['p_B', 'v_B', 'R_WB', 'dofs', 'p_C']
+x = [p_B, v_B, R_WB, dofs, p_C, R_WC]
+x_str = ['p_B', 'v_B', 'R_WB', 'dofs', 'p_C', 'R_WC']
 
 # inputs
 acc = casadi.SX.sym('acc', 3)
@@ -25,9 +26,11 @@ err_v_B = casadi.SX.sym('err_v_B', 3)
 err_theta = casadi.SX.sym('err_theta', 3)
 err_dofs = casadi.SX.sym('err_dofs', 6)
 err_p_C = casadi.SX.sym('err_p_C', 3)
+err_theta_C = casadi.SX.sym('err_theta_C', 3)
 
-err_x = [err_p_B, err_v_B, err_theta, err_dofs, err_p_C]
-err_x_str = ['err_p_B', 'err_v_B', 'err_theta', 'err_dofs', 'err_p_C']
+err_x = [err_p_B, err_v_B, err_theta, err_dofs, err_p_C, err_theta_C]
+err_x_str = ['err_p_B', 'err_v_B', 'err_theta', 'err_dofs',
+                'err_p_C', 'err_theta_C']
             
 # noise
 n_v = casadi.SX.sym('n_v', 3)

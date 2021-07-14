@@ -252,7 +252,7 @@ class Imu(object):
                             # )
                     # ).full()
 
-        return W_p_BW, R_WB, WW_v_BW
+        return W_p_BW.squeeze(), R_WB, WW_v_BW.squeeze()
 
     def write_array_to_file(self, filepath):
         """ Writes IMU trajectory, stored in the _om and _acc arrays,
