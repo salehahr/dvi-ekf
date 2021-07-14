@@ -5,13 +5,10 @@ class States(object):
     def __init__(self, p, v, q, dofs, p_cam, q_cam):
         self._p = np.asarray(p).reshape(3,)
         self._v = np.asarray(v).reshape(3,)
-        self._q = None
+        self._q = Quaternion(val=q, do_normalise=True)
         self._dofs = dofs
         self._p_cam = p_cam
-        self._q_cam = None
-
-        self.q = q
-        self.q_cam = q_cam
+        self._q_cam = Quaternion(val=q_cam, do_normalise=True)
 
         self.size = len(p) + len(v) + len(self.q.xyzw) \
                     + len(dofs) + len(p_cam) + len(self.q_cam.xyzw)
@@ -69,7 +66,7 @@ class States(object):
     def q_cam(self):
         return Quaternion(val=self._q_cam, do_normalise=True)
 
-    @q.setter
+    @q_cam.setter
     def q_cam(self, val):
         self._q_cam = Quaternion(val=val, do_normalise=True)
 
