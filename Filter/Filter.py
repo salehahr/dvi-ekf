@@ -40,6 +40,11 @@ class Filter(object):
         self.P = P0
         assert(self.P.shape == (self.num_error_states, self.num_error_states))
 
+        # static matrices
+        self.Hx = np.zeros([self.num_meas, self.num_states])
+        self.Hx[:3,-6:-3] = np.eye(3)
+        self.Hx[3:7,-4:] = np.eye(4)
+
     @property
     def x(self):
         self._x = [self.states.p,
@@ -76,23 +81,23 @@ class Filter(object):
         self._acc_old = val.squeeze()
 
     @property
-    def Hx(self):
-        Hx = np.zeros([7, self.num_states])
-        Hx[:3,-3:] = np.eye(3)
-        # Hx[6:10,-4:] = np.eye(4) # part of measurement model jacobian # TODO
-        return Hx
-
-    @property
     def jac_X_deltx(self):
-        x, y, z, w = self.states.q.xyzw
-        Q_deltth = 0.5 * np.array([[-x, -y, -z],
+        X_deltx = np.zeros((self.num_states, self.num_error_states))
+
+        def jac_true_wrt_err_quats(quat):
+            x, y, z, w = self.states.q.xyzw
+            return 0.5 * np.array([[-x, -y, -z],
                                    [ w, -z,  y],
                                    [ z,  w, -x],
                                    [-y,  x,  w]])
 
-        X_deltx = np.zeros([self.num_states, self.num_error_states])
-        X_deltx[:6,:6] = np.eye(6)
-        X_deltx[-4:,-3:] = Q_deltth
+        Q_deltth = jac_true_wrt_err_quats(self.states.q)
+        Q_deltth_C = jac_true_wrt_err_quats(self.states.q_cam)
+
+        X_deltx[0:6,0:6] = np.eye(6)
+        X_deltx[6:10,6:9] = Q_deltth
+        X_deltx[10:19,9:18] = np.eye(9)
+        X_deltx[19:23,18:21] = Q_deltth_C
 
         return X_deltx
 
@@ -178,19 +183,20 @@ class Filter(object):
             [dt, R_WB, *u, n_om, err_theta, err_theta_C], [jac],
             ['dt', 'R_WB', *u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
             )
-        return fun_jac( dt          = self.dt,
+        return casadi.DM(
+                fun_jac( dt          = self.dt,
                         R_WB        = self.R_WB_old,
                         om          = self.om_old,
                         acc         = self.acc_old,
                         n_om        = self.imu.stdev_nom,
                         err_theta   = casadi.DM([0., 0., 0.]),
                         err_theta_C = casadi.DM([0., 0., 0.]),
-                        )['jac']
+                        )['jac']).full()
 
     def _predict_error_covariance(self):
-        Q = casadi.SX.eye(self.num_noise)
-        Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * casadi.SX.eye(3)
-        Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * casadi.SX.eye(3)
+        Q = np.eye(self.num_noise)
+        Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
+        Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
 
         sigma_dofs = 0.2
         Q[6:12, 6:12] = np.diag(
@@ -200,14 +206,14 @@ class Filter(object):
 
     def update(self, camera):
         # compute gain        
-        H = self.Hx @ self.jac_X_deltx # 7x18
+        H = self.Hx @ self.jac_X_deltx # 7x21
         S = H @ self.P @ H.T + self.R # 7x7
-        K = self.P @ H.T @ np.linalg.inv(S) # 18x7
+        K = self.P @ H.T @ np.linalg.inv(S) # 21x7
 
         # compute error state
         R_BC = casadi.DM(self.probe.R).full()
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
-        res_q = (camera.qrot - self.states.q * R_BC).xyzw
+        res_q = (camera.qrot - self.states.q_cam).xyzw
         res = np.hstack((res_p_cam, res_q))
         err = ErrorStates(K @ res)
 

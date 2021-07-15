@@ -21,6 +21,8 @@ class States(object):
         self.q.normalise()
         self.dofs += err.ddofs.reshape(6,)
         self.p_cam += err.dpc.reshape(3,)
+        self.q_cam = self.q_cam * err.dqc
+        self.q_cam.normalise()
 
     @property
     def p(self):

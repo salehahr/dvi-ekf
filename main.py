@@ -69,4 +69,10 @@ for i, t in enumerate(cam.t[1:]):
 # plots
 from plotter import plot_trajectories
 traj_name = 'mono'
+
+if do_prop_only:
+    traj_name = traj_name + '_prop'
+else:
+    traj_name = traj_name + f'_upd_Rp{Rpval}_Rq{Rqval}'
+
 plot_trajectories(kf.traj, traj_name, imu_des)
