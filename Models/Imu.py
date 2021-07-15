@@ -38,7 +38,11 @@ from .params import *
     """
 
 class Imu(object):
-    def __init__(self, probe_BtoC, cam):
+    def __init__(self, probe_BtoC, cam, stdev_na=None, stdev_nom=None):
+        # from datasheet
+        self.stdev_na = stdev_na
+        self.stdev_nom = stdev_nom
+
         # data arrays to be appended to upon evaluating om/acc expression
         self.t = []
         self._om = []

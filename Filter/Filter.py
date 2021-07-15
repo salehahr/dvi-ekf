@@ -10,10 +10,11 @@ import casadi
 from .symbols import *
 
 class Filter(object):
-    def __init__(self, imu, IC, P0):
+    def __init__(self, imu, IC, P0, meas_noise):
         self.num_states = IC.size
         self.num_error_states = IC.size - 2
         self.num_meas = 7
+        self.num_noise = 12
 
         self.states = copy(IC)
         self._x = []
@@ -22,9 +23,13 @@ class Filter(object):
         self.dt = 0.
         self.traj = FilterTraj("kf")
 
-        # imu
+        # imu / noise
         self.imu = imu
         self.probe = self.imu.probe
+
+        self.stdev_na = np.array(imu.stdev_na)
+        self.stdev_nom = np.array(imu.stdev_nom)
+        self.R = np.diag(meas_noise)
 
         # buffer
         self._om_old = imu.om.squeeze()
@@ -192,13 +197,13 @@ class Filter(object):
         # self.err_states = self.Fx @ self.err_states
 
     def _predict_error_covariance(self):
-        Q = np.eye(12)
-        Q[:6,:6] = (self.dt ** 2) * self.Qc # integrate acceleration to obstain position
+        Q = casadi.SX.eye(self.num_noise)
+        Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * casadi.SX.eye(3)
+        Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * casadi.SX.eye(3)
 
-        # random walk of dofs
-        sigma = 0.01
-        mu = 0
-        Q[-6:,-6:] = self.dt * (sigma * np.random.randn(6, 6) + mu)
+        sigma_dofs = 0.2
+        Q[6:12, 6:12] = np.diag(
+            np.random.normal(loc=0, scale=sigma_dofs, size=(6,)))
 
         self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ Q @ self.Fi.T
 

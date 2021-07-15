@@ -21,16 +21,15 @@ do_prop_only, use_noisy_imu = parse_arguments()
 
 # load data
 from generate_data import probe_BtoC, cam, cam_interp, imu
-from generate_data import IC, cov0, min_t, max_t, gen_noise_matrices
+from generate_data import IC, cov0, min_t, max_t
 
-# noise values
-Qval = 1e-3
+# measurement noise values
 Rpval, Rqval = 1e3, 0.05
+meas_noise = np.hstack(([Rpval]*3, [Rqval]*4))
 
 # initialisation (t=0): IC, IMU buffer, noise matrices
-kf = Filter(imu, IC, cov0)
+kf = Filter(imu, IC, cov0, meas_noise)
 kf.traj.append_state(cam.t[0], kf.states)
-kf.Qc, kf.R = gen_noise_matrices(Qval, Rpval, Rqval)
 
 # desired trajectory
 imu_des = ImuDesTraj("imu soll", imu)

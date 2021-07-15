@@ -20,22 +20,8 @@ cam_interp = cam.interpolate(num_imu_between_frames)
 min_t, max_t = cam.t[0], cam.t[-1]
 
 # imu
-imu = Imu(probe_BtoC, cam_interp)
-
-# noise matrices
-def gen_noise_matrices(Q, Rp, Rq):
-    # process noise
-    stdev_na = [Q] * 3
-    stdev_nw = stdev_na
-    stdevs = np.hstack((stdev_na,  stdev_nw))
-    Qc = np.square(np.diag(stdevs))
-
-    # measurement noise
-    Rp = [Rp] * 3
-    Rq = [Rq] * 4
-    R = np.diag(np.hstack((Rp, Rq)))
-
-    return Qc, R
+stdev_na, stdev_nom = [1e-3]*3, [1e-3]*3 # supposedly from IMU datasheet
+imu = Imu(probe_BtoC, cam_interp, stdev_na, stdev_nom)
 
 # initial states
 dofs0 = probe_BtoC.joint_dofs
