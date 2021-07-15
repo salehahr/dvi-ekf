@@ -96,13 +96,6 @@ class Filter(object):
 
         return X_deltx
 
-    @property
-    def Fi(self):
-        # motion model noise jacobian
-        Fi = np.zeros([self.num_error_states, 12])
-        Fi[3:15, :12] = np.eye(12)
-        return Fi
-
     def propagate(self, t, om, acc, do_prop_only=False):
         self._predict_nominal()
         self._predict_error()
@@ -149,52 +142,50 @@ class Filter(object):
         self.states.q_cam = res[5].squeeze()
 
     def _predict_error(self):
-        err_p_C_dot = get_err_pc_dot(self.probe)
-        err_theta_C_dot = get_err_theta_c_dot(self.probe)
+        """ Calculates jacobian of the error state kinematics w.r.t. error states and w.r.t. noise. """
 
-        fun_error = casadi.Function('f_err',
-            [dt, *err_x, *u, *n, R_WB],
-            [   err_p_B + dt * err_v_B,
-                err_v_B + dt * (-R_WB @ casadi.skew(acc) @ err_theta) + n_a,
-                -casadi.cross(om, err_theta) + n_om,
-                n_dofs,
-                err_p_C + dt * err_p_C_dot,
-                err_theta_C + dt * err_theta_C_dot],
-            ['dt', *err_x_str, *u_str, *n_str, 'R_WB'],
-            ['err_p_B_next', 'err_v_B_next', 'err_theta_next',
-                'err_dofs_next', 'err_p_C_next', 'err_theta_C_next'])
+        Fx = casadi.SX.eye(self.num_error_states)
+        Fx[0:3, 3:6] = self.dt * casadi.SX.eye(3)
+        Fx[3:6, 6:9] = - self.R_WB_old @ casadi.skew(self.acc_old) * self.dt
+        Fx[6:9, 6:9] = self.Om_old.rot.T
+        # Fx[9:15, :] # dofs
+        self.Fx = self._cam_error_jacobian(Fx, err_x)
 
-        jac = fun_error.jac()
-        res = jac(  dt   = self.dt,
-                    om   = self.om_old,
-                    acc  = self.acc_old,
-                    R_WB = self.R_WB_old)
+        # motion model noise jacobian
+        Fi = casadi.SX.zeros(self.num_error_states, self.num_noise)
+        Fi[3:15, :] = casadi.SX.eye(self.num_noise)
+        self.Fi = self._cam_error_jacobian(Fi, n)
 
-        F = np.eye(self.num_error_states)
+        """ returns zero
+        # self.err_states = self.Fx @ self.err_states """
 
-        F[0:3, 3:6] = self.dt * np.eye(3)
-        F[3:6, 6:9] = - self.R_WB_old @ skew(self.acc_old) * self.dt
-        F[6:9, 6:9] = self.Om_old.rot.T
-        F[9:15, :]  = 0 # dofs
+    def _cam_error_jacobian(self, jac, vars_wrt):
+        """ Fills the error jacobian (either w.r.t. error state or
+            w.r.t. noise) for the camera state entries. """
 
-        # jacobians of the camera states
+        err_p_C_next = err_p_C + dt * get_err_pc_dot(self.probe)
+        err_theta_C_next = err_theta_C + dt * get_err_theta_c_dot(self.probe)
+
         l_in = 0
         r_in = 0
-        for x in err_x_str:
-            name_p = 'Derr_p_C_nextD' + x
-            name_th = 'Derr_theta_C_nextD' + x
-            res_p = res[name_p].full()
-            res_th = res[name_th].full()
-
-            r_in += res_p.shape[1]
-            F[15:18,l_in:r_in] = res_p
-            F[18:,l_in:r_in] = res_th
+        for x in vars_wrt:
+            r_in += x.shape[0]
+            jac[15:18,l_in:r_in] = casadi.jacobian(err_p_C_next, x)
+            jac[18:,l_in:r_in] = casadi.jacobian(err_theta_C_next, x)
             l_in = r_in
 
-        self.Fx = F
-
-        # returns zero
-        # self.err_states = self.Fx @ self.err_states
+        fun_jac = casadi.Function('f_jac',
+            [dt, R_WB, *u, n_om, err_theta, err_theta_C], [jac],
+            ['dt', 'R_WB', *u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
+            )
+        return fun_jac( dt          = self.dt,
+                        R_WB        = self.R_WB_old,
+                        om          = self.om_old,
+                        acc         = self.acc_old,
+                        n_om        = self.imu.stdev_nom,
+                        err_theta   = casadi.DM([0., 0., 0.]),
+                        err_theta_C = casadi.DM([0., 0., 0.]),
+                        )['jac']
 
     def _predict_error_covariance(self):
         Q = casadi.SX.eye(self.num_noise)
