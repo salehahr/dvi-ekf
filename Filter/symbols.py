@@ -33,12 +33,12 @@ err_x_str = ['err_p_B', 'err_v_B', 'err_theta', 'err_dofs',
                 'err_p_C', 'err_theta_C']
             
 # noise
-n_v = casadi.SX.sym('n_v', 3)
+n_a = casadi.SX.sym('n_a', 3)
 n_om = casadi.SX.sym('n_om', 3)
 n_dofs = casadi.SX.sym('n_dofs', 6)
 
-n = [n_v, n_om, n_dofs]
-n_str = ['n_v', 'n_om', 'n_dofs']
+n = [n_a, n_om, n_dofs]
+n_str = ['n_a', 'n_om', 'n_dofs']
 
 # true values
 # v_B_tr = v_B + err_v_B

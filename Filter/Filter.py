@@ -150,7 +150,7 @@ class Filter(object):
         fun_error = casadi.Function('f_err',
             [dt, *err_x, *u, *n, R_WB],
             [   err_p_B + dt * err_v_B,
-                err_v_B + dt * (-R_WB @ casadi.skew(acc) @ err_theta) + n_v,
+                err_v_B + dt * (-R_WB @ casadi.skew(acc) @ err_theta) + n_a,
                 -casadi.cross(om, err_theta) + n_om,
                 n_dofs,
                 err_p_C + dt * err_p_C_dot,
