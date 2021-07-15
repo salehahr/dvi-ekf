@@ -123,9 +123,10 @@ class Filter(object):
                 v_B + dt * R_WB @ acc,
                 R_WB + R_WB @ casadi.skew(dt * om),
                 dofs,
-                p_C + dt * v_B + dt**2 / 2 * R_WB @ acc
-                    + R_WB @ self.probe.p,
-                R_WC + R_WC @ casadi.skew(dt * om_C)], # TODO: p_BC as a function of DOFs
+                p_C + dt * v_B + dt**2 / 2 * R_WB @ acc \
+                    + dt * R_WB @ (self.probe.v + \
+                        casadi.cross(om, self.probe.p)),
+                R_WC + R_WC @ casadi.skew(dt * om_C)],
             ['dt', *x_str, *u_str],
             ['p_B_next', 'v_B_next', 'R_WB_next',
                 'dofs_next', 'p_C_next', 'R_WC_next'])
