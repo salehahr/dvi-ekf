@@ -32,7 +32,7 @@ kf = Filter(imu, IC, cov0, meas_noise)
 kf.traj.append_state(cam.t[0], kf.states)
 
 # desired trajectory
-imu_des = ImuDesTraj("imu soll", imu)
+imu_des = ImuDesTraj("imu ref", imu)
 
 # filter main loop (t>=1)
 old_t = min_t

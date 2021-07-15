@@ -7,7 +7,7 @@ class States(object):
         self._v = np.asarray(v).reshape(3,)
         self._q = Quaternion(val=q, do_normalise=True)
         self._dofs = dofs
-        self._p_cam = p_cam
+        self._p_cam = p_cam.reshape(3,)
         self._q_cam = Quaternion(val=q_cam, do_normalise=True)
 
         self.size = len(p) + len(v) + len(self.q.xyzw) \

@@ -504,8 +504,8 @@ class ImuDesTraj(Trajectory):
         p, R_WB, v = self.imu.desired_vals(current_cam)
 
         euler_angs = R.from_matrix(R_WB).as_euler('xyz', degrees=True)
-        quats = R.from_matrix(R_WB).as_quat()
-        data = [t, *p, *v, *euler_angs, *quats]
+        quats = Quaternion(val=R_WB)
+        data = [t, *p, *v, *euler_angs, *quats.wxyz]
 
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
@@ -530,9 +530,9 @@ class FilterTraj(Trajectory):
 
         euler_angs = R.from_quat(state.q.xyzw).as_euler('xyz', degrees=True)
         euler_angs_C = R.from_quat(state.q_cam.xyzw).as_euler('xyz', degrees=True)
-        data = [t, *state.p, *state.v, *euler_angs, *state.q.xyzw,
+        data = [t, *state.p, *state.v, *euler_angs, *state.q.wxyz,
                     *state.dofs,
-                    *state.p_cam, *euler_angs_C, *state.q_cam.xyzw]
+                    *state.p_cam, *euler_angs_C, *state.q_cam.wxyz]
 
         for i, label in enumerate(self.labels):
             # print(f'{i} {label}: {data[i]}')
@@ -565,8 +565,14 @@ class FilterTraj(Trajectory):
             min_val, max_val = min(*val_filt, *val_cam, *val_des), max(*val_filt, *val_cam, *val_des)
 
             range_val = max_val - min_val
-            min_val = min_val - 0.2 * range_val
-            max_val = max_val + 0.2 * range_val
+
+            # display of very small values
+            if range_val < 0.01:
+                min_val = min_val - 1
+                max_val = max_val + 1
+            else:
+                min_val = min_val - 0.2 * range_val
+                max_val = max_val + 0.2 * range_val
 
             # display of very small values
             if max_val - min_val < 0.001:
@@ -671,10 +677,10 @@ class FilterTraj(Trajectory):
             line.set_linewidth(0.75)
             line.set_linestyle('-')
             line.set_color('blue')
-        elif 'soll' in label:
+        elif label == 'imu ref':
             line.set_linewidth(0.75)
             line.set_linestyle('--')
-            line.set_color('green')
+            line.set_color('tab:green')
         else:
             line.set_color('darkgrey')
             line.set_linestyle('--')
