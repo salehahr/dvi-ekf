@@ -145,6 +145,7 @@ class Filter(object):
 
     def _predict_error(self):
         err_p_C_dot = get_err_pc_dot(self.probe)
+        err_theta_C_dot = get_err_theta_c_dot(self.probe)
 
         fun_error = casadi.Function('f_err',
             [dt, *err_x, *u, *n, R_WB],
@@ -152,10 +153,11 @@ class Filter(object):
                 err_v_B + dt * (-R_WB @ casadi.skew(acc) @ err_theta) + n_v,
                 -casadi.cross(om, err_theta) + n_om,
                 n_dofs,
-                err_p_C + dt * err_p_C_dot ],
+                err_p_C + dt * err_p_C_dot,
+                err_theta_C + dt * err_theta_C_dot],
             ['dt', *err_x_str, *u_str, *n_str, 'R_WB'],
             ['err_p_B_next', 'err_v_B_next', 'err_theta_next',
-                'err_dofs_next', 'err_p_C_next'])
+                'err_dofs_next', 'err_p_C_next', 'err_theta_C_next'])
 
         jac = fun_error.jac()
         res = jac(  dt   = self.dt,
@@ -170,15 +172,18 @@ class Filter(object):
         F[6:9, 6:9] = self.Om_old.rot.T
         F[9:15, :]  = 0 # dofs
 
-        # jacobian of err_p_cam w.r.t. err_x
+        # jacobians of the camera states
         l_in = 0
         r_in = 0
         for x in err_x_str:
-            name = 'Derr_p_C_nextD' + x
-            res_np = res[name].full()
+            name_p = 'Derr_p_C_nextD' + x
+            name_th = 'Derr_theta_C_nextD' + x
+            res_p = res[name_p].full()
+            res_th = res[name_th].full()
 
-            r_in += res_np.shape[1]
-            F[-3:,l_in:r_in] = res_np
+            r_in += res_p.shape[1]
+            F[15:18,l_in:r_in] = res_p
+            F[18:,l_in:r_in] = res_th
             l_in = r_in
 
         self.Fx = F
