@@ -347,6 +347,8 @@ class Trajectory(object):
             return '$' + label + '$'
         elif 'dof' in label:
             return 'dof$_' + label[-1] + '$'
+        elif label[-1] == 'c':
+            return '$' + label[0] + '_{' + label[1:] + '}$'
         else:
             return '$' + label[0] + '_' + label[1] + '$'
 
@@ -594,7 +596,7 @@ class FilterTraj(Trajectory):
 
         # legend on first plot
         r0, c0 = self._get_plot_rc(offset, num_rows)
-        axes[r0][c0].legend()
+        axes[r0][c0].legend(bbox_to_anchor=(1., 2.))
 
         # save img
         if filename:
