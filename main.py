@@ -45,8 +45,8 @@ for i, t in enumerate(cam.t[1:]):
     old_ti = old_t
 
     print(f"Predicting... t={queue.t[0]}")
-    for i, ti in enumerate(queue.t):
-        interp = queue.at_index(i)
+    for ii, ti in enumerate(queue.t):
+        interp = queue.at_index(ii)
         om, acc = imu.eval_expr_single(ti, *probe_BtoC.joint_dofs,
             interp.acc, interp.R,
             interp.om, interp.alp, )
