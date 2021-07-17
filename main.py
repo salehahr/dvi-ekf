@@ -20,7 +20,7 @@ def parse_arguments():
 do_prop_only, use_noisy_imu = parse_arguments()
 
 # load data
-from generate_data import probe_BtoC, cam, cam_interp, imu
+from generate_data import probe, sym_probe, cam, cam_interp, imu
 from generate_data import IC, cov0, min_t, max_t
 
 # measurement noise values
@@ -28,7 +28,7 @@ Rpval, Rqval = 1e3, 0.05
 meas_noise = np.hstack(([Rpval]*3, [Rqval]*4))
 
 # initialisation (t=0): IC, IMU buffer, noise matrices
-kf = Filter(imu, IC, cov0, meas_noise)
+kf = Filter(imu, sym_probe, IC, cov0, meas_noise)
 kf.traj.append_state(cam.t[0], kf.states)
 
 # desired trajectory
@@ -47,7 +47,7 @@ for i, t in enumerate(cam.t[1:]):
     print(f"Predicting... t={queue.t[0]}")
     for ii, ti in enumerate(queue.t):
         interp = queue.at_index(ii)
-        om, acc = imu.eval_expr_single(ti, *probe_BtoC.joint_dofs,
+        om, acc = imu.eval_expr_single(ti, *probe.joint_dofs,
             interp.acc, interp.R,
             interp.om, interp.alp, )
         imu_des.append_value(ti, interp)

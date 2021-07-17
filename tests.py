@@ -1,8 +1,9 @@
 import os
 import unittest
 
-from Models import SimpleProbe, RigidSimpleProbe
-from Models import Camera, Imu, n_dofs, dofs_s, dofs_cas
+from Models import SimpleProbe, RigidSimpleProbe, SymProbe
+from Models import Camera, Imu
+from symbols import num_dofs, dofs_s, dofs_cas
 
 from Filter import Quaternion
 
@@ -74,9 +75,9 @@ class TestSymbolic(unittest.TestCase):
         cls.R_s = sp.MatrixSymbol('R_BW', 3, 3)
         cls.acc_C_s = sp.MatrixSymbol('acc_C', 3, 1)
 
-        cls.q_s = [sp.Symbol(f'q{x}') for x in range(1,n_dofs+1)]
-        cls.q_dot_s = [sp.Symbol(f'q{x}_dot') for x in range(1,n_dofs+1)]
-        cls.q_ddot_s = [sp.Symbol(f'q{x}_ddot') for x in range(1,n_dofs+1)]
+        cls.q_s = [sp.Symbol(f'q{x}') for x in range(1,num_dofs+1)]
+        cls.q_dot_s = [sp.Symbol(f'q{x}_dot') for x in range(1,num_dofs+1)]
+        cls.q_ddot_s = [sp.Symbol(f'q{x}_ddot') for x in range(1,num_dofs+1)]
 
         cls.params = [*cls.q_s, *cls.q_dot_s, *cls.q_ddot_s]
 
@@ -151,7 +152,7 @@ class TestCasadi(unittest.TestCase):
         T = self.probe.R
         T = self.probe.p
         J = self.probe.jacob0(self.probe.q_s)
-        T = J @ dofs_s[n_dofs:2*n_dofs]
+        T = J @ dofs_s[num_dofs:2*num_dofs]
         T = self.probe._calc_acceleration()
         T = sympy2casadi(T, dofs_s, dofs_cas)
 
@@ -193,6 +194,21 @@ class TestRigidSimpleProbe(unittest.TestCase):
     def test_plot(self):
         # view_selector(self.probe, self.q_0)
         do_plot(self.probe, self.q_0)
+
+    def test_sym_probe(self):
+        sym_probe = SymProbe(self.probe)
+        print(self.probe.q)
+        print(sym_probe.q)
+        
+        print()
+        print(self.probe.p)
+        print(sym_probe.p)
+        print(sym_probe.p_tr)
+
+        print()
+        print(self.probe.R)
+        print(sym_probe.R)
+        print(sym_probe.R_tr)
 
 class TestImu(TestRigidSimpleProbe):
 

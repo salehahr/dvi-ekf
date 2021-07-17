@@ -1,12 +1,43 @@
+import numpy as np
+import sympy as sp
 import casadi
 
+### ROBOT KINEMATICS
+num_dofs = 8
+n_dof_vector = num_dofs * 3
+
+# sympy params
+q_s = [sp.Symbol(f'q{x}') for x in range(1,num_dofs+1)]
+qd_s = [sp.Symbol(f'q{x}_dot') for x in range(1,num_dofs+1)]
+qdd_s = [sp.Symbol(f'q{x}_ddot') for x in range(1,num_dofs+1)]
+dofs_s = [*q_s, *qd_s, *qdd_s]
+
+# casadi params
+W_acc_CW_cas = casadi.SX.sym('acc_C', 3)
+R_WC_cas = casadi.SX.sym('R_WC', 3, 3)
+W_om_CW_cas = casadi.SX.sym('om_C', 3)
+W_alp_CW_cas = casadi.SX.sym('alp_C', 3)
+
+q_cas = casadi.SX.sym('q', num_dofs)
+qd_cas = casadi.SX.sym('qd', num_dofs)
+qdd_cas = casadi.SX.sym('qdd', num_dofs)
+
+err_q_cas = casadi.SX.sym('err_q', num_dofs)
+q_tr_cas = q_cas + err_q_cas
+
+dofs_cas = casadi.vertcat(q_cas, qd_cas, qdd_cas)
+dofs_cas_list = casadi.vertsplit(dofs_cas)
+
+
+### KALMAN FILTER
 dt = casadi.SX.sym('dt')
 
 # states
 p_B = casadi.SX.sym('p_B', 3)
 v_B = casadi.SX.sym('v_B', 3)
 R_WB = casadi.SX.sym('R_WB', 3, 3)
-dofs = casadi.SX.sym('q', 6)
+dofs, _ = casadi.vertsplit(q_cas, [0, 6, 8])
+
 p_C = casadi.SX.sym('p_C', 3)
 R_WC = casadi.SX.sym('p_C', 3, 3)
 
@@ -24,7 +55,7 @@ u_str = ['om', 'acc']
 err_p_B = casadi.SX.sym('err_p_B', 3)
 err_v_B = casadi.SX.sym('err_v_B', 3)
 err_theta = casadi.SX.sym('err_theta', 3)
-err_dofs = casadi.SX.sym('err_dofs', 6)
+err_dofs, _ = casadi.vertsplit(err_q_cas, [0, 6, 8])
 err_p_C = casadi.SX.sym('err_p_C', 3)
 err_theta_C = casadi.SX.sym('err_theta_C', 3)
 

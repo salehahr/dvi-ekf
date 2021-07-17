@@ -7,10 +7,11 @@ from .Trajectory import FilterTraj
 from .States import States, ErrorStates
 
 import casadi
-from .symbols import *
+from . import context
+import symbols as sym
 
 class Filter(object):
-    def __init__(self, imu, IC, P0, meas_noise):
+    def __init__(self, imu, probe, IC, P0, meas_noise):
         self.num_states = IC.size
         self.num_error_states = IC.size - 2
         self.num_meas = 7
@@ -25,7 +26,7 @@ class Filter(object):
 
         # imu / noise
         self.imu = imu
-        self.probe = self.imu.probe
+        self.probe = probe
 
         self.stdev_na = np.array(imu.stdev_na)
         self.stdev_nom = np.array(imu.stdev_nom)
@@ -116,21 +117,21 @@ class Filter(object):
 
     def _predict_nominal(self):
         R_BC = self.probe.R
-
-        p_next = p_B + dt * v_B + dt**2 / 2 * R_WB @ acc
-        om_C = R_BC.T @ om + R_BC.T @ self.probe.om
+        om_C = R_BC.T @ (sym.om + self.probe.om)
 
         self.fun_nominal = casadi.Function('f_nom',
-            [dt, *x, *u],
-            [   p_next,
-                v_B + dt * R_WB @ acc,
-                R_WB + R_WB @ casadi.skew(dt * om),
-                dofs,
-                p_C + dt * v_B + dt**2 / 2 * R_WB @ acc \
-                    + dt * R_WB @ (self.probe.v + \
-                        casadi.cross(om, self.probe.p)),
-                R_WC + R_WC @ casadi.skew(dt * om_C)],
-            ['dt', *x_str, *u_str],
+            [sym.dt, *sym.x, *sym.u],
+            [   sym.p_B + sym.dt * sym.v_B \
+                    + sym.dt**2 / 2 * sym.R_WB @ sym.acc,
+                sym.v_B + sym.dt * sym.R_WB @ sym.acc,
+                sym.R_WB + sym.R_WB @ casadi.skew(sym.dt * sym.om),
+                sym.dofs,
+                sym.p_C \
+                    + sym.dt * sym.v_B + sym.dt**2 / 2 * sym.R_WB @ sym.acc \
+                    + sym.dt * sym.R_WB @ (self.probe.v + \
+                        casadi.cross(sym.om, self.probe.p)),
+                sym.R_WC + sym.R_WC @ casadi.skew(sym.dt * om_C)],
+            ['dt', *sym.x_str, *sym.u_str],
             ['p_B_next', 'v_B_next', 'R_WB_next',
                 'dofs_next', 'p_C_next', 'R_WC_next'])
 
@@ -154,12 +155,12 @@ class Filter(object):
         Fx[3:6, 6:9] = - self.R_WB_old @ casadi.skew(self.acc_old) * self.dt
         Fx[6:9, 6:9] = self.Om_old.rot.T
         # Fx[9:15, :] # dofs
-        self.Fx = self._cam_error_jacobian(Fx, err_x)
+        self.Fx = self._cam_error_jacobian(Fx, sym.err_x)
 
         # motion model noise jacobian
         Fi = casadi.SX.zeros(self.num_error_states, self.num_noise)
         Fi[3:15, :] = casadi.SX.eye(self.num_noise)
-        self.Fi = self._cam_error_jacobian(Fi, n)
+        self.Fi = self._cam_error_jacobian(Fi, sym.n)
 
         """ returns zero
         # self.err_states = self.Fx @ self.err_states """
@@ -168,8 +169,10 @@ class Filter(object):
         """ Fills the error jacobian (either w.r.t. error state or
             w.r.t. noise) for the camera state entries. """
 
-        err_p_C_next = err_p_C + dt * get_err_pc_dot(self.probe)
-        err_theta_C_next = err_theta_C + dt * get_err_theta_c_dot(self.probe)
+        err_p_C_next = sym.err_p_C \
+                + sym.dt * sym.get_err_pc_dot(self.probe)
+        err_theta_C_next = sym.err_theta_C \
+                + sym.dt * sym.get_err_theta_c_dot(self.probe)
 
         l_in = 0
         r_in = 0
@@ -180,11 +183,12 @@ class Filter(object):
             l_in = r_in
 
         fun_jac = casadi.Function('f_jac',
-            [dt, R_WB, *u, n_om, err_theta, err_theta_C], [jac],
-            ['dt', 'R_WB', *u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
+            [sym.dt, sym.dofs, sym.R_WB, *sym.u, sym.n_om, sym.err_theta, sym.err_theta_C], [jac],
+            ['dt', 'dofs', 'R_WB', *sym.u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
             )
         return casadi.DM(
-                fun_jac( dt          = self.dt,
+                fun_jac( dt         = self.dt,
+                        dofs        = self.states.dofs,
                         R_WB        = self.R_WB_old,
                         om          = self.om_old,
                         acc         = self.acc_old,

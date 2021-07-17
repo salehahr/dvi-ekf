@@ -5,7 +5,9 @@ import numpy as np
 import sympy as sp
 import casadi
 
-from .params import *
+from . import context
+from symbols import W_acc_CW_cas, R_WC_cas, W_om_CW_cas, W_alp_CW_cas
+from symbols import q_cas, qd_cas, qdd_cas
 
 """ Notation:
         W_acc_CD    : acceleration of C rel. to D.

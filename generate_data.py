@@ -1,5 +1,5 @@
 from Filter import VisualTraj, ImuTraj, States
-from Models import RigidSimpleProbe, Camera, Imu
+from Models import RigidSimpleProbe, SymProbe, Camera, Imu
 
 import numpy as np
 import sympy as sp
@@ -10,7 +10,8 @@ num_imu_between_frames = 10
 # imu_covariance = [0.01, 0.03, 0.01, 0.03, 0.005, 0.005]
 
 # initialise robot
-probe_BtoC = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+sym_probe = SymProbe(probe)
 
 # SLAM data
 # filepath_cam = './trajs/offline_mandala0_gt.txt' # stereo
@@ -22,11 +23,11 @@ min_t, max_t = cam.t[0], cam.t[-1]
 
 # imu
 stdev_na, stdev_nom = [1e-3]*3, [1e-3]*3 # supposedly from IMU datasheet
-imu = Imu(probe_BtoC, cam_interp, stdev_na, stdev_nom)
+imu = Imu(probe, cam_interp, stdev_na, stdev_nom)
 
 # initial states
-dofs0 = probe_BtoC.joint_dofs
-imu_dofs0 = probe_BtoC.imu_dofs
+dofs0 = probe.joint_dofs
+imu_dofs0 = probe.imu_dofs
 
 imu.eval_init(*dofs0)
 W_p_BW_0, R_WB_0, _, WW_v_BW_0, _, _ = imu.get_IC()
