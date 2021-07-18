@@ -12,12 +12,13 @@ python3 main.py <prop/update> nonoise
 ### Simple trajectory
 Camera moves in x direction, no rotations.
 
-Propagation only | Propagation + Update
---- | ---
-&nbsp;  | `R_p = 1e3`  
-&nbsp;  | `R_q = 0.05` 
-![](img/kf_transx_prop_imu.png) | ![](img/kf_transx_upd_Rp1000.0_Rq0.05_imu.png)
-![](img/kf_transx_prop_cam.png) | ![](img/kf_transx_upd_Rp1000.0_Rq0.05_cam.png)
+P only  | P + U | P + U 
+---     | ---   | ---   
+&nbsp;  | `stdev_a, stdev_om = 1e-3`  | `stdev_a, stdev_om = 1e-3` 
+&nbsp;  | **`cov_p = 1000`** | **`cov_p = 0.1`**
+&nbsp;  | `cov_q = 0.05` | `cov_q = 0.05` 
+![](img/kf_transx_prop_imu.png) | ![](img/kf_transx_upd_Rp1000.0_Rq0.05_imu.png) | ![](img/kf_transx_upd_Rp0.1_Rq0.05_imu.png)
+![](img/kf_transx_prop_cam.png) | ![](img/kf_transx_upd_Rp1000.0_Rq0.05_cam.png) | ![](img/kf_transx_upd_Rp0.1_Rq0.05_cam.png)
 
 ### Monocular SLAM trajectory
 P only  | P + U | P + U | P + U
