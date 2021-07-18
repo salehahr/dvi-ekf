@@ -95,7 +95,7 @@ def get_err_pc_dot(probe):
 
     # deriving err_p_C_dot -- continuous time
     p_CB_dot = R_WB @ (probe.v + casadi.cross(om, probe.p))
-    p_CB_dot_tr = R_WB_tr @ (probe.v + casadi.cross(om_tr, probe.p))
+    p_CB_dot_tr = R_WB_tr @ (probe.v_tr + casadi.cross(om_tr, probe.p_tr))
 
     p_C_dot = v_B + p_CB_dot
     p_C_dot_tr = v_B + err_v_B + p_CB_dot_tr
@@ -128,7 +128,7 @@ def quat_matrix(wxyz, dir):
 
 def get_err_theta_c_dot(probe):
     om_c = probe.R.T @ (om + probe.om)
-    om_c_tr = probe.R.T @ (om_tr + probe.om)
+    om_c_tr = probe.R_tr.T @ (om_tr + probe.om_tr)
 
     om_c_quat = rvec_to_quat(om_c)
     om_c_tr_quat = rvec_to_quat(om_c_tr)

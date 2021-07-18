@@ -183,12 +183,14 @@ class Filter(object):
             l_in = r_in
 
         fun_jac = casadi.Function('f_jac',
-            [sym.dt, sym.dofs, sym.R_WB, *sym.u, sym.n_om, sym.err_theta, sym.err_theta_C], [jac],
-            ['dt', 'dofs', 'R_WB', *sym.u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
+            [sym.dt, sym.dofs, sym.err_dofs, sym.R_WB, *sym.u, sym.n_om, sym.err_theta, sym.err_theta_C], [jac],
+            ['dt', 'dofs', 'err_dofs', 'R_WB',
+                *sym.u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
             )
         return casadi.DM(
                 fun_jac( dt         = self.dt,
                         dofs        = self.states.dofs,
+                        err_dofs    = casadi.DM.zeros(6,),
                         R_WB        = self.R_WB_old,
                         om          = self.om_old,
                         acc         = self.acc_old,
