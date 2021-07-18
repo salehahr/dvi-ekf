@@ -20,7 +20,7 @@ def parse_arguments():
 do_prop_only, use_noisy_imu = parse_arguments()
 
 # load data
-from generate_data import probe, sym_probe, cam, cam_interp, imu
+from generate_data import traj_name, probe, sym_probe, cam, cam_interp, imu
 from generate_data import IC, cov0, min_t, max_t
 
 # measurement noise values
@@ -68,7 +68,6 @@ for i, t in enumerate(cam.t[1:]):
 
 # plots
 from plotter import plot_trajectories
-traj_name = 'transx'
 
 if do_prop_only:
     traj_name = traj_name + '_prop'
