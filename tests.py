@@ -15,6 +15,7 @@ from aux_symbolic import sympy2casadi
 from casadi import *
 
 from roboticstoolbox.backends.PyPlot import PyPlot
+import matplotlib.pyplot as plt
 
 cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=5)
 
@@ -469,6 +470,25 @@ class TestFilter(unittest.TestCase):
             jac = fun_error.jacobian_old(idn, index_err_p_C)
             jac = jac.slice(name, range(0,jac.n_in()), [0])
             jac_pc_n.append(jac)
+
+class TestNotch(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=50)
+
+    def test_gen_t_partition(self):
+        cam = self.cam
+        t_part = cam._gen_t_partition()
+        assert(sum([len(x) for x in t_part]) == cam.max_vals)
+
+    def test_gen_notch_values(self):
+        cam = self.cam
+        cam._gen_notch_values()
+
+        plt.plot(cam.t, cam.notch)
+        plt.plot(cam.t, cam.notch_d)
+        plt.plot(cam.t, cam.notch_dd)
+        plt.show()
 
 def suite():
     suite = unittest.TestSuite()
