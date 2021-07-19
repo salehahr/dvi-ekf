@@ -16,11 +16,16 @@ sym_probe = SymProbe(probe)
 # SLAM data
 # filepath_cam = './trajs/offline_mandala0_gt.txt' # stereo
 
-# filepath_cam = './trajs/offline_mandala0_mono.txt' # mono
-filepath_cam = './trajs/trans_x.txt' # simple traj
+traj_name = 'mono'
+# traj_name = 'transx'
 
-# traj_name = 'mono'
-traj_name = 'transx'
+if traj_name == 'mono':
+    filepath_cam = './trajs/offline_mandala0_mono.txt' # mono
+elif traj_name == 'transx':
+    filepath_cam = './trajs/trans_x.txt' # simple traj
+else:
+    print('Invalid trajectory.')
+    raise Exception
 
 cam = Camera(filepath=filepath_cam, max_vals=max_vals)
 cam_interp = cam.interpolate(num_imu_between_frames)
