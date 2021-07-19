@@ -44,6 +44,14 @@ class Camera(object):
         self.acc0   = self.acc[:,0].reshape(3,1)
         self.alp0   = self.alp[:,0].reshape(3,1)
 
+        # notch
+        self.notch = None
+        self.notch_d = None
+        self.notch_dd = None
+
+        if self.max_vals > 10:
+            self._gen_notch_values()
+
     @property
     def filepath(self):
         return self.traj.filepath
@@ -82,6 +90,52 @@ class Camera(object):
     def interpolate(self, interframe_vals):
         interp_traj = Interpolator(interframe_vals, self.traj).interpolated
         return CameraInterpolated(interp_traj)
+
+    def _gen_notch_values(self):
+        def traj_gen(z0, zT, t, t_prev, T):
+            t = t - t_prev
+            T = T - t_prev
+
+            z_n = z0 + (zT - z0) * (35*(t/T)**4 - 84*(t/T)**5 + 70*(t/T)**6 - 20*(t/T)**7)
+
+            z_n_d = (zT - z0) * \
+                    ( 35*4/(T**4)*t**3 - 84*5/(T**5)*t**4 \
+                    + 70*6/(T**6)*t**5 - 20*7/(T**7)*t**6 )
+            z_n_dd = (zT - z0) * \
+                    ( 35*4*3/(T**4)*t**2 - 84*5*4/(T**5)*t**3 \
+                    + 70*6*5/(T**6)*t**4 - 20*7*6/(T**7)*t**5 )
+
+            return z_n, z_n_d, z_n_dd
+
+        ang_vals = np.pi * np.array([0, 0, 0.9, 0.9, -0.9/2, -0.9/2])
+
+        ang_prev = ang_vals[0]
+        t_part = self._gen_t_partition()
+        t_prev = t_part[0][0]
+
+        traj = [0] * len(t_part)
+        traj_d = [0] * len(t_part)
+        traj_dd = [0] * len(t_part)
+
+        for i, ang_k in enumerate(ang_vals[1:]):
+            t_max = t_part[i][-1]
+            traj[i], traj_d[i], traj_dd[i] = traj_gen(ang_prev, ang_k, t_part[i], t_prev, t_max)
+            t_prev = t_max
+            ang_prev = ang_k
+
+        self.notch = np.concatenate(traj).ravel()
+        self.notch_d = np.concatenate(traj_d).ravel()
+        self.notch_dd = np.concatenate(traj_dd).ravel()
+
+    def _gen_t_partition(self):
+        partitions = np.array([0, 0.1, 0.45, 0.5, 0.9, 1])
+        t_part = [0] * (len(partitions)-1)
+        p_prev = 0
+        for i, p in enumerate(partitions[1:]):
+            p_k = int(np.ceil(p * self.max_vals))
+            t_part[i] = np.array(self.t[p_prev : p_k])
+            p_prev = p_k
+        return t_part
 
     def generate_queue(self, old_t, new_t):
         """ After old_t, up till new_t. """
