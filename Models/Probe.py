@@ -282,6 +282,101 @@ class Probe(rtb.DHRobot):
         # reset base
         self.base = None
 
+    def _plot_frames(self, cam=None, ax=None):
+        # base
+        self.base.plot(frame='B', arrow=False, axes=ax, length=0.1, color='black')
+
+        # pivot
+        P = self.fkine_all(self.q_s)[6]
+        P_t = np.eye(4)
+        P_t[:3, :3] = P.R
+        P_t[:3, -1] = P.t
+        P = SE3(P_t)
+        P.plot(frame='P', arrow=False, axes=ax, length=0.1, color='black')
+
+        # physical slam
+        PS = self.fkine_all(self.q_s)[7]
+        PS_t = np.eye(4)
+        PS_t[:3, :3] = PS.R
+        PS_t[:3, -1] = PS.t
+        PS = SE3(PS_t)
+        PS.plot(frame='PS', arrow=False, axes=ax, length=0.1, color='black')
+
+        # virtual slam
+        if cam:
+            B_p_cam = casadi.DM(self.p + cam.p).full()
+            C = np.eye(4)
+            C[:3, :3] = casadi.DM(self.R).full()
+            C[:3, -1] = B_p_cam[:,0]
+            C = SE3(C)
+            C.plot(frame='C', arrow=False, axes=ax, length=0.1, color='black')
+
+    def plot_with_kf_traj(self, cam=None, imu_ref=None, kf_traj=None,
+        filename='', limits=None, dt=0.05):
+        """ Note: this plot shows everything in the B coordinate system.
+            The base only transforms the whole thing so that the camera
+            starts at zero.
+        """
+
+        from roboticstoolbox.backends.PyPlot import PyPlot
+        import tkinter
+        import matplotlib.pyplot as plt
+        print(f"Plotting robot with the configuration:\n\t {self.q_s}")
+
+        env = PyPlot()
+
+        # visuals
+        limit_x = [-0.25, 0.25]
+        limit_y = [-0.5, 0.1]
+        limit_z = [-0.4, 0.4]
+        limits = [*limit_x, *limit_y, *limit_z] if (limits is None) else limits
+
+        env.launch(limits=limits)
+        ax = env.fig.axes[0]
+        try:
+            ax.view_init(azim=azim, elev=elev)
+        except NameError:
+            pass # default view
+
+        # base
+        orig_base = self.base
+        if imu_ref.base:
+            self.base = imu_ref.base if orig_base is None else self.base @ imu_ref.base
+
+        # robots
+        env.add(self, jointlabels=True, jointaxes=False,
+                    eeframe=True, shadow=False)
+        self.q = self.q_s
+        env.step(dt)
+
+        # trajectories
+        if cam:
+            B_p_cam = casadi.DM(self.p + cam.p).full()
+            ax.plot(B_p_cam[0,:], B_p_cam[1,:], B_p_cam[2,:], label='cam ref')
+
+        if imu_ref:
+            ax.plot(imu_ref.x, imu_ref.y, imu_ref.z, label='imu ref')
+
+        if kf_traj:
+            ax.plot(kf_traj.x, kf_traj.y, kf_traj.z, label='imu est')
+            ax.plot(kf_traj.xc, kf_traj.yc, kf_traj.zc, label='cam est')
+
+        # frames
+        self._plot_frames(cam=cam, ax=env.fig.axes[0])
+
+        plt.figure(env.fig)
+        plt.ioff()
+        plt.legend()
+
+        # reset base
+        self.base = orig_base
+
+        # save img
+        if filename:
+            plt.savefig(filename, dpi=200)
+
+        plt.show()
+
 class SimpleProbe(Probe):
     """ Simple probe with ROT9 as the only degree of freedom. """
 

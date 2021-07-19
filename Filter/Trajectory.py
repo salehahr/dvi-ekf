@@ -499,6 +499,7 @@ class ImuDesTraj(Trajectory):
                     'qw', 'qx', 'qy', 'qz']
         super().__init__(name, labels)
         self.imu = imu
+        self.base = imu.get_base()
 
     @property
     def p(self):
