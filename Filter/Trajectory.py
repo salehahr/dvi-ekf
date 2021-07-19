@@ -574,11 +574,6 @@ class FilterTraj(Trajectory):
                 min_val = min_val - 0.2 * range_val
                 max_val = max_val + 0.2 * range_val
 
-            # display of very small values
-            if max_val - min_val < 0.001:
-                min_val = min_val - 1
-                max_val = max_val + 1
-
             axes[row][col].set_visible(True)
             if val_filt:
                 axes[row][col].plot(self.t, val_filt, label=self.name)

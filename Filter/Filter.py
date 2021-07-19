@@ -219,7 +219,6 @@ class Filter(object):
         K = self.P @ H.T @ np.linalg.inv(S) # 21x7
 
         # compute error state
-        R_BC = casadi.DM(self.probe.R).full()
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
         res_q = (camera.qrot - self.states.q_cam).xyzw
         res = np.hstack((res_p_cam, res_q))
