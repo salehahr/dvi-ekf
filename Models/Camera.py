@@ -137,6 +137,9 @@ class Camera(object):
             p_prev = p_k
         return t_part
 
+    def get_notch_at(self, i):
+        return [self.notch[i], self.notch_d[i], self.notch_dd[i]]
+
     def generate_queue(self, old_t, new_t):
         """ After old_t, up till new_t. """
         old_i = self._get_index_at(old_t)
