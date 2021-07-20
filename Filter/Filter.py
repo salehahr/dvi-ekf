@@ -177,24 +177,30 @@ class Filter(object):
             i_cam must be already adjusted so that the IC is not counted
         """
         # propagate
-        self.propagate_imu(old_t, t)
+        notch_arr = camera.get_notch_at(i_cam)
+        self.propagate_imu(old_t, t, notch_arr)
 
         # update
         current_cam = camera.at_index(i_cam) # not counting IC
-        self.update(t, current_cam)
+        self.update(t, current_cam, notch_arr[0])
 
-    def propagate_imu(self, t0, tn):
+    def propagate_imu(self, t0, tn, notch):
         """ Generates IMU data between old and current camera frame,
             then uses this data to propagate the states as many times
             as there are IMU data between frames.
         """
         cam_queue = self.imu.cam.generate_queue(t0, tn)
 
+        real_probe_dofs = self.config.real_joint_dofs
+        real_probe_dofs[0][6] = notch[0]
+        real_probe_dofs[1][6] = notch[1]
+        real_probe_dofs[2][6] = notch[2]
+
         old_ti = t0
         for ii, ti in enumerate(cam_queue.t):
             interp = cam_queue.at_index(ii)
             om, acc = self.imu.eval_expr_single(ti,
-                *self.config.real_joint_dofs,
+                *real_probe_dofs,
                 interp.acc, interp.R,
                 interp.om, interp.alp, )
             self.imu.ref.append_value(ti, interp.vec)
@@ -287,7 +293,7 @@ class Filter(object):
         """
         self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ self.Q @ self.Fi.T
 
-    def update(self, t, camera):
+    def update(self, t, camera, ang_notch):
         # compute gain        
         H = np.zeros((6, self.num_error_states))
         H[0:3, -6:-3] = np.eye(3)
@@ -301,9 +307,13 @@ class Filter(object):
             print("Stopping simulation.")
             return None
 
+        # correct virtual SLAM reading to physical SLAM
+        # TODO  multiplicative correction
+        cam_rot_corr = camera.qrot - Quaternion(val=np.array([0, 0, ang_notch]), euler='xyz')
+
         # compute error state
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
-        err_q = camera.qrot.conjugate * self.states.q_cam
+        err_q = cam_rot_corr.conjugate * self.states.q_cam
         res_q_cam = err_q.angle * err_q.axis
 
         res = np.hstack((res_p_cam, res_q_cam))
