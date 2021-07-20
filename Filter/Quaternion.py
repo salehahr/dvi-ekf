@@ -11,7 +11,7 @@ def skew(x):
 class Quaternion(object):
     """ Quaternion convenience class. """
 
-    def __init__(self, val=None, x=None, y=None, z=None, w=None, v=None, do_normalise=False):
+    def __init__(self, val=None, x=None, y=None, z=None, w=None, v=None, do_normalise=False, euler=''):
         self.x = x
         self.y = y
         self.z = z
@@ -24,6 +24,8 @@ class Quaternion(object):
                     self.x, self.y, self.z, self.w = R.from_matrix(val).as_quat()
                 elif val.shape == (4,1) or val.shape == (4,):
                     self.x, self.y, self.z, self.w = val
+                elif val.squeeze().shape == (3,) and euler == 'xyz':
+                    self.x, self.y, self.z, self.w = R.from_euler('xyz', val).as_quat()
                 else:
                     print("Wrong dimensions of np.ndarray for Quaternion!")
                     raise ValueError
