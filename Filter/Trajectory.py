@@ -349,6 +349,13 @@ class Trajectory(object):
             return 'dof$_' + label[-1] + '$'
         elif label[-1] == 'c':
             return '$' + label[0] + '_{' + label[1:] + '}$'
+        elif 'notch' in label:
+            if 'dd' in label:
+                return '$\\theta_{n, dd}$'
+            elif 'd' in label:
+                return '$\\theta_{n, d}$'
+            else:
+                return '$\\theta_{n}$'
         else:
             return '$' + label[0] + '_' + label[1] + '$'
 
@@ -521,6 +528,7 @@ class FilterTraj(Trajectory):
         self.labels_camera = ['xc', 'yc', 'zc',
                     'rxc', 'ryc', 'rzc',
                     'qwc', 'qxc', 'qyc', 'qzc']
+        self.labels_notch = ['notch', 'notch_d', 'notch_dd']
         labels = ['t', *self.labels_imu,
                     *self.labels_imu_dofs, *self.labels_camera]
         super().__init__(name, labels)
@@ -553,14 +561,18 @@ class FilterTraj(Trajectory):
 
         ai = offset
         for i, label in enumerate(labels):
-            if label in ['vx', 'rx', 'dof1', 'dof4', 'rxc']:
+            if label in ['vx', 'rx', 'dof1', 'dof4', 'rxc', 'notch']:
                 ai += 1
 
             row, col = self._get_plot_rc(ai, num_rows)
 
-            val_filt = self.__dict__[label]
-            val_cam = cam.__dict__[label[:-1]] if cam else []
+            val_filt = self.__dict__[label] if not 'notch' in label else []
             val_des = imu_des.__dict__[label] if (imu_des and 'dof' not in label) else []
+
+            if 'notch' in label:
+                val_cam = cam.__dict__[label] * 180 / np.pi if cam else []
+            else:
+                val_cam = cam.traj.__dict__[label[:-1]] if cam else []
 
             min_val, max_val = min(*val_filt, *val_cam, *val_des), max(*val_filt, *val_cam, *val_des)
 
@@ -578,7 +590,7 @@ class FilterTraj(Trajectory):
             if val_filt:
                 axes[row][col].plot(self.t, val_filt, label=self.name)
             if val_cam != []:
-                axes[row][col].plot(cam.t, val_cam, label=cam.name)
+                axes[row][col].plot(cam.traj.t, val_cam, label=cam.traj.name)
             if val_des != []:
                 axes[row][col].plot(imu_des.t, val_des, label=imu_des.name)
 
@@ -659,8 +671,8 @@ class FilterTraj(Trajectory):
     def plot_camera(self, filename, cam, axes=None, min_t=None, max_t=None):
         """ Creates plot of the camera states/data. """
 
-        labels = self.labels_camera
-        num_cols = 3
+        labels = [*self.labels_camera, *self.labels_notch]
+        num_cols = 4
         offset = 1
         return self.plot(labels, num_cols, offset, cam=cam, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
 
