@@ -212,15 +212,18 @@ class Filter(object):
 
         self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ Q @ self.Fi.T
 
-    def update(self, camera):
+    def update(self, camera, ang_notch):
         # compute gain        
         H = self.Hx @ self.jac_X_deltx # 7x21
         S = H @ self.P @ H.T + self.R # 7x7
         K = self.P @ H.T @ np.linalg.inv(S) # 21x7
 
+        # correct virtual SLAM reading to physical SLAM
+        cam_rot_corr = camera.qrot - Quaternion(val=np.array([0, 0, ang_notch]), euler='xyz')
+
         # compute error state
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
-        res_q = (camera.qrot - self.states.q_cam).xyzw
+        res_q = (cam_rot_corr - self.states.q_cam).xyzw
         res = np.hstack((res_p_cam, res_q))
         err = ErrorStates(K @ res)
 

@@ -155,6 +155,9 @@ class Camera(object):
             p_prev = p_k
         return t_part
 
+    def get_notch_at(self, i):
+        return [self.notch[i], self.notch_d[i], self.notch_dd[i]]
+
     def interpolate(self, num_imu_between_frames):
         self.traj.interpolate(num_imu_between_frames)
         traj_interp = self.traj.interpolated

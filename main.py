@@ -36,6 +36,7 @@ imu_des = ImuDesTraj("imu ref", imu)
 
 # filter main loop (t>=1)
 old_t = min_t
+notch, notch_d, notch_dd = 0, 0, 0
 for i, t in enumerate(cam.t[1:]):
 
     # propagate
@@ -47,7 +48,13 @@ for i, t in enumerate(cam.t[1:]):
     print(f"Predicting... t={queue.t[0]}")
     for ii, ti in enumerate(queue.t):
         interp = queue.at_index(ii)
-        om, acc = imu.eval_expr_single(ti, *probe.joint_dofs,
+
+        probe.q[6] = notch
+        probe.qd[6] = notch_d
+        probe.qdd[6] = notch_dd
+
+        om, acc = imu.eval_expr_single(ti,
+            probe.q, probe.qd, probe.qdd,
             interp.acc, interp.R,
             interp.om, interp.alp, )
         imu_des.append_value(ti, interp)
@@ -60,7 +67,8 @@ for i, t in enumerate(cam.t[1:]):
     # update
     if not do_prop_only:
         current_vis = cam.traj.at_index(i)
-        kf.update(current_vis)
+        notch, notch_d, notch_dd = cam.get_notch_at(i)
+        kf.update(current_vis, notch)
 
     old_t = t
 
