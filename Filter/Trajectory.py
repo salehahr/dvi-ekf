@@ -11,6 +11,8 @@ from scipy.spatial.transform import Rotation as R
 from .Measurement import VisualMeasurement, ImuMeasurement
 from .Quaternion import Quaternion
 
+from spatialmath import SE3
+
 class Trajectory(object):
     """ Base trajectory class which requires a
         trajectory name, trajectory labels, and
@@ -498,6 +500,10 @@ class ImuDesTraj(Trajectory):
         super().__init__(name, labels)
         self.imu = imu
 
+    @property
+    def p(self):
+        return np.array((self.x, self.y, self.z))
+
     def append_value(self, t, current_cam):
         """ Appends new measurement from current state. """
 
@@ -509,6 +515,12 @@ class ImuDesTraj(Trajectory):
 
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
+
+    def from_cam(self, cam):
+        queue = cam.generate_queue(cam.t[0], cam.t[-1])
+        for n, t in enumerate(queue.t):
+            current_cam = queue.at_index(n)
+            self.append_value(t, current_cam)
 
 class FilterTraj(Trajectory):
     def __init__(self, name):
@@ -539,7 +551,7 @@ class FilterTraj(Trajectory):
             self.__dict__[label].append(data[i])
 
     def plot(self, labels, num_cols, offset, filename='',
-            cam=None, imu_des=None, axes=None, min_t=None, max_t=None):
+            cam=None, imu_ref=None, axes=None, min_t=None, max_t=None):
         num_labels = len(labels)
         num_rows = math.ceil( num_labels / num_cols )
 
@@ -560,7 +572,7 @@ class FilterTraj(Trajectory):
 
             val_filt = self.__dict__[label]
             val_cam = cam.__dict__[label[:-1]] if cam else []
-            val_des = imu_des.__dict__[label] if (imu_des and 'dof' not in label) else []
+            val_des = imu_ref.__dict__[label] if (imu_ref and 'dof' not in label) else []
 
             min_val, max_val = min(*val_filt, *val_cam, *val_des), max(*val_filt, *val_cam, *val_des)
 
@@ -580,7 +592,7 @@ class FilterTraj(Trajectory):
             if val_cam != []:
                 axes[row][col].plot(cam.t, val_cam, label=cam.name)
             if val_des != []:
-                axes[row][col].plot(imu_des.t, val_des, label=imu_des.name)
+                axes[row][col].plot(imu_ref.t, val_des, label=imu_ref.name)
 
             latex_label = self._get_latex_label(label)
             axes[row][col].set_title(latex_label)
@@ -605,13 +617,13 @@ class FilterTraj(Trajectory):
 
         return axes
 
-    def plot_imu(self, filename='', imu_des=None, axes=None, min_t=None, max_t=None):
+    def plot_imu(self, filename='', imu_ref=None, axes=None, min_t=None, max_t=None):
         """ Creates plot of the IMU positioning parameters on the probe. """
 
         labels = self.labels_imu + self.labels_imu_dofs
         num_cols = 6
         offset = len(labels) % 2
-        return self.plot(labels, num_cols, offset, imu_des=imu_des, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
+        return self.plot(labels, num_cols, offset, imu_ref=imu_ref, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
 
     def plot_dofs(self, axes=None, min_t=None, max_t=None):
         """ Creates plot of the IMU positioning parameters on the probe. """
@@ -664,6 +676,48 @@ class FilterTraj(Trajectory):
         offset = 1
         return self.plot(labels, num_cols, offset, cam=cam, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
 
+    def plot_3d(self, cam=None, imu_ref=None, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            fig.tight_layout()
+            ax = fig.add_subplot(111, projection='3d')
+
+        ax.plot(self.x, self.y, self.z, label='imu est')
+        if imu_ref:
+            ax.plot(imu_ref.x, imu_ref.y, imu_ref.z, label='imu ref')
+
+            B = np.eye(4)
+            B[:3, :3] = Quaternion(w=imu_ref.qw[0],
+                    v=np.array([imu_ref.qx[0], imu_ref.qy[0], imu_ref.qz[0]]),
+                    do_normalise=True).rot
+            B[:3, -1] = [imu_ref.x[0], imu_ref.y[0], imu_ref.z[0]]
+            X = SE3(B)
+            X.plot(frame='B', arrow=False, axes=fig.axes[0], length=0.1, color='tab:green')
+
+        ax.plot(self.xc, self.yc, self.zc, label='cam est')
+        if cam:
+            ax.plot(cam.x, cam.y, cam.z, label='cam ref')
+
+            C = np.eye(4)
+            C[:3, :3] = cam.quats[0].rot
+            C[:3, -1] = [cam.x[0], cam.y[0], cam.z[0]]
+            X = SE3(C)
+            X.plot(frame='C', arrow=False, axes=fig.axes[0], length=0.1, color='tab:green')
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        # late setting of line styles
+        for line in ax.get_lines():
+            self._set_plot_line_style(line)
+
+        ax.legend()
+        plt.legend()
+        plt.show()
+
+        return ax
+
     def _set_plot_line_style(self, line):
         """ Defines line styles for IMU plot. """
 
@@ -672,10 +726,14 @@ class FilterTraj(Trajectory):
             line.set_linewidth(0.75)
             line.set_linestyle('-')
             line.set_color('blue')
-        elif label == 'imu ref':
+        elif 'ref' in label:
             line.set_linewidth(0.75)
             line.set_linestyle('--')
             line.set_color('tab:green')
+        elif 'est' in label:
+            line.set_linewidth(0.75)
+            line.set_linestyle('-')
+            line.set_color('blue')
         else:
             line.set_color('darkgrey')
             line.set_linestyle('--')
