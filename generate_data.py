@@ -6,7 +6,7 @@ import sympy as sp
 
 # data generation params
 max_vals = 25
-num_imu_between_frames = 10
+num_imu_between_frames = 2
 # imu_covariance = [0.01, 0.03, 0.01, 0.03, 0.005, 0.005]
 
 # initialise robot
