@@ -21,7 +21,7 @@ class Probe(rtb.DHRobot):
         """ Initialises robot links. """
 
         links = self._gen_links(scope_length, theta_cam)
-        super().__init__(links, name='probe', base=plot_rotation)
+        super().__init__(links, name='probe')
 
         self.q_s = q_s.copy()
         self.qd_s = qd_s.copy()
@@ -226,6 +226,9 @@ class Probe(rtb.DHRobot):
         except NameError:
             pass # default view
 
+        # base
+        self.base = plot_rotation
+
         # robots
         env.add(self, jointlabels=True, jointaxes=False,
                     eeframe=True, shadow=False)
@@ -273,6 +276,9 @@ class Probe(rtb.DHRobot):
             except tkinter.TclError:
                 # handles error when closing the window
                 return None
+
+        # reset base
+        self.base = None
 
 class SimpleProbe(Probe):
     """ Simple probe with ROT9 as the only degree of freedom. """
