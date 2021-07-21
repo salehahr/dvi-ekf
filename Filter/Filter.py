@@ -205,7 +205,7 @@ class Filter(object):
         Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
 
         sigma_dofs_p = 0.02
-        sigma_dofs_r = 0.2
+        sigma_dofs_r = 0.1
         N_p = np.random.normal(loc=0, scale=sigma_dofs_p, size=(3,))
         N_r = np.random.normal(loc=0, scale=sigma_dofs_r, size=(3,))
         Q[6:12, 6:12] = np.diag(np.hstack((N_r, N_p)))
