@@ -4,6 +4,8 @@ the calibration parameters in a camera-IMU sensor probe setup.
 
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
+![](img/probe_w_kf_traj.png)
+
 ## Current results
 ```
 python3 main.py <prop/update> nonoise
