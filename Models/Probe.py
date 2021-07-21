@@ -209,6 +209,7 @@ class Probe(rtb.DHRobot):
 
         from roboticstoolbox.backends.PyPlot import PyPlot
         import tkinter
+        import matplotlib.pyplot as plt
         print(f"Plotting robot with the configuration:\n\t {config}")
 
         env = PyPlot()
@@ -272,7 +273,8 @@ class Probe(rtb.DHRobot):
                 env.step(dt)
 
                 if block:
-                    env.hold()
+                    plt.figure(env.fig)
+                    plt.ioff()
             except tkinter.TclError:
                 # handles error when closing the window
                 return None
