@@ -500,6 +500,10 @@ class ImuDesTraj(Trajectory):
         super().__init__(name, labels)
         self.imu = imu
 
+    @property
+    def p(self):
+        return np.array((self.x, self.y, self.z))
+
     def append_value(self, t, current_cam):
         """ Appends new measurement from current state. """
 
