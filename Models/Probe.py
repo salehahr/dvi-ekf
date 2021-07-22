@@ -36,6 +36,11 @@ def transform_trajectories(transf, traj=None, x=None, y=None, z=None, n=None):
     coords_w_rot = [coords_w_rot[i].t for i in range(n)]
     return np.concatenate(coords_w_rot).reshape(n,3).T
 
+def SE3_from_rot(rot):
+    matr = np.eye(4)
+    matr[:3, :3] = rot
+    return SE3(matr)
+
 class Probe(rtb.DHRobot):
     def __init__(self, scope_length, theta_cam):
         """ Initialises robot links. """
@@ -315,19 +320,14 @@ class Probe(rtb.DHRobot):
 
         # pivot
         P = self.fkine_all(self.q_s)[6]
-        P_t = np.eye(4)
-        P_t[:3, :3] = P.R
-        P_t[:3, -1] = P.t
-        P = SE3(P_t)
+        P = SE3(P.t) @ SE3_from_rot(P.R)
         P.plot(frame='P', arrow=False, axes=ax, length=0.1, color='black')
 
         # virtual slam
         if cam:
             B_p_cam = casadi.DM(self.p + cam.p).full()
-            C = np.eye(4)
-            C[:3, :3] = casadi.DM(self.R).full()
-            C[:3, -1] = B_p_cam[:,0]
-            C = SE3(C)
+            R_BC = casadi.DM(self.R).full()
+            C = SE3(B_p_cam[:,0]) @ SE3_from_rot( R_BC )
             C.plot(frame='C', arrow=False, axes=ax, length=0.1, color='black')
 
     def plot_with_kf_traj(self, cam=None, imu_ref=None, kf_traj=None,
