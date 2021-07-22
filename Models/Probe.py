@@ -20,8 +20,12 @@ import matplotlib.pyplot as plt
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Ry(-180, 'deg')
 
-def transform_trajectories(transf, traj=None, x=None, y=None, z=None, n=None):
+def transform_trajectories(transf, traj=None,
+        x=None, y=None, z=None,
+        rots=None,
+        n=None):
     """ Transforms coords from W to new base due to transf. """
+    # positions
     if traj:
         coords_w_rot = [transf @ SE3(traj.x[i],
                             traj.y[i], traj.z[i])
@@ -33,8 +37,12 @@ def transform_trajectories(transf, traj=None, x=None, y=None, z=None, n=None):
         print('Invalid input to function transform_trajectories')
         raise Exception
 
+    # rotations
+    new_rots = [transf @ SE3_from_rot(r) for r in rots] if rots else None
+
     coords_w_rot = [coords_w_rot[i].t for i in range(n)]
-    return np.concatenate(coords_w_rot).reshape(n,3).T
+    new_coords = np.concatenate(coords_w_rot).reshape(n,3).T
+    return new_coords, new_rots
 
 def SE3_from_rot(rot):
     matr = np.eye(4)
@@ -375,7 +383,7 @@ class Probe(rtb.DHRobot):
             # B_p_cam = casadi.DM(self.p + cam.p).full()
 
             # coords in W
-            cam_w_rot = transform_trajectories(plot_rotation, traj=cam.traj, n=cam.max_vals)
+            cam_w_rot, _ = transform_trajectories(plot_rotation, traj=cam.traj, n=cam.max_vals)
             ax.plot(cam_w_rot[0,:], cam_w_rot[1,:], cam_w_rot[2,:], label='cam ref')
 
         if imu_ref:
@@ -383,15 +391,15 @@ class Probe(rtb.DHRobot):
             # imu_b = [imu_ref.base.inv() @ SE3(imu_ref.x[n], imu_ref.y[n], imu_ref.z[n]) for n in range(imu_ref.n)]
 
             # coords in W, taking into account plot_rotation
-            imu_ref_w_rot = transform_trajectories(plot_rotation, traj=imu_ref,
+            imu_ref_w_rot, _ = transform_trajectories(plot_rotation, traj=imu_ref,
                                     n=imu_ref.nvals)
             ax.plot(imu_ref_w_rot[0,:], imu_ref_w_rot[1,:], imu_ref_w_rot[2,:], label='imu ref')
 
         if kf_traj:
-            imu_w_rot = transform_trajectories(plot_rotation, traj=kf_traj, n=kf_traj.nvals)
+            imu_w_rot, _ = transform_trajectories(plot_rotation, traj=kf_traj, n=kf_traj.nvals)
             ax.plot(imu_w_rot[0,:], imu_w_rot[1,:], imu_w_rot[2,:], label='imu est')
 
-            cam_w_rot = transform_trajectories(plot_rotation, x=kf_traj.xc,
+            cam_w_rot, _ = transform_trajectories(plot_rotation, x=kf_traj.xc,
                                 y=kf_traj.yc,
                                 z=kf_traj.zc,
                                 n=cam.max_vals)
