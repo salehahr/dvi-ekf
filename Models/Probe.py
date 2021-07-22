@@ -339,15 +339,19 @@ class Probe(rtb.DHRobot):
             C.plot(frame='C', arrow=False, axes=ax, length=0.1, color='black')
 
     def _plot_anim_frames(self, cam=None, ax=None,
+        B_to_W_transf = None,
         base_p=None, base_r=None, n=None, interval=None):
         # base
         base_T = SE3([SE3(base_p[:,i]) @ base_r[i] for i in range(n)])
-        base_T.animate(frame='B', arrow=False, length=0.1, color='black', nframes=n, interval=interval)
+        # base_T.animate(frame='B', arrow=False, length=0.1, color='black', nframes=n, interval=interval)
 
         # pivot
         P = self.fkine_all(self.q_s)[6]
         P = SE3(P.t) @ SE3_from_rot(P.R)
-        P.plot(frame='P', arrow=False, axes=ax, length=0.1, color='black')
+        # P = B_to_W_transf @ P
+        P = SE3([P @ (B_to_W_transf.inv() @ base_T[i]) for i in range(n)])
+        P.animate(frame='P', arrow=False, length=0.1, color='black')
+        # P.plot(frame='P', arrow=False, axes=ax, length=0.1, color='black')
 
         # virtual slam
         if cam:
@@ -511,6 +515,7 @@ class Probe(rtb.DHRobot):
 
         # frames
         self._plot_anim_frames(cam=cam, ax=ax,
+                B_to_W_transf = imu_ref.base,
                 base_p=imu_ref_w_rot, base_r = imu_ref_rots,
                 n = imu_ref.nvals,
                 interval = dt)
