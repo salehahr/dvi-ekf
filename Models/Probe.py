@@ -421,6 +421,120 @@ class Probe(rtb.DHRobot):
 
         plt.show()
 
+    def anim_with_kf_traj(self, cam=None, imu_ref=None, kf_traj=None,
+        filename='', limits=None, dt=0.05, azim=-37, elev=29):
+        """ Note: this plot shows everything in the B coordinate system.
+            The base only transforms the whole thing so that the camera
+            starts at zero.
+
+            imu_ref.base: transforms coords in B to W
+                e.g. coords_in_W = imu_ref.base @ coords_in_B
+            imu_ref.base.inv(): transforms coords in W to B
+                e.g. coords_in_B = imu_ref.base.inv() @ coords_in_W
+        """
+
+        # visuals
+        limit_x = [-0.2, 0.2]
+        limit_y = [-0.2, 0.7]
+        limit_z = [-0.3, 0.1]
+        limits = [*limit_x, *limit_y, *limit_z] if (limits is None) else limits
+
+        env, ax = self._plot_initialiser(limits=limits, azim=azim, elev=elev)
+
+        # base
+        orig_base = self.base
+        plot_rotation = SE3.Rx(90, 'deg') @ SE3.Rx(self.theta_cam, 'rad')
+        if imu_ref.base:
+            # view everything in W, with a transf. on top
+            self.base = plot_rotation @ imu_ref.base @ orig_base
+
+            # view everything in W
+            # self.base = imu_ref.base @ orig_base
+
+            # view everything in B
+            # self.base = None
+
+        # robots
+        env.add(self, jointlabels=True, jointaxes=False,
+                    eeframe=True, shadow=False)
+        self.q = self.q_s
+        env.step(dt)
+
+        # trajectories
+        if cam:
+            # coords in B
+            # B_p_cam = casadi.DM(self.p + cam.p).full()
+
+            # coords in W
+            cam_w_rot, _ = transform_trajectories(plot_rotation, traj=cam.traj, n=cam.max_vals)
+            ax.plot(cam_w_rot[0,:], cam_w_rot[1,:], cam_w_rot[2,:], label='cam ref')
+
+        if imu_ref:
+            # coords in B
+            # imu_b = [imu_ref.base.inv() @ SE3(imu_ref.x[n], imu_ref.y[n], imu_ref.z[n]) for n in range(imu_ref.n)]
+
+            # coords in W, taking into account plot_rotation
+            imu_ref_w_rot, imu_ref_rots = transform_trajectories(
+                        plot_rotation,
+                        traj=imu_ref,
+                        rots=imu_ref.rots,
+                        n=imu_ref.nvals)
+            ax.plot(imu_ref_w_rot[0,:], imu_ref_w_rot[1,:], imu_ref_w_rot[2,:], label='imu ref')
+
+        if kf_traj:
+            imu_w_rot, _ = transform_trajectories(plot_rotation, traj=kf_traj, n=kf_traj.nvals)
+            ax.plot(imu_w_rot[0,:], imu_w_rot[1,:], imu_w_rot[2,:], label='imu est')
+
+            cam_w_rot, _ = transform_trajectories(plot_rotation, x=kf_traj.xc,
+                                y=kf_traj.yc,
+                                z=kf_traj.zc,
+                                n=cam.max_vals)
+            ax.plot(cam_w_rot[0,:], cam_w_rot[1,:], cam_w_rot[2,:], label='cam est')
+
+        # frames
+        self._plot_frames(cam=cam, ax=env.fig.axes[0])
+        plt.legend()
+
+        # save gif
+        loop = True if (filename is None) else False
+        images = []
+
+        try:
+            while True:
+                for i in range(imu_ref.nvals):
+                    R_base = imu_ref_rots[i] # todo: this is curr. const
+                    self.base = SE3(imu_ref_w_rot[:,i]) @ R_base
+                    env.step(dt)
+
+                    if filename is not None:
+                        images.append(env.getframe())
+
+                if filename is not None:
+                    # save it as an animated gif
+                    images[0].save(
+                        filename,
+                        save_all=True,
+                        append_images=images[1:],
+                        optimize=False,
+                        duration=dt,
+                        loop=0,
+                    )
+                if not loop:
+                    break
+
+        except tkinter.TclError:
+            # handles error when closing the window
+            return None
+
+
+        plt.figure(env.fig)
+        plt.ioff()
+
+        # reset base
+        self.base = orig_base
+
+        plt.show()
+
 class SimpleProbe(Probe):
     """ Simple probe with ROT9 as the only degree of freedom. """
 
