@@ -211,12 +211,23 @@ class Probe(rtb.DHRobot):
 
         return p, R, v, om, acc, alp
 
-    def plot(self, config, block=True, limits=None, movie=None, is_static=True, dt=0.05):
-        """ Modified to allow 'hold' of figure. """
+    def _plot_initialiser(self, config=None, limits=None, azim=None, elev=None):
+        config = self.q_s if config is None else config
 
         print(f"Plotting robot with the configuration:\n\t {config}")
 
         env = PyPlot()
+        env.launch(limits=limits)
+        ax = env.fig.axes[0]
+        try:
+            ax.view_init(azim=azim, elev=elev)
+        except NameError:
+            pass # default view
+
+        return env, ax
+
+    def plot(self, config, block=True, limits=None, movie=None, is_static=True, dt=0.05):
+        """ Modified to allow 'hold' of figure. """
 
         # visuals
         limit_x = [-0.1, 0.1]
@@ -224,12 +235,7 @@ class Probe(rtb.DHRobot):
         limit_z = [0., 0.7]
         limits = [*limit_x, *limit_y, *limit_z] if (limits is None) else limits
 
-        env.launch(limits=limits)
-        ax = env.fig.axes[0]
-        try:
-            ax.view_init(azim=azim, elev=elev)
-        except NameError:
-            pass # default view
+        env, ax = self._plot_initialiser(config=config, limits=limits)
 
         # base
         self.base = plot_rotation
@@ -319,22 +325,13 @@ class Probe(rtb.DHRobot):
                 e.g. coords_in_B = imu_ref.base.inv() @ coords_in_W
         """
 
-        print(f"Plotting robot with the configuration:\n\t {self.q_s}")
-
-        env = PyPlot()
-
         # visuals
         limit_x = [-0.2, 0.2]
         limit_y = [-0.2, 0.7]
         limit_z = [-0.3, 0.1]
         limits = [*limit_x, *limit_y, *limit_z] if (limits is None) else limits
 
-        env.launch(limits=limits)
-        ax = env.fig.axes[0]
-        try:
-            ax.view_init(azim=azim, elev=elev)
-        except NameError:
-            pass # default view
+        env, ax = self._plot_initialiser(limits=limits, azim=azim, elev=elev)
 
         # base
         orig_base = self.base
