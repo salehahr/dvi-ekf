@@ -512,6 +512,12 @@ class ImuDesTraj(Trajectory):
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
 
+    def from_cam(self, cam):
+        queue = cam.generate_queue(cam.t[0], cam.t[-1])
+        for n, t in enumerate(queue.t):
+            current_cam = queue.at_index(n)
+            self.append_value(t, current_cam)
+
 class FilterTraj(Trajectory):
     def __init__(self, name):
         self.labels_imu = ['x', 'y', 'z',
