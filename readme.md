@@ -4,7 +4,7 @@ the calibration parameters in a camera-IMU sensor probe setup.
 
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
-![](img/probe_w_kf_traj.png)
+![](img/probe_w_kf_traj.gif)
 
 ## Current results
 ```

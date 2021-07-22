@@ -338,6 +338,24 @@ class Probe(rtb.DHRobot):
             C = SE3(B_p_cam[:,0]) @ SE3_from_rot( R_BC )
             C.plot(frame='C', arrow=False, axes=ax, length=0.1, color='black')
 
+    def _plot_anim_frames(self, cam=None, ax=None,
+        base_p=None, base_r=None, n=None, interval=None):
+        # base
+        base_T = SE3([SE3(base_p[:,i]) @ base_r[i] for i in range(n)])
+        base_T.animate(frame='B', arrow=False, length=0.1, color='black', nframes=n, interval=interval)
+
+        # pivot
+        P = self.fkine_all(self.q_s)[6]
+        P = SE3(P.t) @ SE3_from_rot(P.R)
+        P.plot(frame='P', arrow=False, axes=ax, length=0.1, color='black')
+
+        # virtual slam
+        if cam:
+            B_p_cam = casadi.DM(self.p + cam.p).full()
+            R_BC = casadi.DM(self.R).full()
+            C = SE3(B_p_cam[:,0]) @ SE3_from_rot( R_BC )
+            C.plot(frame='C', arrow=False, axes=ax, length=0.1, color='black')
+
     def plot_with_kf_traj(self, cam=None, imu_ref=None, kf_traj=None,
         filename='', limits=None, dt=0.05, azim=-37, elev=29):
         """ Note: this plot shows everything in the B coordinate system.
@@ -492,7 +510,10 @@ class Probe(rtb.DHRobot):
             ax.plot(cam_w_rot[0,:], cam_w_rot[1,:], cam_w_rot[2,:], label='cam est')
 
         # frames
-        self._plot_frames(cam=cam, ax=env.fig.axes[0])
+        self._plot_anim_frames(cam=cam, ax=ax,
+                base_p=imu_ref_w_rot, base_r = imu_ref_rots,
+                n = imu_ref.nvals,
+                interval = dt)
         plt.legend()
 
         # save gif
