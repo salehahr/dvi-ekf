@@ -238,6 +238,7 @@ class Probe(rtb.DHRobot):
         env, ax = self._plot_initialiser(config=config, limits=limits)
 
         # base
+        orig_base = self.base
         self.base = plot_rotation
 
         # robots
@@ -290,7 +291,7 @@ class Probe(rtb.DHRobot):
                 return None
 
         # reset base
-        self.base = None
+        self.base = orig_base
 
     def _plot_frames(self, cam=None, ax=None):
         # base
