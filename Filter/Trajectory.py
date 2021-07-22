@@ -505,6 +505,17 @@ class ImuDesTraj(Trajectory):
     def p(self):
         return np.array((self.x, self.y, self.z))
 
+    @property
+    def quats(self):
+        return [Quaternion(x=self.qx[i],
+                        y=self.qy[i], z=self.qz[i], w=w)
+                        for i, w in enumerate(self.qw)]
+    @property
+    def rots(self):
+        return [Quaternion(x=self.qx[i],
+                        y=self.qy[i], z=self.qz[i], w=w).rot
+                        for i, w in enumerate(self.qw)]
+
     def append_value(self, t, current_cam):
         """ Appends new measurement from current state. """
 
