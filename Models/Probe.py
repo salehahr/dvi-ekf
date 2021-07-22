@@ -294,14 +294,6 @@ class Probe(rtb.DHRobot):
         P = SE3(P_t)
         P.plot(frame='P', arrow=False, axes=ax, length=0.1, color='black')
 
-        # physical slam
-        PS = self.fkine_all(self.q_s)[7]
-        PS_t = np.eye(4)
-        PS_t[:3, :3] = PS.R
-        PS_t[:3, -1] = PS.t
-        PS = SE3(PS_t)
-        PS.plot(frame='PS', arrow=False, axes=ax, length=0.1, color='black')
-
         # virtual slam
         if cam:
             B_p_cam = casadi.DM(self.p + cam.p).full()
