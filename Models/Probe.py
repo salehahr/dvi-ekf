@@ -13,6 +13,10 @@ from symbols import q_cas, q_tr_cas, dofs_cas_list
 
 from aux_symbolic import dummify_array
 
+from roboticstoolbox.backends.PyPlot import PyPlot
+import tkinter
+import matplotlib.pyplot as plt
+
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Ry(-180, 'deg')
 
@@ -210,9 +214,6 @@ class Probe(rtb.DHRobot):
     def plot(self, config, block=True, limits=None, movie=None, is_static=True, dt=0.05):
         """ Modified to allow 'hold' of figure. """
 
-        from roboticstoolbox.backends.PyPlot import PyPlot
-        import tkinter
-        import matplotlib.pyplot as plt
         print(f"Plotting robot with the configuration:\n\t {config}")
 
         env = PyPlot()
@@ -318,9 +319,6 @@ class Probe(rtb.DHRobot):
                 e.g. coords_in_B = imu_ref.base.inv() @ coords_in_W
         """
 
-        from roboticstoolbox.backends.PyPlot import PyPlot
-        import tkinter
-        import matplotlib.pyplot as plt
         print(f"Plotting robot with the configuration:\n\t {self.q_s}")
 
         env = PyPlot()
