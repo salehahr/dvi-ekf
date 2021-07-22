@@ -75,6 +75,4 @@ else:
     traj_name = traj_name + f'_upd_Rp{Rpval}_Rq{Rqval}'
 
 probe.plot_with_kf_traj(cam=cam, imu_ref=imu_ref, kf_traj=kf.traj, filename='img/probe_w_kf_traj.png')
-
 plot_trajectories(kf.traj, traj_name, imu_ref)
-kf.traj.plot_3d(cam.traj, imu_ref)
