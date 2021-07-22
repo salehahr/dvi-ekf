@@ -7,6 +7,8 @@ the calibration parameters in a camera-IMU sensor probe setup.
 ![](img/kf_mono_upd_Rp1000.0_Rq0.05_imu.png)
 ![](img/kf_mono_upd_Rp1000.0_Rq0.05_cam.png)
 
+![](img/probe_w_kf_traj.png)
+
 ## Current results
 ```
 python3 main.py <prop/update> nonoise

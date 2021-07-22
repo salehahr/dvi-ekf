@@ -32,7 +32,7 @@ kf = Filter(imu, sym_probe, IC, cov0, meas_noise)
 kf.traj.append_state(cam.t[0], kf.states)
 
 # desired trajectory
-imu_des = ImuDesTraj("imu ref", imu)
+imu_ref = ImuDesTraj("imu ref", imu)
 
 # filter main loop (t>=1)
 old_t = min_t
@@ -57,7 +57,7 @@ for i, t in enumerate(cam.t[1:]):
             probe.q, probe.qd, probe.qdd,
             interp.acc, interp.R,
             interp.om, interp.alp, )
-        imu_des.append_value(ti, interp)
+        imu_ref.append_value(ti, interp)
 
         kf.dt = ti - old_ti
         kf.propagate(ti, om, acc)
@@ -82,4 +82,5 @@ if do_prop_only:
 else:
     traj_name = traj_name + f'_upd_Rp{Rpval}_Rq{Rqval}'
 
-plot_trajectories(kf.traj, traj_name, imu_des)
+probe.plot_with_kf_traj(cam=cam, imu_ref=imu_ref, kf_traj=kf.traj, filename='img/probe_w_kf_traj.png')
+plot_trajectories(kf.traj, traj_name, imu_ref)

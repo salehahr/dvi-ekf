@@ -4,6 +4,7 @@ from Filter import ImuTraj
 import numpy as np
 import sympy as sp
 import casadi
+from spatialmath import SE3
 
 from . import context
 from symbols import W_acc_CW_cas, R_WC_cas, W_om_CW_cas, W_alp_CW_cas
@@ -230,6 +231,15 @@ class Imu(object):
         W_acc_BW_0 = casadi.DM(R_WB_0 @ self.acc[:,0].reshape(3,1)).full()
 
         return W_p_BW_0, R_WB_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0
+
+    def get_base(self):
+        """ [R_WB,    W_p_B]
+            [0, 0, 0, 1    ] """
+        B_np = np.eye(4)
+        R_WB_0 = casadi.DM(self.cam.R0 @ self.R_BC.T).full()
+        B_np[:3,:3] = R_WB_0
+        B_np[:3,-1] = casadi.DM(self.cam.p0 - R_WB_0 @ self.B_p_CB).full().reshape(3,)
+        return SE3(B_np)
 
     def desired_vals(self, current_cam):
         """ For troubleshooting.
