@@ -548,7 +548,7 @@ class Probe(rtb.DHRobot):
             return None
 
 
-        plt.figure(env.fig)
+        plt.figure(env.fig.number)
         plt.ioff()
 
         # reset base
