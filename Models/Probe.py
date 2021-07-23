@@ -1,4 +1,5 @@
 import roboticstoolbox as rtb
+
 from spatialmath import SE3
 import spatialmath.base.symbolic as sym
 
@@ -341,9 +342,12 @@ class Probe(rtb.DHRobot):
     def _plot_anim_frames(self, cam=None, ax=None,
         B_to_W_transf = None,
         base_p=None, base_r=None, n=None, interval=None):
+        anims = []
+
         # base
         base_T = SE3([SE3(base_p[:,i]) @ base_r[i] for i in range(n)])
-        # base_T.animate(frame='B', arrow=False, length=0.1, color='black', nframes=n, interval=interval)
+        base_ani = base_T.animate(start=base_T[0], frame='B', axes=ax, arrow=False, length=0.1, color='black', nframes=n, interval=interval)
+        anims.append(base_ani)
 
         # pivot
         P = self.fkine_all(self.q_s)[6]
@@ -359,6 +363,8 @@ class Probe(rtb.DHRobot):
             R_BC = casadi.DM(self.R).full()
             C = SE3(B_p_cam[:,0]) @ SE3_from_rot( R_BC )
             C.plot(frame='C', arrow=False, axes=ax, length=0.1, color='black')
+
+        return anims
 
     def plot_with_kf_traj(self, cam=None, imu_ref=None, kf_traj=None,
         filename='', limits=None, dt=0.05, azim=-37, elev=29):
@@ -514,7 +520,7 @@ class Probe(rtb.DHRobot):
             ax.plot(cam_w_rot[0,:], cam_w_rot[1,:], cam_w_rot[2,:], label='cam est')
 
         # frames
-        self._plot_anim_frames(cam=cam, ax=ax,
+        anim_frames = self._plot_anim_frames(cam=cam, ax=ax,
                 B_to_W_transf = imu_ref.base,
                 base_p=imu_ref_w_rot, base_r = imu_ref_rots,
                 n = imu_ref.nvals,
@@ -551,7 +557,6 @@ class Probe(rtb.DHRobot):
         except tkinter.TclError:
             # handles error when closing the window
             return None
-
 
         plt.figure(env.fig.number)
         plt.ioff()
