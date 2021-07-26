@@ -227,3 +227,5 @@ class Filter(object):
         # correct predicted state and covariance
         self.states.apply_correction(err)
         self.P = (np.eye(self.num_error_states) - K @ H) @ self.P
+
+        return K

@@ -37,6 +37,7 @@ meas_noise = np.hstack(([Rpval]*3, [Rqval]*4))
 sym_probe = SymProbe(probe, const_dofs)
 kf = Filter(imu, sym_probe, IC, cov0, meas_noise)
 kf.traj.append_state(cam.t[0], kf.states)
+gain_plt = MatrixPlotter('K', min_row=0, min_col=0, max_row=3, max_col=3)
 
 # desired trajectory
 imu_des = ImuDesTraj("imu ref", imu)
@@ -67,8 +68,8 @@ for i, t in enumerate(cam.t[1:]):
     # update
     if not do_prop_only:
         current_vis = cam.traj.at_index(i)
-        kf.update(current_vis)
-
+        K = kf.update(current_vis)
+        gain_plt.append(t, K)
     old_t = t
 
 
@@ -81,4 +82,5 @@ if do_prop_only:
 else:
     traj_name = traj_name + f'_upd_Rp{Rpval}_Rq{Rqval}'
 
+gain_plt.plot(min_t=min_t, max_t=max_t, index_from_zero=False)
 plot_trajectories(kf.traj, traj_name, imu_des)
