@@ -16,8 +16,8 @@ sym_probe = SymProbe(probe)
 # SLAM data
 # filepath_cam = './trajs/offline_mandala0_gt.txt' # stereo
 
-traj_name = 'mono'
-# traj_name = 'from_prop'
+# traj_name = 'mono'
+traj_name = 'from_prop'
 # traj_name = 'transx'
 
 if traj_name == 'mono':
