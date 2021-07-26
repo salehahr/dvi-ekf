@@ -4,13 +4,27 @@ the calibration parameters in a camera-IMU sensor probe setup.
 
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
-## Current results
+## Usage
+### Running the program
 ```
 python3 main.py <prop/update> <const_dofs> 
 ```
 * arg1: `prop` for propagation only, anything else to perform prop + update
 * arg2: `cdofs` or `const_dofs` to make probe have constant dofs, anything else otherwise
 
+### Changing the noise values
+* [Process noise - IMU](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/generate_data.py#L35)
+* [Process noise - DOFs](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/Filter/Filter.py#L207)
+* [Measurement noise](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/main.py#L33)
+
+### Setting the Kalman gain plotter
+Adjust the arguments in [this line](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/main.py#L40)
+as necessary.  
+e.g. `min_row, min_col = 0` and `max_row, max_col = 3` will plot the gain matrix entries `K[0:3,0:3]`.
+
+Optional: for plot labels, the boolean option `index_from_zero` [can be set](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/main.py#L85).
+
+## Current results
 ### Simple trajectory
 Camera moves in x direction, no rotations.
 
