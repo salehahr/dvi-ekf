@@ -5,7 +5,7 @@ import numpy as np
 import sympy as sp
 
 # data generation params
-max_vals = 25
+max_vals = 50
 num_imu_between_frames = 10
 # imu_covariance = [0.01, 0.03, 0.01, 0.03, 0.005, 0.005]
 
@@ -17,12 +17,15 @@ sym_probe = SymProbe(probe)
 # filepath_cam = './trajs/offline_mandala0_gt.txt' # stereo
 
 traj_name = 'mono'
+# traj_name = 'from_prop'
 # traj_name = 'transx'
 
 if traj_name == 'mono':
     filepath_cam = './trajs/offline_mandala0_mono.txt' # mono
 elif traj_name == 'transx':
     filepath_cam = './trajs/trans_x.txt' # simple traj
+elif traj_name == 'from_prop':
+    filepath_cam = './trajs/from_prop.txt' # from prop only run
 else:
     print('Invalid trajectory.')
     raise Exception

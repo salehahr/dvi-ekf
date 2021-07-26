@@ -681,6 +681,18 @@ class FilterTraj(Trajectory):
             line.set_linestyle('--')
             line.set_linewidth(0.8)
 
+    def write_to_file(self, filename=None, discard_interframe_vals=True):
+        with open(filename, 'w+') as f:
+            for i, t in enumerate(self.t):
+                res = abs(round(t) - t)
+                if res > 0.00001 and discard_interframe_vals:
+                    continue
+
+                pc_str = f"{self.xc[i]:.9f} {self.yc[i]:.9f} {self.zc[i]:.9f} "
+                qc_str = f"{self.qxc[i]:.9f} {self.qyc[i]:.9f} {self.qzc[i]:.9f} {self.qwc[i]:.9f}"
+                data_str = f"{t:.6f} " + pc_str + qc_str
+                f.write(data_str + '\n')
+
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
     angular velocity measurements. """

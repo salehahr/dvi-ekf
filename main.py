@@ -72,7 +72,8 @@ for i, t in enumerate(cam.t[1:]):
         gain_plt.append(t, K)
     old_t = t
 
-
+if do_prop_only:
+    kf.traj.write_to_file('./trajs/from_prop.txt', discard_interframe_vals=True)
 
 # plots
 from plotter import plot_trajectories

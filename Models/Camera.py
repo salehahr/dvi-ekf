@@ -13,6 +13,8 @@ class Camera(object):
     """
 
     def __init__(self, filepath, traj=None, max_vals=None):
+        if filepath:
+            print(f'Reading camera data from \'{filepath}\'.')
         self.traj_filepath = filepath
         self.traj = traj if (traj) else \
             VisualTraj("camera", self.traj_filepath, cap=max_vals)
