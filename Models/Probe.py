@@ -325,11 +325,12 @@ class SymProbe(object):
     """ Container class for probe that only stores the
         symbolic forward kinematics relations. """
 
-    def __init__(self, probe):
+    def __init__(self, probe, const_dofs=False):
         self.n = probe.n
         self.q0 = probe.q.copy()
-        self.q = q_s.copy()
+        self.q = q_s.copy() if not const_dofs else self.q0
 
+        # set non-imu dofs to zero
         for i in range(6,self.n):
             self.q[i] = 0
 
@@ -347,6 +348,8 @@ class SymProbe(object):
         self.om_tr = self._get_tr(om)
         self.acc_tr = self._get_tr(acc)
         self.alp_tr = self._get_tr(alp)
+
+        self._flag_const_dofs = const_dofs
 
     def _get_tr(self, expr):
         """ Returns kinematic expressions in terms of

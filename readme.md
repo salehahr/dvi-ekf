@@ -6,8 +6,10 @@ the calibration parameters in a camera-IMU sensor probe setup.
 
 ## Current results
 ```
-python3 main.py <prop/update> nonoise
+python3 main.py <prop/update> <const_dofs> 
 ```
+* arg1: `prop` for propagation only, anything else to perform prop + update
+* arg2: `cdofs` or `const_dofs` to make probe have constant dofs, anything else otherwise
 
 ### Simple trajectory
 Camera moves in x direction, no rotations.
