@@ -15,6 +15,7 @@ from aux_symbolic import sympy2casadi
 from casadi import *
 
 from roboticstoolbox.backends.PyPlot import PyPlot
+import matplotlib.pyplot as plt
 
 cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=5)
 
@@ -64,6 +65,24 @@ def view_selector(robot, q):
                 do_switch = False
     except:
         sys.exit()
+
+class TestCamera(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=10)
+
+        num_imu_between_frames = 10
+        cls.cam_interp = cls.cam.interpolate(num_imu_between_frames)
+
+    def test_plot(self):
+        ax = self.cam.traj.plot()
+        ax = self.cam_interp.traj.plot(axes=ax)
+        plt.show()
+
+    def test_imu(self):
+        probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+        stdev_na, stdev_nom = [1e-3]*3, [1e-3]*3 # supposedly from IMU datasheet
+        imu = Imu(probe, self.cam_interp, stdev_na, stdev_nom)
 
 class TestSymbolic(unittest.TestCase):
     """ Module to troubleshoot symbolic stuff. """
