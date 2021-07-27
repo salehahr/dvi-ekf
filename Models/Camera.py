@@ -107,7 +107,6 @@ class Camera(object):
 
     def interpolate(self, num_imu_between_frames):
         self.traj.interpolate(num_imu_between_frames)
-        traj_interp = self.traj.interpolated
         return Camera(filepath='', traj=self.traj.interpolated)
 
     def generate_queue(self, old_t, new_t):
