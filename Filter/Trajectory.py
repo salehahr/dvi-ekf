@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from scipy.interpolate import interp1d, splrep, splev
 from scipy.integrate import cumtrapz
 from scipy.spatial.transform import Rotation as R
 
@@ -98,8 +97,8 @@ class Trajectory(object):
             val = self.__dict__[label]
 
             # interpolating
-            f = splrep(old_t, val, k=5)
-            interp_obj.__dict__[label] = splev(new_t, f)
+            np.interp(new_t, old_t, val)
+            interp_obj.__dict__[label] = np.interp(new_t, old_t, val)
 
         interp_obj._flag_interpolated = True
 
