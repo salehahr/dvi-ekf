@@ -74,6 +74,10 @@ class States(object):
 
 class ErrorStates(object):
     def __init__(self, vec):
+        self.set(vec)
+
+    def set(self, vec):
+        self.vec = vec
         self.size = len(vec)
         assert(self.size == 21)
 
@@ -86,7 +90,13 @@ class ErrorStates(object):
 
         self.dp = np.asarray(p)
         self.dv = np.asarray(v)
-        self.dq = Quaternion(v=theta/2, w=1.)
+        self.dq = Quaternion(v=np.array(theta)/2, w=1.)
         self.ddofs = np.asarray(dofs)
         self.dpc = np.asarray(p_c)
-        self.dqc = Quaternion(v=theta_c/2, w=1.)
+        self.dqc = Quaternion(v=np.array(theta_c)/2, w=1.)
+
+        self.theta = np.asarray(theta)
+        self.theta_c = np.asarray(theta_c)
+
+    def reset(self):
+        self.set([0] * 21)

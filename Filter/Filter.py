@@ -18,6 +18,7 @@ class Filter(object):
         self.num_noise = 12
 
         self.states = copy(IC)
+        # self.err_states = ErrorStates([0] * self.num_error_states) # defaults to zero
         self._x = []
         self._u = []
 
@@ -163,7 +164,7 @@ class Filter(object):
         self.Fi = self._cam_error_jacobian(Fi, sym.n)
 
         """ returns zero
-        # self.err_states = self.Fx @ self.err_states """
+        self.err_states.set(self.Fx @ self.err_states.vec) """
 
     def _cam_error_jacobian(self, jac, vars_wrt):
         """ Fills the error jacobian (either w.r.t. error state or
@@ -228,5 +229,11 @@ class Filter(object):
         self.states.apply_correction(err)
         I = np.eye(self.num_error_states)
         self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ self.R @ K.T
+
+        # reset error states
+        G = np.eye(self.num_error_states)
+        G[6:9, 6:9] = np.eye(3) - skew(0.5 * err.theta)
+        G[-3:, -3:] = np.eye(3) - skew(0.5 * err.theta_c)
+        self.P = G @ self.P @ G.T
 
         return K
