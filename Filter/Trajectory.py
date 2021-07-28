@@ -451,11 +451,13 @@ class VisualTraj(Trajectory):
             intrinsic: XYZ: rotations about moving CS """
 
         euler = np.array([R.from_quat(q.xyzw).as_euler('xyz', degrees=True) for q in self.quats])
+        euler = np.unwrap(euler, axis=0, discont=180)
         self.rx = euler[:,0]
         self.ry = euler[:,1]
         self.rz = euler[:,2]
 
         euler = np.array([R.from_quat(q.xyzw).as_euler('XYZ', degrees=True) for q in self.quats])
+        euler = np.unwrap(euler, axis=0, discont=180)
         self.rX = euler[:,0]
         self.rY = euler[:,1]
         self.rZ = euler[:,2]

@@ -65,7 +65,7 @@ class Camera(object):
 
     @property
     def r(self):
-        self._r = np.array([q.euler_xyz for q in self.traj.quats]).T
+        self._r = np.unwrap(np.array([q.euler_xyz for q in self.traj.quats]).T)
         return self._r
 
     @property
