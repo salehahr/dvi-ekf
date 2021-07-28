@@ -1,8 +1,9 @@
 import os
 import unittest
 
-from Models import SimpleProbe, RigidSimpleProbe
-from Models import Camera, Imu, n_dofs, dofs_s, dofs_cas
+from Models import SimpleProbe, RigidSimpleProbe, SymProbe
+from Models import Camera, Imu
+from symbols import num_dofs, dofs_s, dofs_cas
 
 from Filter import Quaternion
 
@@ -14,6 +15,7 @@ from aux_symbolic import sympy2casadi
 from casadi import *
 
 from roboticstoolbox.backends.PyPlot import PyPlot
+import matplotlib.pyplot as plt
 
 cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=5)
 
@@ -64,6 +66,24 @@ def view_selector(robot, q):
     except:
         sys.exit()
 
+class TestCamera(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=10)
+
+        num_imu_between_frames = 10
+        cls.cam_interp = cls.cam.interpolate(num_imu_between_frames)
+
+    def test_plot(self):
+        ax = self.cam.traj.plot()
+        ax = self.cam_interp.traj.plot(axes=ax)
+        plt.show()
+
+    def test_imu(self):
+        probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+        stdev_na, stdev_nom = [1e-3]*3, [1e-3]*3 # supposedly from IMU datasheet
+        imu = Imu(probe, self.cam_interp, stdev_na, stdev_nom)
+
 class TestSymbolic(unittest.TestCase):
     """ Module to troubleshoot symbolic stuff. """
 
@@ -74,9 +94,9 @@ class TestSymbolic(unittest.TestCase):
         cls.R_s = sp.MatrixSymbol('R_BW', 3, 3)
         cls.acc_C_s = sp.MatrixSymbol('acc_C', 3, 1)
 
-        cls.q_s = [sp.Symbol(f'q{x}') for x in range(1,n_dofs+1)]
-        cls.q_dot_s = [sp.Symbol(f'q{x}_dot') for x in range(1,n_dofs+1)]
-        cls.q_ddot_s = [sp.Symbol(f'q{x}_ddot') for x in range(1,n_dofs+1)]
+        cls.q_s = [sp.Symbol(f'q{x}') for x in range(1,num_dofs+1)]
+        cls.q_dot_s = [sp.Symbol(f'q{x}_dot') for x in range(1,num_dofs+1)]
+        cls.q_ddot_s = [sp.Symbol(f'q{x}_ddot') for x in range(1,num_dofs+1)]
 
         cls.params = [*cls.q_s, *cls.q_dot_s, *cls.q_ddot_s]
 
@@ -151,7 +171,7 @@ class TestCasadi(unittest.TestCase):
         T = self.probe.R
         T = self.probe.p
         J = self.probe.jacob0(self.probe.q_s)
-        T = J @ dofs_s[n_dofs:2*n_dofs]
+        T = J @ dofs_s[num_dofs:2*num_dofs]
         T = self.probe._calc_acceleration()
         T = sympy2casadi(T, dofs_s, dofs_cas)
 
@@ -193,6 +213,21 @@ class TestRigidSimpleProbe(unittest.TestCase):
     def test_plot(self):
         # view_selector(self.probe, self.q_0)
         do_plot(self.probe, self.q_0)
+
+    def test_sym_probe(self):
+        sym_probe = SymProbe(self.probe)
+        print(self.probe.q)
+        print(sym_probe.q)
+        
+        print()
+        print(self.probe.p)
+        print(sym_probe.p)
+        print(sym_probe.p_tr)
+
+        print()
+        print(self.probe.R)
+        print(sym_probe.R)
+        print(sym_probe.R_tr)
 
 class TestImu(TestRigidSimpleProbe):
 
@@ -283,6 +318,7 @@ class TestFilter(unittest.TestCase):
 
         cls.states()
         cls.error_states()
+        cls.measurements()
         cls.inputs()
         cls.noise()
 
@@ -291,8 +327,11 @@ class TestFilter(unittest.TestCase):
         cls.p_B = casadi.SX.sym('p_B', 3)
         cls.v_B = casadi.SX.sym('v_B', 3)
         cls.R_WB = casadi.SX.sym('R_WB', 3, 3)
-        dofs = casadi.SX.sym('q', 6)
-        cls.dofs_t, cls.dofs_r = casadi.vertsplit(dofs, [0, 3, 6])
+
+         # note: creating cls.dofs via casadi.SX.sym results in free variables in the functions created later on -- therefore dofs_cas, which was used in Probe.py, has to be imported
+        cls.dofs, cls.ddofs, cls.dddofs = casadi.vertsplit(dofs_cas, [0, 8, 16, 24])
+        cls.dofs_t, cls.dofs_r, _ = casadi.vertsplit(cls.dofs, [0, 3, 6, 8])
+
         cls.p_C = casadi.SX.sym('p_C', 6)
 
         cls.x = [cls.p_B, cls.v_B, cls.R_WB, cls.dofs_t, cls.dofs_r, cls.p_C]
@@ -311,6 +350,13 @@ class TestFilter(unittest.TestCase):
                     cls.err_dofs_t, cls.err_dofs_r, cls.err_p_C]
         cls.err_x_str = ['err_p_B', 'err_v_B', 'err_theta',
                     'err_dofs_t', 'err_dofs_r', 'err_p_C']
+
+    @classmethod
+    def measurements(cls):
+        _, cls.q_notch, _ = casadi.vertsplit(cls.dofs, [0, 6, 7, 8])
+        _, cls.qd_notch, _ = casadi.vertsplit(cls.ddofs, [0, 6, 7, 8])
+        cls.notch_dof = [cls.q_notch, cls.qd_notch]
+        cls.notch_dof_str = ['q_notch', 'qd_notch']
 
     @classmethod
     def inputs(cls):
@@ -336,14 +382,14 @@ class TestFilter(unittest.TestCase):
                 + self.dt**2 / 2 * self.R_WB @ self.acc
 
         fun_nominal = casadi.Function('f_nom',
-            [self.dt, *self.x, *self.u],
+            [self.dt, *self.x, *self.u, *self.notch_dof],
             [   p_B_next,
                 self.v_B + self.dt * self.R_WB @ self.acc,
                 self.R_WB + self.R_WB @ casadi.skew(self.dt * self.om),
                 self.dofs_t,
                 self.dofs_r,
                 p_B_next + self.R_WB @ self.p_CB ],
-            ['dt', *self.x_str, *self.u_str],
+            ['dt', *self.x_str, *self.u_str, *self.notch_dof_str],
             ['p_B_next', 'v_B_next', 'R_WB_next',
                 'dofs_t_next', 'dofs_r_next', 'p_C_next'])
 
@@ -353,6 +399,8 @@ class TestFilter(unittest.TestCase):
                             R_WB = casadi.DM.eye(3),
                             om = casadi.DM(self.imu.om),
                             acc = casadi.DM(self.imu.acc),
+                            q_notch = casadi.DM(0.),
+                            qd_notch = casadi.DM(0.),
                          )
         p_B_next = res['p_B_next']
 

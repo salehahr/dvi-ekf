@@ -7,8 +7,9 @@ import numpy as np
 import sympy as sp
 from sympy.tensor.array import tensorproduct, tensorcontraction
 
-from .params import q_s, qd_s, qdd_s, dofs_s, dofs_cas
-from .params import dofs_cas_list
+from . import context
+from symbols import q_s, qd_s, qdd_s, dofs_s
+from symbols import q_cas, q_tr_cas, dofs_cas_list
 
 from aux_symbolic import dummify_array
 
@@ -132,6 +133,14 @@ class Probe(rtb.DHRobot):
         alp = self._calc_acceleration()[-3:]
         return self._to_casadi(alp)
 
+    @property
+    def joint_dofs(self):
+        return [self.q_cas, self.qd_cas, self.qdd_cas]
+
+    @property
+    def imu_dofs(self):
+        return [*self.q[:6]]
+
     def _to_casadi(self, var):
         if isinstance(var, np.ndarray):
             is_1dim = var.ndim == 1
@@ -175,6 +184,25 @@ class Probe(rtb.DHRobot):
                 self[i].offset = offsets[i]
 
         return s
+
+    def get_sym(self, q):
+        # set joint dofs to symbolic
+        q_orig = self.q_s.copy()
+        self.q_s = q.copy()
+
+        p = self.p
+        R = self.R
+
+        v = self.v
+        om = self.om
+
+        acc = self.acc
+        alp = self.alp
+
+        # reset joint dofs
+        self.q_s = q_orig
+
+        return p, R, v, om, acc, alp
 
     def plot(self, config, block=True, limits=None, movie=None, is_static=True, dt=0.05):
         """ Modified to allow 'hold' of figure. """
@@ -293,10 +321,37 @@ class RigidSimpleProbe(SimpleProbe):
         self.qd = [0] * self.n
         self.qdd = [0] * self.n
 
-    @property
-    def joint_dofs(self):
-        return [self.q_cas, self.qd_cas, self.qdd_cas]
+class SymProbe(object):
+    """ Container class for probe that only stores the
+        symbolic forward kinematics relations. """
 
-    @property
-    def imu_dofs(self):
-        return [*self.q[:6]]
+    def __init__(self, probe, const_dofs=False):
+        self.n = probe.n
+        self.q0 = probe.q.copy()
+        self.q = q_s.copy() if not const_dofs else self.q0
+
+        # set non-imu dofs to zero
+        for i in range(6,self.n):
+            self.q[i] = 0
+
+        p, R, v, om, acc, alp = probe.get_sym(self.q)
+        self.p = p
+        self.R = R
+        self.v = v
+        self.om = om
+        self.acc = acc
+        self.alp = alp
+
+        self.p_tr = self._get_tr(p)
+        self.R_tr = self._get_tr(R)
+        self.v_tr = self._get_tr(p)
+        self.om_tr = self._get_tr(om)
+        self.acc_tr = self._get_tr(acc)
+        self.alp_tr = self._get_tr(alp)
+
+        self._flag_const_dofs = const_dofs
+
+    def _get_tr(self, expr):
+        """ Returns kinematic expressions in terms of
+            estimated DOFs and error DOFs."""
+        return casadi.substitute(expr, q_cas, q_tr_cas)

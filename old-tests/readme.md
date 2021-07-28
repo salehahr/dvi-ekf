@@ -19,6 +19,7 @@ python3 old-tests/plot_traj.py
 ![](../img/offline_trajs.PNG)
 
 ## Fake IMU data
+### Numerical
 ```
 python3 old-tests/plot_imu.py
 ```
@@ -42,6 +43,13 @@ To improve:
 - [ ] get rid of outliers
 
 ![](../img/offline_noisyimu.PNG)
+
+### Analytical
+```
+python3 simple_robot.py regen plot
+```
+![](../img/gen_fake_imu_validation.PNG)  
+![](../img/gen_fake_imu.PNG)
 
 ## Reconstructed visual trajectory
 ```

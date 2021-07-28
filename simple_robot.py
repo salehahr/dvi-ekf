@@ -64,5 +64,4 @@ if do_plot:
     recon_axes_3d = cam.traj.plot_3d()
     recon_axes_3d = imu.traj.reconstructed.plot_3d(ax=recon_axes_3d)
 
-    probe_BtoC.plot(probe_BtoC.q, is_static=True)
     plt.show()

@@ -13,6 +13,8 @@ class Camera(object):
     """
 
     def __init__(self, filepath, traj=None, max_vals=None):
+        if filepath:
+            print(f'Reading camera data from \'{filepath}\'.')
         self.traj_filepath = filepath
         self.traj = traj if (traj) else \
             VisualTraj("camera", self.traj_filepath, cap=max_vals)
@@ -105,7 +107,6 @@ class Camera(object):
 
     def interpolate(self, num_imu_between_frames):
         self.traj.interpolate(num_imu_between_frames)
-        traj_interp = self.traj.interpolated
         return Camera(filepath='', traj=self.traj.interpolated)
 
     def generate_queue(self, old_t, new_t):

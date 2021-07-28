@@ -28,12 +28,55 @@ Camera rotates around its x-axis (270 deg)
 Camera rotates around its x-axis (270 deg -- constrained `q_w` to be positive)  
 ![](img/fakecam-rx-270-qwpos.png)
 
-## Filter
-![](img/kf.png)
+## Usage
+### Running the program
+```
+python3 main.py <prop/update> <const_dofs> 
+```
+* arg1: `prop` for propagation only, anything else to perform prop + update
+* arg2: `cdofs` or `const_dofs` to make probe have constant dofs, anything else otherwise
 
-- [ ] Shown are IMU positions and rotations, I still need to work on
-proper plot functions for the rest of the states.
-- [ ] Equations/Jacobian stuff still needs checking.
+### Changing the noise values
+* [Process noise - IMU](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/generate_data.py#L35)
+* [Process noise - DOFs](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/Filter/Filter.py#L207)
+* [Measurement noise](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/main.py#L33)
+
+### Setting the Kalman gain plotter
+Adjust the arguments in [this line](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/main.py#L40)
+as necessary.  
+e.g. `min_row, min_col = 0` and `max_row, max_col = 3` will plot the gain matrix entries `K[0:3,0:3]`.
+
+Optional: for plot labels, the boolean option `index_from_zero` [can be set](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/main.py#L85).
+
+## Current results
+### Trajectory from monocular SLAM propagation
+P + U | P + U | P + U
+---   | ---   | --- |
+`stdev_a, stdev_om = 1e-3`  | `stdev_a, stdev_om = 1e-3` | `stdev_a, stdev_om = 1e-3`  
+**`cov_p = 1000`** | **`cov_p = 0.1`**  | **`cov_p = 1e-6`**
+`cov_q = 0.05` | `cov_q = 0.05` | `cov_q = 0.05`
+![](img/kf_from_prop_upd_Rp1000.0_Rq0.05_imu.png) | ![](img/kf_from_prop_upd_Rp0.1_Rq0.05_imu.png) | ![](img/kf_mono_upd_Rp1e-06_Rq0.05_imu.png)
+![](img/kf_from_prop_upd_Rp1000.0_Rq0.05_cam.png) | ![](img/kf_from_prop_upd_Rp0.1_Rq0.05_cam.png) | ![](img/kf_mono_upd_Rp1e-06_Rq0.05_cam.png)
+
+### Monocular SLAM trajectory
+P only  | P + U | P + U | P + U
+---     | ---   | ---   | --- |
+&nbsp;  | `stdev_a, stdev_om = 1e-3`  | `stdev_a, stdev_om = 1e-3` | `stdev_a, stdev_om = 1e-3`  
+&nbsp;  | **`cov_p = 1000`** | **`cov_p = 0.1`**  | **`cov_p = 1e-6`**
+&nbsp;  | `cov_q = 0.05` | `cov_q = 0.05` | `cov_q = 0.05`
+![](img/kf_mono_prop_imu.png) | ![](img/kf_mono_upd_Rp1000.0_Rq0.05_imu.png) | ![](img/kf_mono_upd_Rp0.1_Rq0.05_imu.png) | ![](img/kf_mono_upd_Rp1e-06_Rq0.05_imu.png)
+![](img/kf_mono_prop_cam.png) | ![](img/kf_mono_upd_Rp1000.0_Rq0.05_cam.png) | ![](img/kf_mono_upd_Rp0.1_Rq0.05_cam.png) | ![](img/kf_mono_upd_Rp1e-06_Rq0.05_cam.png)
+
+### Simple trajectory
+Camera moves in x direction, no rotations.
+
+P only  | P + U | P + U 
+---     | ---   | ---   
+&nbsp;  | `stdev_a, stdev_om = 1e-3`  | `stdev_a, stdev_om = 1e-3` 
+&nbsp;  | **`cov_p = 1000`** | **`cov_p = 0.1`**
+&nbsp;  | `cov_q = 0.05` | `cov_q = 0.05` 
+![](img/kf_transx_prop_imu.png) | ![](img/kf_transx_upd_Rp1000.0_Rq0.05_imu.png) | ![](img/kf_transx_upd_Rp0.1_Rq0.05_imu.png)
+![](img/kf_transx_prop_cam.png) | ![](img/kf_transx_upd_Rp1000.0_Rq0.05_cam.png) | ![](img/kf_transx_upd_Rp0.1_Rq0.05_cam.png)
 
 ## Probe
 ```
@@ -43,20 +86,9 @@ Unconstrained SLAM end | Constrained SLAM end
 --- | ---
 ![](img/probe_uncon.gif) | ![](img/probe_con.gif)
 
-## Fake IMU data generation
-```
-python3 simple_robot.py regen plot
-```
-![](img/gen_fake_imu_validation.PNG)
-
-Generated fake IMU data based on kinematics relations between
-the camera and the IMU. Shown here: for the first 50 camera values.
-
-![](img/gen_fake_imu.PNG)
-
 ## Table of contents
-* [Probe](#probe)
 * [Simple camera trajectory](#simple-camera-trajectory)
-* [Filter](#filter)
-* [Fake IMU data](#fake-imu-data-generation)
+* [Usage](#usage)
+* [Current results](#current-results)
+* [Probe](#probe)
 * [Old tests](/old-tests)

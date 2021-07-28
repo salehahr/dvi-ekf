@@ -1,30 +1,31 @@
 import matplotlib.pyplot as plt
 
 class MatrixPlotter(object):
-    def __init__(self, name, t0, mat,
+    def __init__(self, name,
             min_row = 0,
             min_col = 0,
             max_row = None,
             max_col = None):
         self.name = name
-        self.num_rows, self.num_cols = mat.shape
-        self.t = [t0]
+        self.t = []
 
         # min/max values
         self.min_row = min_row
         self.min_col = min_col
-        self.max_row = (self.num_rows if max_row is None else max_row)
-        self.max_col = (self.num_cols if max_col is None else max_col)
+        self.max_row = max_row
+        self.max_col = max_col
 
-        # set initial values
-        for i in range(self.min_row, self.max_row):
-            for j in range(self.min_col, self.max_col):
-                self.__dict__[f"a_{i}_{j}"] = [mat[i][j]]
+        self._init_matrix()
 
     def __iter__(self):
         """ Make object iterable. """
         for attr, value in self.__dict__.items():
             yield attr, value
+
+    def _init_matrix(self):
+        for i in range(self.min_row, self.max_row):
+            for j in range(self.min_col, self.max_col):
+                self.__dict__[f"a_{i}_{j}"] = []
 
     def append(self, t, mat):
         self.t.append(t)
@@ -33,8 +34,13 @@ class MatrixPlotter(object):
             for j in range(self.min_col, self.max_col):
                 self.__dict__[f"a_{i}_{j}"].append(mat[i][j])
 
-    def plot(self, axes=None, min_t=None, max_t=None):
-        """ Creates a plot of them matrix entries. """
+    def plot(self, axes=None, min_t=None, max_t=None, index_from_zero=False):
+        """ Creates a plot of them matrix entries.
+
+            Param:
+            * index_from_zero - whether to label matrix entries starting from
+                    0 or starting from 1
+        """
 
         plot_rows = self.max_row - self.min_row
         plot_cols = self.max_col - self.min_col
@@ -55,7 +61,8 @@ class MatrixPlotter(object):
                 plt_col = col - self.min_col
 
                 label = f"a_{row}_{col}"
-                latex_label = f"$a_{{{row}\_{col}}}$"
+                latex_label = f"$a_{{{row}\_{col}}}$" if index_from_zero \
+                            else f"$a_{{{row+1}\_{col+1}}}$"
 
                 axes[plt_row][plt_col].plot(self.t, self.__dict__[label])
 

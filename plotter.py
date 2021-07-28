@@ -7,12 +7,9 @@ def plot_savefig(fig, figname):
     print(f"Saving file \"{figname}\". ")
     fig.savefig(figname)
     
-def plot_trajectories(kf_traj, do_prop_only):
-    axes = cam.traj.plot()
-    # if not do_prop_only:
-        # axes = mono_traj.plot(axes)
-    axes = kf_traj.plot(axes, min_t=min_t, max_t=max_t)
-    plt.legend()
+def plot_trajectories(kf_traj, traj_name, imu_des):
+    imu_axes = kf_traj.plot_imu('img/kf_' + traj_name + '_imu.png', min_t=min_t, max_t=max_t, imu_des=imu_des)
+    cam_axes = kf_traj.plot_camera('img/kf_' + traj_name + '_cam.png', cam=cam.traj, min_t=min_t, max_t=max_t)
     plt.show()
 
 def plot_velocities(kf_traj, do_plot_vel):
