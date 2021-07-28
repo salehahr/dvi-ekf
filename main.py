@@ -72,6 +72,7 @@ for i, t in enumerate(cam.t[1:]):
         gain_plt.append(t, K)
     old_t = t
 
+# write to file
 if do_prop_only:
     kf.traj.write_to_file('./trajs/from_prop.txt', discard_interframe_vals=True)
 
@@ -82,6 +83,6 @@ if do_prop_only:
     traj_name = traj_name + '_prop'
 else:
     traj_name = traj_name + f'_upd_Rp{Rpval}_Rq{Rqval}'
+    gain_plt.plot(min_t=min_t, max_t=max_t, index_from_zero=False)
 
-gain_plt.plot(min_t=min_t, max_t=max_t, index_from_zero=False)
 plot_trajectories(kf.traj, traj_name, imu_des)
