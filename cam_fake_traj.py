@@ -63,10 +63,10 @@ if __name__ == '__main__':
 
     # translations
     x = translate('x', t, 0, 10, 0, 0)
-    y = translate('y', t, 0, 10, 0, 0)
+    y = translate('y', t, 0, 10, 0, 4)
     z = translate('z', t, 0, 10, 0, 0)
 
     # rotations
-    qx, qy, qz, qw = rotate('x', t, 0, 270*3)
+    qx, qy, qz, qw = rotate('x', t, 0, 0*270*3)
 
     write_to_file(filepath, t, x, y, z, qx, qy, qz, qw)
