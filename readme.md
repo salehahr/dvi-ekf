@@ -5,6 +5,11 @@ the calibration parameters in a camera-IMU sensor probe setup.
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
 ## Simple camera trajectory
+```
+python3 cam_fake_traj.py # for generating a simple trajectory
+python3 simple_robot.py <regen/noregen> <plot/noplot>
+```
+
 Camera moves in x  
 ![](img/fakecam-x.png)
 
