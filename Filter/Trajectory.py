@@ -503,7 +503,7 @@ class ImuDesTraj(Trajectory):
         p, R_WB, v = self.imu.desired_vals(current_cam)
 
         euler_angs = R.from_matrix(R_WB).as_euler('xyz', degrees=True)
-        quats = Quaternion(val=R_WB)
+        quats = Quaternion(val=R_WB, do_normalise=True)
         data = [t, *p, *v, *euler_angs, *quats.wxyz]
 
         for i, label in enumerate(self.labels):
