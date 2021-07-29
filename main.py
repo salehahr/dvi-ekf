@@ -68,7 +68,7 @@ for i, t in enumerate(cam.t[1:]):
 
     # update
     if not do_prop_only:
-        current_vis = cam.traj.at_index(i)
+        current_vis = cam.traj.at_index(i + 1) # not counting IC
         K = kf.update(current_vis)
 
         # error in calculating K -- stop sim
