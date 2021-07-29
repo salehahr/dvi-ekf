@@ -17,13 +17,17 @@ sym_probe = SymProbe(probe)
 # filepath_cam = './trajs/offline_mandala0_gt.txt' # stereo
 
 # traj_name = 'mono'
-traj_name = 'from_prop'
-# traj_name = 'transx'
+# traj_name = 'from_prop'
+# traj_name = 'transz'
+traj_name = 'rotx'
 
 if traj_name == 'mono':
     filepath_cam = './trajs/offline_mandala0_mono.txt' # mono
-elif traj_name == 'transx':
-    filepath_cam = './trajs/trans_x.txt' # simple traj
+elif traj_name == 'transz':
+    # filepath_cam = './trajs/trans_x.txt' # simple traj
+    filepath_cam = './trajs/trans_z_smooth.txt' # simple traj smooth
+elif traj_name == 'rotx':
+    filepath_cam = './trajs/rot_x_smooth.txt' # simple traj smooth
 elif traj_name == 'from_prop':
     filepath_cam = './trajs/from_prop.txt' # from prop only run
 else:
