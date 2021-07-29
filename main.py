@@ -1,14 +1,15 @@
 from Filter import States, Filter, VisualTraj, ImuDesTraj, MatrixPlotter
 from Models import SymProbe
 import numpy as np
+import sys
 
 def parse_arguments():
-    import sys
 
     def print_usage():
-        print(f"Usage: {__file__} <prop> <const_dofs>")
+        print(f"Usage: {__file__} <prop> <const_dofs> <Rpval>")
         print("\t <prop>  - prop / all")
         print("\t <const_dofs>  - cdofs / nocdofs")
+        print("Optional:\n\t <Rpval>")
         sys.exit()
 
     try:
@@ -18,20 +19,25 @@ def parse_arguments():
         print('Chosen settings: ')
         print(f'\t* Propagate only\t: {do_prop_only}')
         print(f'\t* Constant DOFs  \t: {const_dofs}\n')
-        print(f'----------------------------')
     except IndexError:
         print_usage()
 
-    return do_prop_only, const_dofs
-do_prop_only, const_dofs = parse_arguments()
+    # optional args
+    optional_args = len(sys.argv) > 3
+
+    return do_prop_only, const_dofs, optional_args
+do_prop_only, const_dofs, optional_args = parse_arguments()
 
 # load data
 from generate_data import traj_name, probe, cam, cam_interp, imu
 from generate_data import IC, cov0, min_t, max_t
 
 # measurement noise values
-Rpval, Rqval = 1e3, 0.05
+Rpval = float(sys.argv[3]) if optional_args else 1e3
+Rqval = 0.05
 meas_noise = np.hstack(([Rpval]*3, [Rqval]*4))
+print(f'\n\tRp = {Rpval}\n\tRq = {Rqval}')
+print(f'----------------------------')
 
 # initialisation (t=0): IC, IMU buffer, noise matrices
 sym_probe = SymProbe(probe, const_dofs)
