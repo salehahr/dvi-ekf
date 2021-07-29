@@ -44,6 +44,7 @@ imu_des = ImuDesTraj("imu ref", imu)
 
 # filter main loop (t>=1)
 old_t = min_t
+cap_t = 10
 for i, t in enumerate(cam.t[1:]):
 
     # propagate
@@ -71,6 +72,10 @@ for i, t in enumerate(cam.t[1:]):
         K = kf.update(current_vis)
         gain_plt.append(t, K)
     old_t = t
+
+    if cap_t is not None and t >= cap_t:
+        max_t = cap_t
+        break
 
 # write to file
 if do_prop_only:
