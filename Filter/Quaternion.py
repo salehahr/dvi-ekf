@@ -80,6 +80,10 @@ class Quaternion(object):
         return R.from_quat(self.xyzw).as_euler('xyz')
 
     @property
+    def euler_xyz_deg(self):
+        return R.from_quat(self.xyzw).as_euler('xyz', degrees=True)
+
+    @property
     def euler_zyx(self):
         return R.from_quat(self.xyzw).as_euler('zyx')
 
