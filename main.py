@@ -70,7 +70,13 @@ for i, t in enumerate(cam.t[1:]):
     if not do_prop_only:
         current_vis = cam.traj.at_index(i)
         K = kf.update(current_vis)
+
+        # error in calculating K -- stop sim
+        if K is None:
+            break
+
         gain_plt.append(t, K)
+
     old_t = t
 
     if cap_t is not None and t >= cap_t:

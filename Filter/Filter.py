@@ -217,7 +217,12 @@ class Filter(object):
         # compute gain        
         H = self.Hx @ self.jac_X_deltx # 7x21
         S = H @ self.P @ H.T + self.R # 7x7
-        K = self.P @ H.T @ np.linalg.inv(S) # 21x7
+        try:
+            K = self.P @ H.T @ np.linalg.inv(S) # 21x7
+        except np.linalg.LinAlgError as e:
+            print(f"ERROR: {e}!")
+            print("Stopping simulation.")
+            return None
 
         # compute error state
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
