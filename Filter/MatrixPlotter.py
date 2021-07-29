@@ -64,10 +64,28 @@ class MatrixPlotter(object):
                 latex_label = f"$a_{{{row}\_{col}}}$" if index_from_zero \
                             else f"$a_{{{row+1}\_{col+1}}}$"
 
-                axes[plt_row][plt_col].plot(self.t, self.__dict__[label])
+                val = self.__dict__[label]
+                min_val, max_val = min(val), max(val)
+                range_val = max_val - min_val
 
-                axes[plt_row][plt_col].set_title(latex_label)
-                axes[plt_row][plt_col].set_xlim(left=min_t, right=max_t)
-                axes[plt_row][plt_col].grid(True)
+                # display of very small values
+                if range_val < 0.0001:
+                    min_val = min_val - 0.002
+                    max_val = max_val + 0.002
+                else:
+                    min_val = min_val - 0.2 * range_val
+                    max_val = max_val + 0.2 * range_val
+
+                if plot_rows > 1:
+                    ax_obj = axes[plt_row][plt_col]
+                else:
+                    ax_obj = axes[plt_col]
+
+                ax_obj.plot(self.t, self.__dict__[label])
+
+                ax_obj.set_title(latex_label)
+                ax_obj.set_xlim(left=min_t, right=max_t)
+                ax_obj.set_ylim(bottom=min_val, top=max_val)
+                ax_obj.grid(True)
 
         return axes
