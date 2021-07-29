@@ -566,9 +566,9 @@ class FilterTraj(Trajectory):
             range_val = max_val - min_val
 
             # display of very small values
-            if range_val < 0.01:
-                min_val = min_val - 1
-                max_val = max_val + 1
+            if range_val < 0.001:
+                min_val = min_val - 0.1
+                max_val = max_val + 0.1
             else:
                 min_val = min_val - 0.2 * range_val
                 max_val = max_val + 0.2 * range_val
