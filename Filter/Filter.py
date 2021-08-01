@@ -128,7 +128,7 @@ class Filter(object):
                 sym.R_WB + sym.R_WB @ casadi.skew(sym.dt * sym.om),
                 sym.dofs,
                 sym.p_C \
-                    + sym.dt * sym.v_B + sym.dt**2 / 2 * sym.R_WB @ sym.acc \
+                    + sym.dt * sym.v_B \
                     + sym.dt * sym.R_WB @ (self.probe.v + \
                         casadi.cross(sym.om, self.probe.p)),
                 sym.R_WC + sym.R_WC @ casadi.skew(sym.dt * om_C)],
