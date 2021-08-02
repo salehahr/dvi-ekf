@@ -42,7 +42,7 @@ class States(object):
 
     @property
     def q(self):
-        return Quaternion(val=self._q, do_normalise=True)
+        return self._q
 
     @q.setter
     def q(self, val):
@@ -66,7 +66,7 @@ class States(object):
 
     @property
     def q_cam(self):
-        return Quaternion(val=self._q_cam, do_normalise=True)
+        return self._q_cam
 
     @q_cam.setter
     def q_cam(self, val):
