@@ -11,7 +11,7 @@ python3 main.py <prop/update> <const_dofs> <Rpval>
 ```
 * arg1: `prop` for propagation only, anything else to perform prop + update
 * arg2: `cdofs` or `const_dofs` to make probe have constant dofs, anything else otherwise
-* arg3: (_optional_) sets value for `R_p`, defaults to `1e3`
+* arg3: (_optional_) sets value for `R_p`, defaults to `1e2`
 
 ### Changing the noise values
 * [Process noise - IMU](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/generate_data.py#L35)

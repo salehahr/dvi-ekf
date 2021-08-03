@@ -33,7 +33,7 @@ from generate_data import traj_name, probe, cam, cam_interp, imu
 from generate_data import IC, cov0, min_t, max_t
 
 # measurement noise values
-Rpval = float(sys.argv[3]) if optional_args else 1e3
+Rpval = float(sys.argv[3]) if optional_args else 1e2
 Rqval = 0.05
 meas_noise = np.hstack(([Rpval]*3, [Rqval]*4))
 print(f'\n\tRp = {Rpval}\n\tRq = {Rqval}')
@@ -50,7 +50,7 @@ imu_des = ImuDesTraj("imu ref", imu)
 
 # filter main loop (t>=1)
 old_t = min_t
-cap_t = 10
+cap_t = None
 for i, t in enumerate(cam.t[1:]):
 
     # propagate
