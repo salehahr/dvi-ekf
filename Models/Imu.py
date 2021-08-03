@@ -115,6 +115,11 @@ class Imu(object):
         for attr, value in self.__dict__.items():
             yield attr, value
 
+    def clear(self):
+        self.t = []
+        self._om = []
+        self._acc = []
+
     def eval_expr_single(self, t, q, qd, qdd,
         W_acc_C, R_WC, W_om_C, W_alp_C,
         append_array=False, filepath=''):
@@ -186,6 +191,7 @@ class Imu(object):
         if os.path.exists(filepath):
             os.remove(filepath)
 
+        self.clear()
         self._eval_expr(append_array=True, filepath=filepath)
 
         self._init_trajectory()
