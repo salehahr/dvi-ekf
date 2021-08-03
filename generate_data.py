@@ -10,7 +10,7 @@ num_imu_between_frames = 10
 # imu_covariance = [0.01, 0.03, 0.01, 0.03, 0.005, 0.005]
 
 # initialise robot
-probe = RigidSimpleProbe(scope_length=0.5, theta_cam=sp.pi/6)
+probe = RigidSimpleProbe(scope_length=50, theta_cam=sp.pi/6)
 sym_probe = SymProbe(probe)
 
 # SLAM data

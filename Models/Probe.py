@@ -309,7 +309,7 @@ class RigidSimpleProbe(SimpleProbe):
         Uses the BC configuration. """
 
     ROT1, ROT2, ROT3 = 0., 0., 0.
-    TRANS4, TRANS5, TRANS6 = 0., 0., 0.2
+    TRANS4, TRANS5, TRANS6 = 0., 0., 20
 
     constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, 0., 0.]
 
