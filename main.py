@@ -102,4 +102,4 @@ else:
     traj_name = traj_name + f'_upd_Rp{Rpval}_Rq{Rqval}'
     gain_plt.plot(min_t=min_t, max_t=max_t, index_from_zero=False)
 
-plot_trajectories(kf.traj, traj_name, imu_des)
+plot_trajectories(kf.traj, traj_name, imu, imu_des)

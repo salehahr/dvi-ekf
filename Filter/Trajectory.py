@@ -538,7 +538,8 @@ class FilterTraj(Trajectory):
             self.__dict__[label].append(data[i])
 
     def plot(self, labels, num_cols, offset, filename='',
-            cam=None, imu_des=None, axes=None, min_t=None, max_t=None):
+            cam=None, imu_des=None, imu_recon=None,
+            axes=None, min_t=None, max_t=None):
         num_labels = len(labels)
         num_rows = math.ceil( num_labels / num_cols )
 
@@ -560,8 +561,10 @@ class FilterTraj(Trajectory):
             val_filt = self.__dict__[label]
             val_cam = cam.__dict__[label[:-1]] if cam else []
             val_des = imu_des.__dict__[label] if (imu_des and 'dof' not in label) else []
+            val_recon = imu_recon.__dict__[label] if (imu_recon and label in imu_recon.__dict__) else []
 
-            min_val, max_val = min(*val_filt, *val_cam, *val_des), max(*val_filt, *val_cam, *val_des)
+            min_val = min(*val_filt, *val_cam, *val_des, *val_recon)
+            max_val = max(*val_filt, *val_cam, *val_des, *val_recon)
 
             range_val = max_val - min_val
 
@@ -575,11 +578,17 @@ class FilterTraj(Trajectory):
 
             axes[row][col].set_visible(True)
             if val_filt:
-                axes[row][col].plot(self.t, val_filt, label=self.name)
+                axes[row][col].plot(self.t, val_filt,
+                        label=self.name)
             if val_cam != []:
-                axes[row][col].plot(cam.t, val_cam, label=cam.name)
+                axes[row][col].plot(cam.t, val_cam,
+                        label=cam.name)
             if val_des != []:
-                axes[row][col].plot(imu_des.t, val_des, label=imu_des.name)
+                axes[row][col].plot(imu_des.t, val_des,
+                        label=imu_des.name)
+            if val_recon != []:
+                axes[row][col].plot(imu_recon.t, val_recon,
+                        label=imu_recon.name)
 
             latex_label = self._get_latex_label(label)
             axes[row][col].set_title(latex_label)
@@ -604,13 +613,16 @@ class FilterTraj(Trajectory):
 
         return axes
 
-    def plot_imu(self, filename='', imu_des=None, axes=None, min_t=None, max_t=None):
+    def plot_imu(self, filename='', imu_des=None, imu_recon=None,
+        axes=None, min_t=None, max_t=None):
         """ Creates plot of the IMU positioning parameters on the probe. """
 
         labels = self.labels_imu + self.labels_imu_dofs
         num_cols = 6
         offset = len(labels) % 2
-        return self.plot(labels, num_cols, offset, imu_des=imu_des, filename=filename, axes=axes, min_t=min_t, max_t=max_t)
+        return self.plot(labels, num_cols, offset,
+            imu_des=imu_des, imu_recon=imu_recon,
+            filename=filename, axes=axes, min_t=min_t, max_t=max_t)
 
     def plot_dofs(self, axes=None, min_t=None, max_t=None):
         """ Creates plot of the IMU positioning parameters on the probe. """
