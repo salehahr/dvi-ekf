@@ -123,7 +123,7 @@ class Filter(object):
         self.fun_nominal = casadi.Function('f_nom',
             [sym.dt, *sym.x, *sym.u],
             [   sym.p_B + sym.dt * sym.v_B \
-                    + sym.dt**2 / 2 * sym.R_WB @ sym.acc,
+                    + (sym.dt**2 / 2) * sym.R_WB @ sym.acc,
                 sym.v_B + sym.dt * sym.R_WB @ sym.acc,
                 sym.R_WB + sym.R_WB @ casadi.skew(sym.dt * sym.om),
                 sym.dofs,
