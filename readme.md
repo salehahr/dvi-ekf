@@ -57,7 +57,7 @@ P only  | P + U | P + U
 
 ## Probe
 ```
-python3 vsimpleprobe.py
+python3 old-tests/simple_rotation_anim.py
 ```
 Unconstrained SLAM end | Constrained SLAM end
 --- | ---

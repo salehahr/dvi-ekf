@@ -9,7 +9,7 @@ import tkinter
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Rx(0, 'deg') * SE3.Ry(0, 'deg')
 
-class VerySimpleRigidProbe(rtb.DHRobot):
+class SimpleProbe(rtb.DHRobot):
     """ Base coordinates are the IMU coordinates. """
 
     def __init__(self, scope_length, theta_cam):
