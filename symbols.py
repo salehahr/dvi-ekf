@@ -39,9 +39,9 @@ R_WB = casadi.SX.sym('R_WB', 3, 3)
 dofs, _ = casadi.vertsplit(q_cas, [0, 6, 8])
 
 p_C = casadi.SX.sym('p_C', 3)
-R_WC = casadi.SX.sym('p_C', 3, 3)
+R_WC_kf = casadi.SX.sym('R_WC', 3, 3)
 
-x = [p_B, v_B, R_WB, dofs, p_C, R_WC]
+x = [p_B, v_B, R_WB, dofs, p_C, R_WC_kf]
 x_str = ['p_B', 'v_B', 'R_WB', 'dofs', 'p_C', 'R_WC']
 
 # inputs

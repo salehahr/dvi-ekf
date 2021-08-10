@@ -131,7 +131,7 @@ class Filter(object):
                     + sym.dt * sym.v_B \
                     + sym.dt * sym.R_WB @ (self.probe.v + \
                         casadi.cross(sym.om, self.probe.p)),
-                sym.R_WC + sym.R_WC @ casadi.skew(sym.dt * om_C)],
+                sym.R_WC_kf + sym.R_WC_kf @ casadi.skew(sym.dt * om_C)],
             ['dt', *sym.x_str, *sym.u_str],
             ['p_B_next', 'v_B_next', 'R_WB_next',
                 'dofs_next', 'p_C_next', 'R_WC_next'])
