@@ -237,7 +237,7 @@ class Imu(object):
 
         return W_p_BW_0, R_WB_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0
 
-    def desired_vals(self, current_cam):
+    def ref_vals(self, current_cam):
         """ For troubleshooting.
             Obtains the desired IMU position based on current camera values
             the relative kinematics relations C to B.

@@ -7,7 +7,7 @@ def plot_savefig(fig, figname):
     print(f"Saving file \"{figname}\". ")
     fig.savefig(figname)
     
-def plot_trajectories(kf_traj, traj_name, imu, imu_des, do_reconstruct=False):
+def plot_trajectories(kf_traj, traj_name, imu, imu_ref, do_reconstruct=False):
     if do_reconstruct:
         imu.generate_traj('trajs/imu_recon.txt', True)
         imu.reconstruct()
@@ -17,7 +17,7 @@ def plot_trajectories(kf_traj, traj_name, imu, imu_des, do_reconstruct=False):
         imu_recon = None
 
     maxt = min(kf_traj.t[-1], max_t)
-    imu_axes = kf_traj.plot_imu('img/kf_' + traj_name + '_imu.png', min_t=min_t, max_t=maxt, imu_des=imu_des, imu_recon=imu_recon)
+    imu_axes = kf_traj.plot_imu('img/kf_' + traj_name + '_imu.png', min_t=min_t, max_t=maxt, imu_ref=imu_ref, imu_recon=imu_recon)
     cam_axes = kf_traj.plot_camera('img/kf_' + traj_name + '_cam.png', cam=cam.traj, min_t=min_t, max_t=maxt)
     plt.show()
 

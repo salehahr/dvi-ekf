@@ -486,7 +486,7 @@ class VisualTraj(Trajectory):
 
             return VisualMeasurement(t, pos, rot)
 
-class ImuDesTraj(Trajectory):
+class ImuRefTraj(Trajectory):
     """ Desired traj of the IMU. """
 
     def __init__(self, name, imu):
@@ -500,7 +500,7 @@ class ImuDesTraj(Trajectory):
     def append_value(self, t, current_cam):
         """ Appends new measurement from current state. """
 
-        p, R_WB, v = self.imu.desired_vals(current_cam)
+        p, R_WB, v = self.imu.ref_vals(current_cam)
 
         euler_angs = R.from_matrix(R_WB).as_euler('xyz', degrees=True)
         quats = Quaternion(val=R_WB, do_normalise=True)
@@ -538,7 +538,7 @@ class FilterTraj(Trajectory):
             self.__dict__[label].append(data[i])
 
     def plot(self, labels, num_cols, offset, filename='',
-            cam=None, imu_des=None, imu_recon=None,
+            cam=None, imu_ref=None, imu_recon=None,
             axes=None, min_t=None, max_t=None):
         num_labels = len(labels)
         num_rows = math.ceil( num_labels / num_cols )
@@ -560,7 +560,7 @@ class FilterTraj(Trajectory):
 
             val_filt = self.__dict__[label]
             val_cam = cam.__dict__[label[:-1]] if cam else []
-            val_des = imu_des.__dict__[label] if (imu_des and 'dof' not in label) else []
+            val_des = imu_ref.__dict__[label] if (imu_ref and 'dof' not in label) else []
             val_recon = imu_recon.__dict__[label] if (imu_recon and label in imu_recon.__dict__) else []
 
             min_val = min(*val_filt, *val_cam, *val_des, *val_recon)
@@ -584,8 +584,8 @@ class FilterTraj(Trajectory):
                 axes[row][col].plot(cam.t, val_cam,
                         label=cam.name)
             if val_des != []:
-                axes[row][col].plot(imu_des.t, val_des,
-                        label=imu_des.name)
+                axes[row][col].plot(imu_ref.t, val_des,
+                        label=imu_ref.name)
             if val_recon != []:
                 axes[row][col].plot(imu_recon.t, val_recon,
                         label=imu_recon.name)
@@ -613,7 +613,7 @@ class FilterTraj(Trajectory):
 
         return axes
 
-    def plot_imu(self, filename='', imu_des=None, imu_recon=None,
+    def plot_imu(self, filename='', imu_ref=None, imu_recon=None,
         axes=None, min_t=None, max_t=None):
         """ Creates plot of the IMU positioning parameters on the probe. """
 
@@ -621,7 +621,7 @@ class FilterTraj(Trajectory):
         num_cols = 6
         offset = len(labels) % 2
         return self.plot(labels, num_cols, offset,
-            imu_des=imu_des, imu_recon=imu_recon,
+            imu_ref=imu_ref, imu_recon=imu_recon,
             filename=filename, axes=axes, min_t=min_t, max_t=max_t)
 
     def plot_dofs(self, axes=None, min_t=None, max_t=None):

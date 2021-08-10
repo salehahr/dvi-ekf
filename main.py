@@ -1,4 +1,4 @@
-from Filter import States, Filter, VisualTraj, ImuDesTraj, MatrixPlotter
+from Filter import States, Filter, VisualTraj, ImuRefTraj, MatrixPlotter
 from Models import SymProbe
 import numpy as np
 import sys
@@ -46,7 +46,7 @@ kf.traj.append_state(cam.t[0], kf.states)
 gain_plt = MatrixPlotter('K', min_row=0, min_col=0, max_row=3, max_col=3)
 
 # desired trajectory
-imu_des = ImuDesTraj("imu ref", imu)
+imu_ref = ImuRefTraj("imu ref", imu)
 
 # filter main loop (t>=1)
 old_t = min_t
@@ -65,7 +65,7 @@ for i, t in enumerate(cam.t[1:]):
         om, acc = imu.eval_expr_single(ti, *probe.joint_dofs,
             interp.acc, interp.R,
             interp.om, interp.alp, )
-        imu_des.append_value(ti, interp)
+        imu_ref.append_value(ti, interp)
 
         kf.dt = ti - old_ti
         kf.propagate(ti, om, acc)
@@ -102,4 +102,4 @@ else:
     traj_name = traj_name + f'_upd_Rp{Rpval}_Rq{Rqval}'
     gain_plt.plot(min_t=min_t, max_t=max_t, index_from_zero=False)
 
-plot_trajectories(kf.traj, traj_name, imu, imu_des)
+plot_trajectories(kf.traj, traj_name, imu, imu_ref)
