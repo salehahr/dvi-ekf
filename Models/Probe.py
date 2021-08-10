@@ -64,6 +64,10 @@ class Probe(rtb.DHRobot):
         return sp.MutableDenseNDimArray(self.qd_s, (self.n, 1))
 
     @property
+    def fwkin(self):
+        return self.get_sym(self.q)
+
+    @property
     def T(self):
         return self.fkine(self.q_s)
 
@@ -337,7 +341,8 @@ class SymProbe(object):
         for i in range(6,self.n):
             self.q[i] = 0
 
-        p, R, v, om, acc, alp = probe.get_sym(self.q)
+        self.fwkin = probe.fwkin
+        p, R, v, om, acc, alp = self.fwkin
         self.p = p
         self.R = R
         self.v = v
