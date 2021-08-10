@@ -93,6 +93,17 @@ class Imu(object):
 
         self._flag_interpolated = False
 
+    def __iter__(self):
+        for attr, value in self.__dict__.items():
+            yield attr, value
+
+    def __repr__(self):
+        return f"IMU object containing {self.nvals} values."
+
+    @property
+    def nvals(self):
+        return len(self.t)
+
     @property
     def om(self):
         return np.array(self._om).T # 3xn
@@ -110,10 +121,6 @@ class Imu(object):
     def flag_interpolated(self):
         self._flag_interpolated = self.cam.flag_interpolated
         return self._flag_interpolated
-
-    def __iter__(self):
-        for attr, value in self.__dict__.items():
-            yield attr, value
 
     def clear(self):
         self.t = []
