@@ -50,12 +50,7 @@ class Filter(object):
 
     @property
     def x(self):
-        self._x = [self.states.p,
-                    self.states.v,
-                    self.states.q.rot,
-                    self.states.dofs,
-                    self.states.p_cam,
-                    self.states.q_cam.rot]
+        self._x = self.states.vec
         return self._x
 
     @property
@@ -123,13 +118,7 @@ class Filter(object):
                         *self.x,
                         *self.u,
                         *self.probe.fwkin)]
-
-        self.states.p = res[0].squeeze()
-        self.states.v = res[1].squeeze()
-        self.states.q = res[2].squeeze()
-        self.states.dofs = res[3].squeeze()
-        self.states.p_cam = res[4].squeeze()
-        self.states.q_cam = res[5].squeeze()
+        self.states.set(res)
 
     def _predict_error(self):
         """ Calculates jacobian of the error state kinematics w.r.t. error states and w.r.t. noise. """

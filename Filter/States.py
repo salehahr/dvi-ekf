@@ -24,6 +24,23 @@ class States(object):
         self.q_cam = self.q_cam * err.dqc
         self.q_cam.normalise()
 
+    def set(self, vec):
+        self.p = vec[0].squeeze()
+        self.v = vec[1].squeeze()
+        self.q = vec[2].squeeze()
+        self.dofs = vec[3].squeeze()
+        self.p_cam = vec[4].squeeze()
+        self.q_cam = vec[5].squeeze()
+
+    def __repr__(self):
+        return f'State: p_cam ({self._p_cam}), ...'
+
+    @property
+    def vec(self):
+        return [self.p, self.v, self.q.rot,
+                    self.dofs,
+                    self.p_cam, self.q_cam.rot]
+
     @property
     def p(self):
         return self._p.copy()
