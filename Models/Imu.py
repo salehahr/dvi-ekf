@@ -40,7 +40,7 @@ from symbols import q_cas, qd_cas, qdd_cas
     """
 
 class Imu(object):
-    def __init__(self, probe_BtoC, cam, stdev_na=None, stdev_nom=None):
+    def __init__(self, probe, cam, stdev_na=None, stdev_nom=None):
         # from datasheet
         self.stdev_na = stdev_na
         self.stdev_nom = stdev_nom
@@ -52,13 +52,14 @@ class Imu(object):
 
         # cam values
         self.cam = cam
-        # W_p_CW, WW_v_CW, W_acc_CW = cam.p, cam.v, cam.acc
-        # R_WC, W_om_CW, W_alp_CW = cam.R, cam.om, cam.alp
 
         # forward kinematics
-        self.probe = probe_BtoC
-        self.B_p_CB, self.BB_v_CB, self.B_acc_CB = probe_BtoC.p, probe_BtoC.v, probe_BtoC.acc
-        self.R_BC, self.B_om_CB, self.B_alp_CB = probe_BtoC.R, probe_BtoC.om, probe_BtoC.alp
+        self.fwkin = probe.fwkin
+        p, R, v, om, acc, alp = self.fwkin
+
+        self.B_p_CB, self.BB_v_CB, self.B_acc_CB = p, v, acc
+        self.R_BC, self.B_om_CB, self.B_alp_CB = R, om, alp
+        self.q, self.qd, self.qdd = probe.q, probe.qd, probe.qdd
 
         # derived
         R_BW = self.R_BC @ R_WC_cas.T
@@ -173,8 +174,8 @@ class Imu(object):
 
     def _eval_expr(self, append_array=False, filepath=''):
         for n in range(self.cam.max_vals):
-            self.eval_expr_single(self.cam.t[n], self.probe.q_cas,
-                self.probe.qd_cas, self.probe.qdd_cas,
+            self.eval_expr_single(self.cam.t[n], self.q,
+                self.qd, self.qdd,
                 self.cam.acc[:,n], self.cam.R[n],
                 self.cam.om[:,n], self.cam.alp[:,n],
                 append_array=append_array, filepath=filepath)
