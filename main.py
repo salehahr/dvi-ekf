@@ -41,6 +41,7 @@ print(f'----------------------------')
 
 # initialisation (t=0): IC, IMU buffer, noise matrices
 sym_probe = SymProbe(probe, const_dofs)
+imu.eval_init()
 kf = Filter(imu, sym_probe, IC, cov0, meas_noise)
 kf.traj.append_state(cam.t[0], kf.states)
 gain_plt = MatrixPlotter('K', min_row=0, min_col=0, max_row=3, max_col=3)
@@ -65,7 +66,7 @@ for i, t in enumerate(cam.t[1:]):
         om, acc = imu.eval_expr_single(ti, *probe.joint_dofs,
             interp.acc, interp.R,
             interp.om, interp.alp, )
-        imu_ref.append_value(ti, interp)
+        imu_ref.append_value(ti, interp.vec)
 
         kf.dt = ti - old_ti
         kf.propagate(ti, om, acc)

@@ -26,18 +26,15 @@ filepath_cam = f'./trajs/{traj_name}.txt' # simple traj smooth
 cam = Camera(filepath=filepath_cam, max_vals=max_vals)
 cam_interp = cam.interpolate(num_imu_between_frames)
 min_t, max_t = cam.t[0], cam.t[-1]
+cam0 = cam.vec_at(0)
 
 # imu
 stdev_na, stdev_nom = [1e-3]*3, [1e-3]*3 # supposedly from IMU datasheet
 imu = Imu(probe, cam_interp, stdev_na, stdev_nom)
 
 # initial states
-dofs0 = probe.joint_dofs
-imu_dofs0 = probe.imu_dofs
-
-imu.eval_init(*dofs0)
-W_p_BW_0, R_WB_0, _, WW_v_BW_0, _, _ = imu.get_IC()
-IC = States(W_p_BW_0, WW_v_BW_0, R_WB_0, imu_dofs0, cam.p0, cam.q0)
+W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(cam0)
+IC = States(W_p_BW_0, WW_v_BW_0, R_WB_0, probe.imu_dofs, cam.p0, cam.q0)
 
 # initial covariances
 stdev_p = [0.1, 0.1, 0.1]

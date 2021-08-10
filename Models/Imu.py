@@ -8,6 +8,9 @@ import casadi
 from . import context
 from symbols import W_acc_CW_cas, R_WC_cas, W_om_CW_cas, W_alp_CW_cas
 from symbols import q_cas, qd_cas, qdd_cas
+import symbols as sym
+
+import symbolic_eqns as eqns
 
 """ Notation:
         W_acc_CD    : acceleration of C rel. to D.
@@ -61,32 +64,12 @@ class Imu(object):
         self.R_BC, self.B_om_CB, self.B_alp_CB = R, om, alp
         self.q, self.qd, self.qdd = probe.q, probe.qd, probe.qdd
 
-        # derived
-        R_BW = self.R_BC @ R_WC_cas.T
-        B_om_BW = R_BW @ W_om_CW_cas - self.B_om_CB
-        B_alp_BW = R_BW @ W_alp_CW_cas - self.B_alp_CB \
-                        - casadi.cross(B_om_BW, self.B_om_CB)
-
-        cross_omBW_pCB = casadi.cross(B_om_BW, self.B_p_CB)
-        
-        B_acc_BW = R_BW @ W_acc_CW_cas \
-                        - self.B_acc_CB \
-                        - casadi.cross(B_alp_BW, self.B_p_CB) \
-                        - 2 * casadi.cross(B_om_BW, self.BB_v_CB) \
-                        - casadi.cross(B_om_BW, cross_omBW_pCB)
-
-        # IMU data
-        self.om_expr = casadi.Function('f_B_om_BW',
-                [q_cas, qd_cas, R_WC_cas, W_om_CW_cas],
-                [B_om_BW],
-                    ['q', 'qd', 'R_WC', 'om_C'],
-                    ['B_om_BW'])
-        self.acc_expr = casadi.Function('f_B_acc_BW',
-                [q_cas, qd_cas, qdd_cas,
-                    R_WC_cas, W_om_CW_cas, W_acc_CW_cas, W_alp_CW_cas],
-                [B_acc_BW],
-                    ['q', 'qd', 'qdd', 'R_WC', 'om_C', 'acc_C', 'alp_C'],
-                    ['B_acc_BW'])
+        # symbolic expressions
+        self.expr = casadi.Function('f_imu_meas',
+                [q_cas, qd_cas, qdd_cas, *sym.cam],
+                eqns.f_imu_meas(*self.fwkin),
+                    ['q', 'qd', 'qdd', *sym.cam_str],
+                    ['B_om_BW', 'B_acc_BW'])
 
         # for trajectory reconstruction/plotting
         self.traj = None
@@ -146,9 +129,10 @@ class Imu(object):
         W_om_C = self._correct_cam_dims(W_om_C)
         W_alp_C = self._correct_cam_dims(W_alp_C)
 
-        res_om = casadi.DM(self.om_expr(q, qd, R_WC, W_om_C)).full().reshape(3,)
-        res_acc = casadi.DM(self.acc_expr(q, qd, qdd,
-                        R_WC, W_om_C, W_acc_C, W_alp_C)).full().reshape(3,)
+        cam = [sym.W_p_CW, R_WC, sym.WW_v_CW, W_om_C, W_acc_C, W_alp_C]
+
+        res_om, res_acc = [casadi.DM(r).full().reshape(3,)
+                for r in self.expr(q, qd, qdd, *cam)]
 
         if append_array:
             self.t.append(t)
@@ -164,8 +148,8 @@ class Imu(object):
 
         return res_om, res_acc
 
-    def eval_init(self, q, qd, qdd):
-        self.eval_expr_single(self.cam.t[0], q, qd, qdd,
+    def eval_init(self):
+        self.eval_expr_single(self.cam.t[0], self.q, self.qd, self.qdd,
                                 self.cam.acc[:,0],
                                 self.cam.R[0], self.cam.om[:,0],
                                 self.cam.alp[:,0],
@@ -224,55 +208,14 @@ class Imu(object):
         self.traj.reconstruct(R_WB, W_p_BW_0, WW_v_BW_0)
         return self.traj.reconstructed
 
-    def get_IC(self):
-        """ For trajectory reconstruction.
-            Obtains IMU IC based on initial camera values and
-            the relative kinematics relations C to B.
-        """
-        # cam values
-        W_p_CW, WW_v_CW, W_acc_CW = self.cam.p0, self.cam.v0, self.cam.acc0
-        R_WC, W_om_CW, W_alp_CW = self.cam.R0, self.cam.om0, self.cam.alp0
-
-        R_WB_0 = casadi.DM(R_WC @ self.R_BC.T).full()
-        W_p_BW_0 = casadi.DM(W_p_CW - R_WB_0 @ self.B_p_CB).full()
-
-        W_om_BW_0 = casadi.DM(R_WB_0 @ self.om[:,0].reshape(3,1)).full()
-        WW_v_BW_0 = casadi.DM(WW_v_CW - R_WB_0 @ self.BB_v_CB \
-                - casadi.cross(W_om_BW_0, R_WB_0 @ self.B_p_CB)).full()
-
-        W_alp_BW_0 = casadi.DM(W_alp_CW - R_WB_0 @ self.B_alp_CB).full()
-        W_acc_BW_0 = casadi.DM(R_WB_0 @ self.acc[:,0].reshape(3,1)).full()
-
-        return W_p_BW_0, R_WB_0, W_om_BW_0, WW_v_BW_0, W_alp_BW_0, W_acc_BW_0
-
     def ref_vals(self, current_cam):
         """ For troubleshooting.
             Obtains the desired IMU position based on current camera values
             the relative kinematics relations C to B.
         """
-        # cam values
-        W_p_CW, WW_v_CW, W_acc_CW = current_cam.p, current_cam.v, current_cam.acc
-        R_WC, W_om_CW, W_alp_CW = current_cam.R, current_cam.om, current_cam.alp
-
-        R_WB = casadi.DM(R_WC @ self.R_BC.T).full()
-        W_p_BW = casadi.DM(W_p_CW - R_WB @ self.B_p_CB).full()
-
-        W_om_BW = casadi.DM(W_om_CW - R_WC @ self.R_BC.T @ self.B_om_CB).full()
-        WW_v_BW = casadi.DM(WW_v_CW - R_WB @ self.BB_v_CB \
-                - casadi.cross(W_om_BW, R_WB @ self.B_p_CB)).full()
-
-        # W_alp_BW = casadi.DM(W_alp_CW - R_WB @ self.B_alp_CB
-                    # - casadi.cross(W_om_BW, R_WB @ self.B_om_CB)).full()
-        # W_acc_BW = casadi.DM( \
-                    # W_acc_CW - R_WB @ self.B_acc_CB \
-                    # - casadi.cross(W_alp_BW, R_WB @ self.B_p_CB) \
-                    # - 2 * casadi.cross(W_om_BW, R_WB @ self.BB_v_CB) \
-                    # - casadi.cross(W_om_BW,
-                            # casadi.cross(W_om_BW, R_WB @ self.B_p_CB)
-                            # )
-                    # ).full()
-
-        return W_p_BW.squeeze(), R_WB, WW_v_BW.squeeze()
+        # return W_p_BW, R_WB, WW_v_BW
+        return [casadi.DM(r).full() \
+                    for r in eqns.f_imu(*current_cam, *self.fwkin)]
 
     def write_array_to_file(self, filepath):
         """ Writes IMU trajectory, stored in the _om and _acc arrays,
