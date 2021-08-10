@@ -328,7 +328,10 @@ class SymProbe(object):
     def __init__(self, probe, const_dofs=False):
         self.n = probe.n
         self.q0 = probe.q.copy()
+
         self.q = q_s.copy() if not const_dofs else self.q0
+        self.qd = probe.qd_cas
+        self.qdd = probe.qdd_cas
 
         # set non-imu dofs to zero
         for i in range(6,self.n):
