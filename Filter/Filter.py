@@ -9,6 +9,7 @@ from .States import States, ErrorStates
 import casadi
 from . import context
 import symbols as sym
+import symbolic_eqns as eqns
 
 class Filter(object):
     def __init__(self, imu, probe, IC, P0, meas_noise):
@@ -117,29 +118,11 @@ class Filter(object):
         self.traj.append_state(t, self.states)
 
     def _predict_nominal(self):
-        R_BC = self.probe.R
-        om_C = R_BC.T @ (sym.om + self.probe.om)
-
-        self.fun_nominal = casadi.Function('f_nom',
-            [sym.dt, *sym.x, *sym.u],
-            [   sym.p_B + sym.dt * sym.v_B \
-                    + (sym.dt**2 / 2) * sym.R_WB @ sym.acc,
-                sym.v_B + sym.dt * sym.R_WB @ sym.acc,
-                sym.R_WB + sym.R_WB @ casadi.skew(sym.dt * sym.om),
-                sym.dofs,
-                sym.p_C \
-                    + sym.dt * sym.v_B \
-                    + sym.dt * sym.R_WB @ (self.probe.v + \
-                        casadi.cross(sym.om, self.probe.p)),
-                sym.R_WC_kf + sym.R_WC_kf @ casadi.skew(sym.dt * om_C)],
-            ['dt', *sym.x_str, *sym.u_str],
-            ['p_B_next', 'v_B_next', 'R_WB_next',
-                'dofs_next', 'p_C_next', 'R_WC_next'])
-
         res = [casadi.DM(r).full() \
-                    for r in self.fun_nominal(self.dt,
+                    for r in eqns.f_predict(self.dt,
                         *self.x,
-                        *self.u)]
+                        *self.u,
+                        *self.probe.fwkin)]
 
         self.states.p = res[0].squeeze()
         self.states.v = res[1].squeeze()
@@ -193,8 +176,8 @@ class Filter(object):
                         dofs        = self.states.dofs,
                         err_dofs    = casadi.DM.zeros(6,),
                         R_WB        = self.R_WB_old,
-                        om          = self.om_old,
-                        acc         = self.acc_old,
+                        B_om_BW     = self.om_old,
+                        B_acc_BW    = self.acc_old,
                         n_om        = self.imu.stdev_nom,
                         err_theta   = casadi.DM([0., 0., 0.]),
                         err_theta_C = casadi.DM([0., 0., 0.]),

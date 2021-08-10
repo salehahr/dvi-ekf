@@ -6,6 +6,20 @@ import casadi
 num_dofs = 8
 n_dof_vector = num_dofs * 3
 
+B_p_CB = casadi.SX.sym('B_p_CB', 3)
+R_BC = casadi.SX.sym('R_BC', 3, 3)
+
+BB_v_CB = casadi.SX.sym('BB_v_CB', 3)
+B_om_CB = casadi.SX.sym('B_om_CB', 3)
+
+B_acc_CB = casadi.SX.sym('B_acc_CB', 3)
+B_alp_CB = casadi.SX.sym('B_alp_CB', 3)
+
+probe_fwkin = [B_p_CB, R_BC, BB_v_CB, B_om_CB, B_acc_CB, B_alp_CB]
+probe_fwkin_str = ['B_p_CB', 'R_BC',
+                    'BB_v_CB', 'B_om_CB',
+                    'B_acc_CB', 'B_alp_CB']
+
 # sympy params
 q_s = [sp.Symbol(f'q{x}') for x in range(1,num_dofs+1)]
 qd_s = [sp.Symbol(f'q{x}_dot') for x in range(1,num_dofs+1)]
@@ -28,6 +42,24 @@ q_tr_cas = q_cas + err_q_cas
 dofs_cas = casadi.vertcat(q_cas, qd_cas, qdd_cas)
 dofs_cas_list = casadi.vertsplit(dofs_cas)
 
+### IMU
+B_acc_BW = casadi.SX.sym('B_acc_BW', 3)
+B_om_BW = casadi.SX.sym('B_om_BW', 3)
+
+### CAMERA
+W_p_CW = casadi.SX.sym('W_p_CW', 3)
+R_WC = casadi.SX.sym('R_WC', 3, 3)
+
+WW_v_CW = casadi.SX.sym('WW_v_CW', 3)
+W_om_CW = casadi.SX.sym('W_om_CW', 3)
+
+W_acc_CW = casadi.SX.sym('W_acc_CW', 3)
+W_alp_CW = casadi.SX.sym('W_alp_CW', 3)
+
+cam = [W_p_CW, R_WC, WW_v_CW, W_om_CW, W_acc_CW, W_alp_CW]
+cam_str = ['W_p_CW', 'R_WC', 'WW_v_CW', 'W_om_CW', 'W_acc_CW', 'W_alp_CW']
+
+C_om_CW = R_BC.T @ (B_om_BW + B_om_CB)
 
 ### KALMAN FILTER
 dt = casadi.SX.sym('dt')
@@ -45,11 +77,8 @@ x = [p_B, v_B, R_WB, dofs, p_C, R_WC_kf]
 x_str = ['p_B', 'v_B', 'R_WB', 'dofs', 'p_C', 'R_WC']
 
 # inputs
-acc = casadi.SX.sym('acc', 3)
-om = casadi.SX.sym('om', 3)
-
-u = [om, acc]
-u_str = ['om', 'acc']
+u = [B_om_BW, B_acc_BW]
+u_str = ['B_om_BW', 'B_acc_BW']
 
 # error states
 err_p_B = casadi.SX.sym('err_p_B', 3)
@@ -75,7 +104,7 @@ n_str = ['n_a', 'n_om', 'n_dofs']
 # v_B_tr = v_B + err_v_B
 R_WB_tr = R_WB @ (casadi.DM.eye(3) + casadi.skew(err_theta))
 dofs_tr = dofs + err_dofs
-om_tr = om - n_om
+om_tr = B_om_BW - n_om
 
 def get_err_pc_dot(probe):
     """
@@ -94,7 +123,7 @@ def get_err_pc_dot(probe):
     """
 
     # deriving err_p_C_dot -- continuous time
-    p_CB_dot = R_WB @ (probe.v + casadi.cross(om, probe.p))
+    p_CB_dot = R_WB @ (probe.v + casadi.cross(B_om_BW, probe.p))
     p_CB_dot_tr = R_WB_tr @ (probe.v_tr + casadi.cross(om_tr, probe.p_tr))
 
     p_C_dot = v_B + p_CB_dot
@@ -127,7 +156,7 @@ def quat_matrix(wxyz, dir):
     return matr
 
 def get_err_theta_c_dot(probe):
-    om_c = probe.R.T @ (om + probe.om)
+    om_c = probe.R.T @ (B_om_BW + probe.om)
     om_c_tr = probe.R_tr.T @ (om_tr + probe.om_tr)
 
     om_c_quat = rvec_to_quat(om_c)
