@@ -129,6 +129,16 @@ class Camera(object):
         """ Get index of camera data whose timestamp matches the argument T. """
         return max([i for i, t in enumerate(self.t) if t <= T])
 
+    def vec_at(self, i):
+        p = self.p[:,i].reshape(3,1)
+        R = self.R[i]
+        v = self.v[:,i].reshape(3,1)
+        om = self.om[:,i].reshape(3,1)
+        acc = self.acc[:,i].reshape(3,1)
+        alp = self.alp[:,i].reshape(3,1)
+
+        return [p, R, v, om, acc, alp]
+
 class Queue(object):
     def __init__(self):
         pass
@@ -147,3 +157,7 @@ class Queue(object):
         queue_item.acc = self.acc[:,i]
         queue_item.alp = self.alp[:,i]
         return queue_item
+
+    @property
+    def vec(self):
+        return [self.p, self.R, self.v, self.om, self.acc, self.alp]
