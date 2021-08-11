@@ -107,10 +107,10 @@ class ErrorStates(object):
 
         self.dp = np.asarray(p)
         self.dv = np.asarray(v)
-        self.dq = Quaternion(v=np.array(theta)/2, w=1.)
+        self.dq = Quaternion(v=np.array(theta)/2, w=1., do_normalise=True)
         self.ddofs = np.asarray(dofs)
         self.dpc = np.asarray(p_c)
-        self.dqc = Quaternion(v=np.array(theta_c)/2, w=1.)
+        self.dqc = Quaternion(v=np.array(theta_c)/2, w=1., do_normalise=True)
 
         self.theta = np.asarray(theta)
         self.theta_c = np.asarray(theta_c)

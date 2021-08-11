@@ -444,7 +444,7 @@ class VisualTraj(Trajectory):
 
     def _gen_quats_farray(self):
         self.quats = [Quaternion(x=self.qx[i],
-                        y=self.qy[i], z=self.qz[i], w=w)
+                        y=self.qy[i], z=self.qz[i], w=w, do_normalise=True)
                         for i, w in enumerate(self.qw)]
 
     def _gen_euler_angles(self):

@@ -69,7 +69,7 @@ class Filter(object):
 
     @property
     def Om_old(self):
-        return Quaternion(w=1., v=(0.5 * self.dt * self.om_old) )
+        return Quaternion(w=1., v=(0.5 * self.dt * self.om_old), do_normalise=True )
 
     @property
     def acc_old(self):

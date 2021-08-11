@@ -106,17 +106,17 @@ class Quaternion(object):
             v = self.w * q_other.v + q_other.w * self.v + np.cross(self.v, q_other.v)
         else:
             raise TypeError
-        return Quaternion(w=w, v=v)
+        return Quaternion(w=w, v=v, do_normalise=True)
 
     def __add__(self, other):
         w = self.w + other.w
         v = self.v + other.v
-        return Quaternion(w=w, v=v)
+        return Quaternion(w=w, v=v, do_normalise=True)
 
     def __sub__(self, other):
         w = self.w - other.w
         v = self.v - other.v
-        return Quaternion(w=w, v=v)
+        return Quaternion(w=w, v=v, do_normalise=True)
 
     def normalise(self):
         d = math.sqrt(self.x**2 + self.y**2 + self.z**2 + self.w**2)
