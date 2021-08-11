@@ -92,7 +92,7 @@ class Filter(object):
         X_deltx = np.zeros((self.num_states, self.num_error_states))
 
         def jac_true_wrt_err_quats(quat):
-            x, y, z, w = self.states.q.xyzw
+            x, y, z, w = quat.xyzw
             return 0.5 * np.array([[-x, -y, -z],
                                    [ w, -z,  y],
                                    [ z,  w, -x],
