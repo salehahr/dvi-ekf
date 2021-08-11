@@ -38,6 +38,7 @@ class Filter(object):
         self._om_old = imu.om.squeeze()
         self._acc_old = imu.acc.squeeze()
         self.R_WB_old = self.states.q.rot
+        self._states_old = copy(IC)
 
         # covariance
         self.P = P0
@@ -79,6 +80,14 @@ class Filter(object):
         self._acc_old = val.squeeze()
 
     @property
+    def states_old(self):
+        return self._states_old
+
+    @states_old.setter
+    def states_old(self, val):
+        self._states_old.set(val.vec)
+
+    @property
     def jac_X_deltx(self):
         X_deltx = np.zeros((self.num_states, self.num_error_states))
 
@@ -108,6 +117,7 @@ class Filter(object):
         self.om_old = om
         self.acc_old = acc
         self.R_WB_old = self.states.q.rot
+        self.states_old = self.states
 
         # for plotting
         self.traj.append_state(t, self.states)
