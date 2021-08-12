@@ -90,10 +90,6 @@ for i, t in enumerate(cam.t[1:]):
         max_t = cap_t
         break
 
-# write to file
-if do_prop_only:
-    kf.traj.write_to_file('./trajs/from_prop.txt', discard_interframe_vals=True)
-
 # plots
 from plotter import plot_trajectories
 
