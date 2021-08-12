@@ -91,6 +91,33 @@ class Quaternion(object):
     def conjugate(self):
         return Quaternion(w=self.w, v=-self.v)
 
+    @property
+    def angle(self):
+        """ in radians """
+        # https://github.com/aipiano/ESEKF_IMU/blob/38320a8617cd3cf07231c9f6394b01755f7a5fff/esekf.py#L164
+        ang1 = math.asin(np.linalg.norm(self.v))
+        # ang2 = np.linalg.norm(self.axis)
+        # ang3 = 2 * math.acos(self.w)
+        # print(f'ang1 {ang1}')
+        # print(f'ang2 {ang2}')
+        # print(f'ang3 {ang3}')
+        return ang1
+
+    @property
+    def axis(self):
+        ang1 = math.asin(np.linalg.norm(self.v))
+        ang3 = 2 * math.acos(self.w)
+
+        ax1 = np.zeros(3,) if math.isclose(ang1, 0) else \
+                self.v / np.linalg.norm(self.v)
+        # ax2 = R.from_quat(self.xyzw).as_rotvec()
+        # ax3 = np.zeros(3,) if math.isclose(ang3, 0) else \
+                # self.v / np.sin (ang3)
+        # print(f'ax1 {ax1}')
+        # print(f'ax2 {ax2}')
+        # print(f'ax3 {ax3}')
+        return ax1
+
 
     # operators
     def __mul__(self, other):
