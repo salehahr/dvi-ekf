@@ -1,4 +1,4 @@
-from Filter import VisualTraj, ImuTraj, States
+from Filter import VisualTraj, ImuTraj, States, ImuRefTraj
 from Models import RigidSimpleProbe, SymProbe, Camera, Imu
 
 import numpy as np
@@ -31,6 +31,8 @@ cam0 = cam.vec_at(0)
 # imu
 stdev_na, stdev_nom = [1e-3]*3, [1e-3]*3 # supposedly from IMU datasheet
 imu = Imu(probe, cam_interp, stdev_na, stdev_nom)
+imu_ref = ImuRefTraj("imu ref", imu)
+imu_ref.append_value(min_t, cam0)
 
 # initial states
 W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(cam0)

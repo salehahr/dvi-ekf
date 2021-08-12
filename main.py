@@ -1,4 +1,4 @@
-from Filter import States, Filter, VisualTraj, ImuRefTraj, MatrixPlotter
+from Filter import States, Filter, VisualTraj, MatrixPlotter
 from Models import SymProbe
 import numpy as np
 import sys
@@ -29,7 +29,7 @@ def parse_arguments():
 do_prop_only, const_dofs, optional_args = parse_arguments()
 
 # load data
-from generate_data import traj_name, probe, cam, cam_interp, imu
+from generate_data import traj_name, probe, cam, cam_interp, imu, imu_ref
 from generate_data import IC, cov0, min_t, max_t
 
 # measurement noise values
@@ -45,9 +45,6 @@ imu.eval_init()
 kf = Filter(imu, sym_probe, IC, cov0, meas_noise)
 kf.traj.append_state(cam.t[0], kf.states)
 gain_plt = MatrixPlotter('K', min_row=0, min_col=0, max_row=3, max_col=3)
-
-# desired trajectory
-imu_ref = ImuRefTraj("imu ref", imu)
 
 # filter main loop (t>=1)
 old_t = min_t
