@@ -109,7 +109,7 @@ class Filter(object):
         return X_deltx
 
     def propagate(self, t, om, acc, do_prop_only=False):
-        self._predict_nominal()
+        self._predict_nominal(om, acc)
         self._predict_error()
         self._predict_error_covariance()
 
@@ -122,12 +122,13 @@ class Filter(object):
         # for plotting
         self.traj.append_state(t, self.states)
 
-    def _predict_nominal(self):
+    def _predict_nominal(self, om, acc):
         res = [casadi.DM(r).full() \
                     for r in eqns.f_predict(self.dt,
                         *self.x,
                         *self.u,
-                        *self.probe.fwkin)]
+                        *self.probe.fwkin,
+                        om, acc)]
         self.states.set(res)
 
     def _predict_error(self):
