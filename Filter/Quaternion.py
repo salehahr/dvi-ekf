@@ -35,7 +35,7 @@ class Quaternion(object):
                 self.z = val.z
                 self.w = val.w
             else:
-                print("Wrong input type to Quaternion!")
+                print(f"Wrong input type to Quaternion! Is: {type(val)}")
                 raise TypeError
 
         elif v is not None and w is not None:
