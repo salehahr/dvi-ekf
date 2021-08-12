@@ -197,10 +197,15 @@ class Filter(object):
 
     def update(self, camera):
         # compute gain        
-        H = self.Hx @ self.jac_X_deltx # 7x21
-        S = H @ self.P @ H.T + self.R # 7x7
+        # H = self.Hx @ self.jac_X_deltx # 7x21
+        H = np.zeros((6, self.num_error_states))
+        H[0:3, -6:-3] = np.eye(3)
+        H[3:6, -3:  ] = np.eye(3)
+
+        R = self.R[:6,:6]
+        S = H @ self.P @ H.T + R # 6x6
         try:
-            K = self.P @ H.T @ np.linalg.inv(S) # 21x7
+            K = self.P @ H.T @ np.linalg.inv(S) # 21x6
         except np.linalg.LinAlgError as e:
             print(f"ERROR: {e}!")
             print("Stopping simulation.")
@@ -208,14 +213,16 @@ class Filter(object):
 
         # compute error state
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
-        res_q = (camera.qrot - self.states.q_cam).xyzw
-        res = np.hstack((res_p_cam, res_q))
+        err_q = self.states.q_cam.conjugate * camera.qrot
+        res_q_cam = err_q.angle * err_q.axis
+
+        res = np.hstack((res_p_cam, res_q_cam))
         err = ErrorStates(K @ res)
 
         # correct predicted state and covariance
         self.states.apply_correction(err)
         I = np.eye(self.num_error_states)
-        self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ self.R @ K.T
+        self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ R @ K.T
 
         # reset error states
         G = np.eye(self.num_error_states)
