@@ -1,5 +1,6 @@
 import numpy as np
 from .Quaternion import Quaternion
+import math
 
 class States(object):
     def __init__(self, p, v, q, dofs, p_cam, q_cam):
@@ -107,13 +108,30 @@ class ErrorStates(object):
 
         self.dp = np.asarray(p)
         self.dv = np.asarray(v)
-        self.dq = Quaternion(v=np.array(theta)/2, w=1., do_normalise=True)
+
+        dq_xyzw = quaternion_about_axis(np.linalg.norm(theta), theta)
+        self.dq = Quaternion(val=dq_xyzw, do_normalise=True)
+
         self.ddofs = np.asarray(dofs)
         self.dpc = np.asarray(p_c)
-        self.dqc = Quaternion(v=np.array(theta_c)/2, w=1., do_normalise=True)
+
+        dqc_xyzw = quaternion_about_axis(np.linalg.norm(theta_c), theta)
+        self.dqc = Quaternion(val=dqc_xyzw, do_normalise=True)
 
         self.theta = np.asarray(theta)
         self.theta_c = np.asarray(theta_c)
 
     def reset(self):
         self.set([0] * 21)
+
+def quaternion_about_axis(angle, axis):
+    """ https://github.com/aipiano/ESEKF_IMU/blob/master/transformations.py """
+    q = np.array([0.0, axis[0], axis[1], axis[2]])
+    qlen = np.linalg.norm(q)
+
+    _EPS = np.finfo(float).eps * 4.0
+    if qlen > _EPS:
+        q *= math.sin(angle/2.0) / qlen
+    q[0] = math.cos(angle/2.0)
+
+    return np.array([*q[1:4], q[0]])
