@@ -36,11 +36,12 @@ Unconstrained SLAM end | Constrained SLAM end
 ## Usage
 ### Running the program
 ```
-python3 main.py <prop/update> <const_dofs> <Rpval>
+python3 main.py <prop/update> <traj_name> <Rpval>
 ```
 * arg1: `prop` for propagation only, anything else to perform prop + update
-* arg2: `cdofs` or `const_dofs` to make probe have constant dofs, anything else otherwise
+* arg2: `traj_name`, e.g. `mandala0_mono`, `trans_x`, `rot_x`, ...
 * arg3: (_optional_) sets value for `R_p`, defaults to `1e2`
+* arg4: (_optional_) sets value for `R_q`, defaults to `0.5`
 
 ### Changing the noise values
 * [Process noise - IMU](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/generate_data.py#L35)

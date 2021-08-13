@@ -6,41 +6,43 @@ import sys
 def parse_arguments():
 
     def print_usage():
-        print(f"Usage: {__file__} <prop> <const_dofs> <Rpval>")
-        print("\t <prop>  - prop / all")
-        print("\t <const_dofs>  - cdofs / nocdofs")
-        print("Optional:\n\t <Rpval>")
+        print(f"Usage: {__file__} <traj_name> <prop> <Rpval> <Rqval>")
+        print("\t <traj_name>  - mandala0_mono, trans_x, rot_x, ...")
+        print("\t <prop>       - prop / update")
+        print("Optional:\n\t <Rpval>: default is 1e2")
+        print("\t <Rqval>: default is 0.5")
         sys.exit()
 
     try:
-        do_prop_only = False or (sys.argv[1] == 'prop')
-        const_dofs = False or (sys.argv[2] == 'cdofs') or (sys.argv[2] == 'const_dofs')
+        traj_name = sys.argv[1]
+        do_prop_only = False or (sys.argv[2] == 'prop')
 
         print('Chosen settings: ')
-        print(f'\t* Propagate only\t: {do_prop_only}')
-        print(f'\t* Constant DOFs  \t: {const_dofs}\n')
+        print(f'\t* Trajectory     : {traj_name}')
+        print(f'\t* Propagate only : {do_prop_only}')
     except IndexError:
         print_usage()
 
     # optional args
     optional_args = len(sys.argv) > 3
 
-    return do_prop_only, const_dofs, optional_args
-do_prop_only, const_dofs, optional_args = parse_arguments()
+    return traj_name, do_prop_only, optional_args
+traj_name, do_prop_only, optional_args = parse_arguments()
 
 # load data
-from generate_data import traj_name, probe, cam, cam_interp, imu, imu_ref
-from generate_data import IC, cov0, min_t, max_t
+from generate_data import get_data
+from generate_data import probe, cov0
+cam, cam_interp, imu, imu_ref, IC, min_t, max_t = get_data(traj_name)
 
 # measurement noise values
 Rpval = float(sys.argv[3]) if optional_args else 1e2
-Rqval = 0.05
+Rqval = float(sys.argv[4]) if optional_args else 0.5
 meas_noise = np.hstack(([Rpval]*3, [Rqval]*4))
 print(f'\n\tRp = {Rpval}\n\tRq = {Rqval}')
 print(f'----------------------------')
 
 # initialisation (t=0): IC, IMU buffer, noise matrices
-sym_probe = SymProbe(probe, const_dofs)
+sym_probe = SymProbe(probe)
 imu.eval_init()
 kf = Filter(imu, sym_probe, IC, cov0, meas_noise)
 kf.traj.append_state(cam.t[0], kf.states)
@@ -89,11 +91,4 @@ for i, t in enumerate(cam.t[1:]):
 
 # plots
 from plotter import plot_trajectories
-
-if do_prop_only:
-    traj_name = traj_name + '_prop'
-else:
-    traj_name = traj_name + f'_upd_Rp{Rpval}_Rq{Rqval}'
-    # gain_plt.plot(min_t=min_t, max_t=max_t, index_from_zero=False)
-
-plot_trajectories(kf.traj, traj_name, imu, imu_ref)
+plot_trajectories(kf.traj, traj_name, do_prop_only, imu, imu_ref, Rpval, Rqval)
