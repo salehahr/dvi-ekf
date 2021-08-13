@@ -46,6 +46,10 @@ dofs_cas_list = casadi.vertsplit(dofs_cas)
 B_acc_BW = casadi.SX.sym('B_acc_BW', 3)
 B_om_BW = casadi.SX.sym('B_om_BW', 3)
 
+# values at current time step n
+B_om_BW_n  = casadi.SX.sym('B_om_BW_n', 3)
+B_acc_BW_n = casadi.SX.sym('B_acc_BW_n', 3)
+
 ### CAMERA
 W_p_CW = casadi.SX.sym('W_p_CW', 3)
 R_WC = casadi.SX.sym('R_WC', 3, 3)
@@ -79,6 +83,9 @@ x_str = ['p_B', 'v_B', 'R_WB', 'dofs', 'p_C', 'R_WC']
 # inputs
 u = [B_om_BW, B_acc_BW]
 u_str = ['B_om_BW', 'B_acc_BW']
+
+u_current = [B_om_BW_n, B_acc_BW_n]
+u_current_str = ['om_n', 'acc_n']
 
 # error states
 err_p_B = casadi.SX.sym('err_p_B', 3)
