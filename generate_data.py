@@ -16,10 +16,10 @@ sym_probe = SymProbe(probe)
 # SLAM data
 # filepath_cam = './trajs/offline_mandala0_gt.txt' # stereo
 
-# traj_name = 'mandala0_mono'
+traj_name = 'mandala0_mono'
 # traj_name = 'from_prop'
 # traj_name = 'trans_z'
-traj_name = 'rot_x'
+# traj_name = 'rot_x'
 
 filepath_cam = f'./trajs/{traj_name}.txt' # simple traj smooth
 
