@@ -594,6 +594,7 @@ class FilterTraj(Trajectory):
             axes[row][col].set_title(latex_label)
             axes[row][col].set_xlim(left=min_t, right=max_t)
             axes[row][col].set_ylim(bottom=min_val, top=max_val)
+            axes[row][col].ticklabel_format(useOffset=False)
             axes[row][col].grid(True)
 
             ai += 1
