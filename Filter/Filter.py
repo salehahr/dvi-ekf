@@ -117,17 +117,18 @@ class Filter(object):
         self.om_old = om
         self.acc_old = acc
         self.R_WB_old = self.states.q.rot
-        self.states_old = self.states
 
         # for plotting
         self.traj.append_state(t, self.states)
 
     def _predict_nominal(self, om, acc):
+        est_probe = self.probe.get_est_fwkin(self.states.dofs)
+
         res = [casadi.DM(r).full() \
                     for r in eqns.f_predict(self.dt,
                         *self.x,
                         *self.u,
-                        *self.probe.fwkin,
+                        *est_probe,
                         om, acc)]
         self.states.set(res)
 

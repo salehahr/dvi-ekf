@@ -1,6 +1,5 @@
 import roboticstoolbox as rtb
 from spatialmath import SE3
-import spatialmath.base.symbolic as sym
 
 from casadi import *
 import numpy as np
@@ -8,6 +7,7 @@ import sympy as sp
 from sympy.tensor.array import tensorproduct, tensorcontraction
 
 from . import context
+import symbols as sym
 from symbols import q_s, qd_s, qdd_s, dofs_s
 from symbols import q_cas, q_tr_cas, dofs_cas_list
 
@@ -341,8 +341,9 @@ class SymProbe(object):
         for i in range(6,self.n):
             self.q[i] = 0
 
-        self.fwkin = probe.fwkin
-        p, R, v, om, acc, alp = self.fwkin
+        # relative kinematics in terms of q0, q1, ...
+        self.sym_fwkin = probe.get_sym(self.q)
+        p, R, v, om, acc, alp = self.sym_fwkin
         self.p = p
         self.R = R
         self.v = v
@@ -363,3 +364,15 @@ class SymProbe(object):
         """ Returns kinematic expressions in terms of
             estimated DOFs and error DOFs."""
         return casadi.substitute(expr, q_cas, q_tr_cas)
+
+    def get_est_fwkin(self, dofs_est):
+        """ Returns the estimated relative kinematics
+            using the estimated dofs. """
+        f_est_probe = casadi.Function('f_est_probe',
+                    [sym.dofs],
+                    [*self.sym_fwkin],
+                    ['dofs'],
+                    [*sym.probe_fwkin_str],
+                    )
+        return [casadi.DM(r).full()
+                    for r in f_est_probe(dofs_est)]

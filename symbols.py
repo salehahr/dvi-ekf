@@ -63,8 +63,6 @@ W_alp_CW = casadi.SX.sym('W_alp_CW', 3)
 cam = [W_p_CW, R_WC, WW_v_CW, W_om_CW, W_acc_CW, W_alp_CW]
 cam_str = ['W_p_CW', 'R_WC', 'WW_v_CW', 'W_om_CW', 'W_acc_CW', 'W_alp_CW']
 
-C_om_CW = R_BC.T @ (B_om_BW + B_om_CB)
-
 ### KALMAN FILTER
 dt = casadi.SX.sym('dt')
 
