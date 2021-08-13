@@ -5,25 +5,49 @@ the calibration parameters in a camera-IMU sensor probe setup.
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
 ## Current results
+Using `stdev_a, stdev_om = 1e-3`  
+
 ### Monocular SLAM trajectory
-P only  | P + U | P + U | P + U
----     | ---   | ---   | --- |
-&nbsp;  | `stdev_a, stdev_om = 1e-3`  | `stdev_a, stdev_om = 1e-3` | `stdev_a, stdev_om = 1e-3`  
-&nbsp;  | **`cov_p = 1000`** | **`cov_p = 0.1`**  | **`cov_p = 1e-6`**
-&nbsp;  | `cov_q = 0.05` | `cov_q = 0.05` | `cov_q = 0.05`
-![](img/kf_mandala0_mono_prop_imu.png) | ![](img/kf_mandala0_mono_upd_Rp1000.0_Rq0.05_imu.png) | ![](img/kf_mandala0_mono_upd_Rp0.1_Rq0.05_imu.png) | ![](img/kf_mandala0_mono_upd_Rp1e-06_Rq0.05_imu.png)
-![](img/kf_mandala0_mono_prop_cam.png) | ![](img/kf_mandala0_mono_upd_Rp1000.0_Rq0.05_cam.png) | ![](img/kf_mandala0_mono_upd_Rp0.1_Rq0.05_cam.png) | ![](img/kf_mandala0_mono_upd_Rp1e-06_Rq0.05_cam.png)
+Prop only plots: [imu](img/kf_mandala0_mono_prop_imu.png) ||
+                 [cam](img/kf_mandala0_mono_prop_cam.png)
+
+Only modifying `R_p`:  
+
+**`cov_p = 1000`** | **`cov_p = 0.1`**  | **`cov_p = 1e-3`**
+---   | ---   | --- |
+`cov_q = 0.5` | `cov_q = 0.5` | `cov_q = 0.5`
+![](img/kf_mandala0_mono_upd_Rp1000.0_Rq0.5_imu.png) | ![](img/kf_mandala0_mono_upd_Rp0.1_Rq0.5_imu.png) | ![](img/kf_mandala0_mono_upd_Rp0.001_Rq0.5_imu.png)
+![](img/kf_mandala0_mono_upd_Rp1000.0_Rq0.5_cam.png) | ![](img/kf_mandala0_mono_upd_Rp0.1_Rq0.5_cam.png) | ![](img/kf_mandala0_mono_upd_Rp0.001_Rq0.5_cam.png)
+
+Only modifying `R_q`:  
+
+`cov_p = 0.1` | `cov_p = 0.1`  | `cov_p = 0.1`
+---   | ---   | --- |
+**`cov_q = 1000.0`** | **`cov_q = 0.5`** | **`cov_q = 0.001`**
+![](img/kf_mandala0_mono_upd_Rp0.1_Rq1000.0_imu.png) | ![](img/kf_mandala0_mono_upd_Rp0.1_Rq0.5_imu.png) | ![](img/kf_mandala0_mono_upd_Rp0.1_Rq0.001_imu.png)
+![](img/kf_mandala0_mono_upd_Rp0.1_Rq1000.0_cam.png) | ![](img/kf_mandala0_mono_upd_Rp0.1_Rq0.5_cam.png) | ![](img/kf_mandala0_mono_upd_Rp0.1_Rq0.001_cam.png)
 
 ### Simple trajectory
 Camera moves in x direction, no rotations.
 
-P only  | P + U | P + U 
----     | ---   | ---   
-&nbsp;  | `stdev_a, stdev_om = 1e-3`  | `stdev_a, stdev_om = 1e-3` 
-&nbsp;  | **`cov_p = 1000`** | **`cov_p = 0.1`**
-&nbsp;  | `cov_q = 0.05` | `cov_q = 0.05` 
-![](img/kf_trans_x_prop_imu.png) | ![](img/kf_trans_x_upd_Rp1000.0_Rq0.05_imu.png) | ![](img/kf_trans_x_upd_Rp0.1_Rq0.05_imu.png)
-![](img/kf_trans_x_prop_cam.png) | ![](img/kf_trans_x_upd_Rp1000.0_Rq0.05_cam.png) | ![](img/kf_trans_x_upd_Rp0.1_Rq0.05_cam.png)
+Prop only plots: [imu](img/kf_mandala0_trans_x_prop_imu.png) ||
+                 [cam](img/kf_mandala0_trans_x_prop_cam.png)
+
+Only modifying `R_p`:  
+
+**`cov_p = 1000`** | **`cov_p = 0.1`**
+---   | ---   
+`cov_q = 0.5` | `cov_q = 0.5` 
+![](img/kf_trans_x_upd_Rp1000.0_Rq0.5_imu.png) | ![](img/kf_trans_x_upd_Rp0.1_Rq0.5_imu.png)
+![](img/kf_trans_x_upd_Rp1000.0_Rq0.5_cam.png) | ![](img/kf_trans_x_upd_Rp0.1_Rq0.5_cam.png)
+
+Only modifying `R_q`:  
+
+`cov_p = 0.1` | `cov_p = 0.1`  | `cov_p = 0.1`
+---   | ---   | --- |
+**`cov_q = 1000.0`** | **`cov_q = 0.5`** | **`cov_q = 0.001`**
+![](img/kf_trans_x_upd_Rp0.1_Rq1000.0_imu.png) | ![](img/kf_trans_x_upd_Rp0.1_Rq0.5_imu.png) | ![](img/kf_trans_x_upd_Rp0.1_Rq0.001_imu.png)
+![](img/kf_trans_x_upd_Rp0.1_Rq1000.0_cam.png) | ![](img/kf_trans_x_upd_Rp0.1_Rq0.5_cam.png) | ![](img/kf_trans_x_upd_Rp0.1_Rq0.001_cam.png)
 
 ## Probe
 ```
