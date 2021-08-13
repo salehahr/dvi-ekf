@@ -32,6 +32,7 @@ class Camera(object):
         self._acc = None
         self._alp = None
 
+        self.vec0 = self.vec_at(0)
         self.p0 = self.p[:,0].reshape(3,1)
         self.r0 = self.r[:,0].reshape(3,1)
         self.R0 = self.R[0]
