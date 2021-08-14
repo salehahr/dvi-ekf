@@ -112,6 +112,22 @@ class Filter(object):
 
         return X_deltx
 
+    def propagate_imu(self, t0, tn, real_joint_dofs):
+        cam_queue = self.imu.cam.generate_queue(t0, tn)
+
+        old_ti = t0
+        for ii, ti in enumerate(cam_queue.t):
+            interp = cam_queue.at_index(ii)
+            om, acc = self.imu.eval_expr_single(ti, *real_joint_dofs,
+                interp.acc, interp.R,
+                interp.om, interp.alp, )
+            self.imu.ref.append_value(ti, interp.vec)
+
+            self.dt = ti - old_ti
+            self.propagate(ti, om, acc)
+
+            old_ti = ti
+
     def propagate(self, t, om, acc, do_prop_only=False):
         self._predict_nominal(om, acc)
         self._predict_error()

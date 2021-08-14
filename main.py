@@ -14,35 +14,19 @@ old_t = config.min_t
 cap_t = config.cap_t
 
 for i, t in enumerate(camera.t[1:]):
-
     # propagate
-    # simulate imu queue
-    queue = imu.cam.generate_queue(old_t, t)
-    old_ti = old_t
-
-    print(f"Predicting... t={queue.t[0]}")
-    for ii, ti in enumerate(queue.t):
-        interp = queue.at_index(ii)
-        om, acc = imu.eval_expr_single(ti, *config.real_joint_dofs,
-            interp.acc, interp.R,
-            interp.om, interp.alp, )
-        imu.ref.append_value(ti, interp.vec)
-
-        kf.dt = ti - old_ti
-        kf.propagate(ti, om, acc)
-
-        old_ti = ti
+    kf.propagate_imu(old_t, t, config.real_joint_dofs)
 
     # update
     if not config.do_prop_only:
-        current_vis = camera.traj.at_index(i + 1) # not counting IC
-        K = kf.update(current_vis)
+        current_cam = camera.traj.at_index(i + 1) # not counting IC
+        K = kf.update(current_cam)
         if K is None: break
-
-    old_t = t
 
     # capping of simulation data
     if cap_t is not None and t >= cap_t: break
+
+    old_t = t
 
 ## plot results
 from plotter import plot_trajectories
