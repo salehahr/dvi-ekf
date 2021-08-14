@@ -2,7 +2,7 @@ import os
 import unittest
 
 from Models import SimpleProbe, RigidSimpleProbe, SymProbe
-from Models import Camera, Imu
+from Models import Camera, Imu, sympy2casadi
 from symbols import num_dofs, dofs_s, dofs_cas
 
 from Filter import Quaternion
@@ -11,7 +11,6 @@ import numpy as np
 import sympy as sp
 t = sp.Symbol('t')
 
-from aux_symbolic import sympy2casadi
 from casadi import *
 
 from roboticstoolbox.backends.PyPlot import PyPlot

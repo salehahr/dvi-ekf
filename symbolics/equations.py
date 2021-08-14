@@ -1,7 +1,7 @@
 import numpy as np
 import casadi
 
-import symbols as sym
+from . import symbols as sym
 
 ###### EXPRESSIONS
 """ IMU states = fcn(cam, probe)  - in W frame """

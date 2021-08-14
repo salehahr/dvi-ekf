@@ -7,9 +7,7 @@ from .Trajectory import FilterTraj
 from .States import States, ErrorStates
 
 import casadi
-from . import context
-import symbols as sym
-import symbolic_eqns as eqns
+from .context import syms, eqns
 from Visuals import FilterPlot
 
 class Filter(object):
@@ -161,12 +159,12 @@ class Filter(object):
         Fx[3:6, 6:9] = - self.R_WB_old @ casadi.skew(self.acc_old) * self.dt
         Fx[6:9, 6:9] = self.Om_old.rot.T
         # Fx[9:15, :] # dofs
-        self.Fx = self._cam_error_jacobian(Fx, sym.err_x)
+        self.Fx = self._cam_error_jacobian(Fx, syms.err_x)
 
         # motion model noise jacobian
         Fi = casadi.SX.zeros(self.num_error_states, self.num_noise)
         Fi[3:15, :] = casadi.SX.eye(self.num_noise)
-        self.Fi = self._cam_error_jacobian(Fi, sym.n)
+        self.Fi = self._cam_error_jacobian(Fi, syms.n)
 
         """ returns zero
         self.err_states.set(self.Fx @ self.err_states.vec) """
@@ -175,10 +173,10 @@ class Filter(object):
         """ Fills the error jacobian (either w.r.t. error state or
             w.r.t. noise) for the camera state entries. """
 
-        err_p_C_next = sym.err_p_C \
-                + sym.dt * sym.get_err_pc_dot(self.probe)
-        err_theta_C_next = sym.err_theta_C \
-                + sym.dt * sym.get_err_theta_c_dot(self.probe)
+        err_p_C_next = syms.err_p_C \
+                + syms.dt * syms.get_err_pc_dot(self.probe)
+        err_theta_C_next = syms.err_theta_C \
+                + syms.dt * syms.get_err_theta_c_dot(self.probe)
 
         l_in = 0
         r_in = 0
@@ -189,9 +187,9 @@ class Filter(object):
             l_in = r_in
 
         fun_jac = casadi.Function('f_jac',
-            [sym.dt, sym.dofs, sym.err_dofs, sym.R_WB, *sym.u, sym.n_om, sym.err_theta, sym.err_theta_C], [jac],
+            [syms.dt, syms.dofs, syms.err_dofs, syms.R_WB, *syms.u, syms.n_om, syms.err_theta, syms.err_theta_C], [jac],
             ['dt', 'dofs', 'err_dofs', 'R_WB',
-                *sym.u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
+                *syms.u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
             )
         return casadi.DM(
                 fun_jac( dt         = self.dt,

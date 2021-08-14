@@ -5,12 +5,7 @@ import numpy as np
 import sympy as sp
 import casadi
 
-from . import context
-from symbols import W_acc_CW_cas, R_WC_cas, W_om_CW_cas, W_alp_CW_cas
-from symbols import q_cas, qd_cas, qdd_cas
-import symbols as sym
-
-import symbolic_eqns as eqns
+from .context import syms, eqns
 
 """ Notation:
         W_acc_CD    : acceleration of C rel. to D.
@@ -68,9 +63,9 @@ class Imu(object):
 
         # symbolic expressions
         self.expr = casadi.Function('f_imu_meas',
-                [q_cas, qd_cas, qdd_cas, *sym.cam],
+                [syms.q_cas, syms.qd_cas, syms.qdd_cas, *syms.cam],
                 eqns.f_imu_meas(*self.fwkin),
-                    ['q', 'qd', 'qdd', *sym.cam_str],
+                    ['q', 'qd', 'qdd', *syms.cam_str],
                     ['B_om_BW', 'B_acc_BW'])
 
         # for trajectory reconstruction/plotting
@@ -132,7 +127,7 @@ class Imu(object):
         W_om_C = self._correct_cam_dims(W_om_C)
         W_alp_C = self._correct_cam_dims(W_alp_C)
 
-        cam = [sym.W_p_CW, R_WC, sym.WW_v_CW, W_om_C, W_acc_C, W_alp_C]
+        cam = [syms.W_p_CW, R_WC, syms.WW_v_CW, W_om_C, W_acc_C, W_alp_C]
 
         res_om, res_acc = [casadi.DM(r).full().reshape(3,)
                 for r in self.expr(q, qd, qdd, *cam)]

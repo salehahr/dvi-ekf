@@ -7,12 +7,7 @@ import numpy as np
 import sympy as sp
 from sympy.tensor.array import tensorproduct, tensorcontraction
 
-from . import context
-import symbols as sym
-from symbols import q_s, qd_s, qdd_s, dofs_s
-from symbols import q_cas, q_tr_cas, dofs_cas_list
-
-from aux_symbolic import dummify_array
+from .context import syms, symfcns
 
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Ry(-180, 'deg')
@@ -24,9 +19,9 @@ class Probe(rtb.DHRobot):
         links = self._gen_links(scope_length, theta_cam)
         super().__init__(links, name='probe', base=plot_rotation)
 
-        self.q_s = q_s.copy()
-        self.qd_s = qd_s.copy()
-        self.qdd_s = qdd_s.copy()
+        self.q_s = syms.q_s.copy()
+        self.qd_s = syms.qd_s.copy()
+        self.qdd_s = syms.qdd_s.copy()
 
     def _gen_links(self, scope_length, theta_cam):
         """ Generates robot links according to chosen configuration. """
@@ -158,15 +153,15 @@ class Probe(rtb.DHRobot):
         if is_1dim:
             for i, v in enumerate(var):
                 if isinstance(v, sp.Expr):
-                    f = sp.lambdify(dofs_s, dummify_array(v))
-                    cs[i,0] = f(*dofs_cas_list)
+                    f = sp.lambdify(syms.dofs_s, symfcns.dummify_array(v))
+                    cs[i,0] = f(*syms.dofs_cas_list)
                 else:
                     cs[i,0] = v
         else:
             for i, r in enumerate(var):
                 for j, c in enumerate(r):
-                    f = sp.lambdify(dofs_s, dummify_array(c))
-                    cs[i,j] = f(*dofs_cas_list)
+                    f = sp.lambdify(syms.dofs_s, symfcns.dummify_array(c))
+                    cs[i,j] = f(*syms.dofs_cas_list)
 
         return cs
 
@@ -334,7 +329,7 @@ class SymProbe(object):
         self.n = probe.n
         self.q0 = probe.q.copy()
 
-        self.q = q_s.copy() if not const_dofs else self.q0
+        self.q = syms.q_s.copy() if not const_dofs else self.q0
         self.qd = probe.qd_cas
         self.qdd = probe.qdd_cas
 
@@ -364,16 +359,16 @@ class SymProbe(object):
     def _get_tr(self, expr):
         """ Returns kinematic expressions in terms of
             estimated DOFs and error DOFs."""
-        return casadi.substitute(expr, q_cas, q_tr_cas)
+        return casadi.substitute(expr, syms.q_cas, syms.q_tr_cas)
 
     def get_est_fwkin(self, dofs_est):
         """ Returns the estimated relative kinematics
             using the estimated dofs. """
         f_est_probe = casadi.Function('f_est_probe',
-                    [sym.dofs],
+                    [syms.dofs],
                     [*self.sym_fwkin],
                     ['dofs'],
-                    [*sym.probe_fwkin_str],
+                    [*syms.probe_fwkin_str],
                     )
         return [casadi.DM(r).full()
                     for r in f_est_probe(dofs_est)]
