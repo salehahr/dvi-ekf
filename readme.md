@@ -60,17 +60,25 @@ Unconstrained SLAM end | Constrained SLAM end
 ## Usage
 ### Running the program
 ```
-python3 main.py <prop/update> <traj_name> <Rpval>
+python3 main.py [-f [{0,1}]] [-Rp RP] [-Rq RQ] traj_name prop
 ```
-* arg1: `prop` for propagation only, anything else to perform prop + update
-* arg2: `traj_name`, e.g. `mandala0_mono`, `trans_x`, `rot_x`, ...
-* arg3: (_optional_) sets value for `R_p`, defaults to `1e2`
-* arg4: (_optional_) sets value for `R_q`, defaults to `0.5`
+
+```
+positional arguments:
+  traj_name   mandala0_mono, trans_x, rot_x, ...
+  prop        do propagation only or do prop + update; ['prop', 'p', 'update',
+              'u', 'pu']
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -f [{0,1}]  fast sim. (only 10 frames)
+  -Rp RP      camera position noise (default: 0.1)
+  -Rq RQ      camera rotation noise (default: 0.5)
+```
 
 ### Changing the noise values
 * [Process noise - IMU](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/generate_data.py#L35)
 * [Process noise - DOFs](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/Filter/Filter.py#L207)
-* [Measurement noise](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/main.py#L33)
 
 ### Setting the Kalman gain plotter
 Adjust the arguments in [this line](https://github.com/feudalism/dvi-ekf/blob/95afc6e5996ef68fc3ec3b39d4f063dd8248ce6e/main.py#L40)

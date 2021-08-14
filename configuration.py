@@ -3,7 +3,7 @@ from Models import RigidSimpleProbe, SymProbe
 
 from Filter import States
 
-import sys
+import sys, argparse
 import numpy as np
 
 # Data generation parameters
@@ -15,7 +15,7 @@ cap_t = None
 
 """ Number of IMU data between prev. frame up to
     and including the next frame """
-num_imu_between_frames = 10
+interframe_vals = 10
 
 # Probe model
 scope_length        = 50            # []
@@ -44,16 +44,8 @@ stdev_q_cam = [0.05, 0.04, 0.025]
 stdevs0 = np.hstack((stdev_p, stdev_v, stdev_q, stdev_dofs, stdev_p_cam, stdev_q_cam))
 
 class Config(object):
-    def __init__(self, main_filename):
-        # params from user arguments
-        self.traj_name      = ''
-        self.do_prop_only   = False
-        self.Rp_val         = RP_VAL_DEFAULT
-        self.Rq_val         = RQ_VAL_DEFAULT
-        self._parse_arguments(main_filename)
-        
-        self.max_vals               = max_vals
-        self.num_imu_between_frames = num_imu_between_frames
+    def __init__(self):
+        args = self._parse_arguments()
 
         # probe
         """ Container for probe object containing only the symbolic
@@ -62,16 +54,23 @@ class Config(object):
         self.real_joint_dofs = probe.joint_dofs
         
         # noises
+        self.Rp_val     = args.Rp
+        self.Rq_val     = args.Rq
         self.meas_noise = np.hstack(([self.Rp_val]*3, [self.Rq_val]*4))
         
         # simulation params
+        self.do_prop_only       = args.do_prop_only in ['prop', 'p']
+        do_fast_sim             = bool(args.f)
+        self.max_vals           = 10 if do_fast_sim else max_vals
+        self.interframe_vals    = 1  if do_fast_sim else interframe_vals
         self.min_t          = None
         self.max_t          = None
         self.cap_t          = None
         self.total_data_pts = None
 
         # plot params
-        img_filename = self._gen_img_filename()
+        self.traj_name      = args.traj_name
+        img_filename        = self._gen_img_filename()
         self.img_filepath_imu = 'img/kf_' + img_filename + '_imu.png'
         self.img_filepath_cam = 'img/kf_' + img_filename + '_cam.png'
 
@@ -88,10 +87,10 @@ class Config(object):
         self.max_t      = camera.max_t
         self.cap_t      = camera.min_t + cap_t - 1 if cap_t else None
         self.total_data_pts = (self.max_vals - 1) * \
-                        self.num_imu_between_frames + 1
+                        self.interframe_vals + 1
 
     def get_imu(self, camera=None, gen_ref=False):
-        camera_interp = camera.interpolate(self.num_imu_between_frames)
+        camera_interp = camera.interpolate(self.interframe_vals)
         return Imu(probe, camera_interp, stdev_acc, stdev_om, gen_ref=gen_ref)
 
     def get_IC(self, imu, camera):
@@ -110,32 +109,27 @@ class Config(object):
         else:
             return self.traj_name + f'_upd_Rp{self.Rp_val}_Rq{self.Rq_val}'
 
-    def _parse_arguments(self, main_filename):
-        def print_usage():
-            print(f"Usage: {main_filename}",
-                "<traj_name> <prop> <Rpval> <Rqval>\n\n",
-                
-                    "\t<traj_name> : mandala0_mono, trans_x, rot_x, ...\n",
-                    "\t<prop>      : prop / update\n\n",
-                
-                "Optional:\n",
-                    "\t <Rpval>    : default is 1e2\n",
-                    "\t <Rqval>    : default is 0.5")
-            sys.exit()
+    def _parse_arguments(self):
+        parser = argparse.ArgumentParser(description='Run the VI-ESKF.')
 
-        try:
-            self.traj_name = sys.argv[1]
-            self.do_prop_only = False or (sys.argv[2] == 'prop')
-        except IndexError:
-            print_usage()
+        # positional args
+        parser.add_argument('traj_name', type=str,
+                        help='mandala0_mono, trans_x, rot_x, ...')
+        prop_choices = ['prop', 'p', 'update', 'u', 'pu']
+        parser.add_argument('do_prop_only', metavar='prop',
+                        choices=prop_choices,
+                        help=f'do propagation only or do prop + update;\n{prop_choices}')
 
-        # optional args
-        if len(sys.argv) > 3:
-            self._parse_meas_noise_from_args()
+        # optional arguments
+        parser.add_argument('-f', nargs='?',
+                        default=0, const=1, choices=[0, 1], type=int,
+                        help='fast sim. (only 10 frames)')
+        parser.add_argument('-Rp', default=RP_VAL_DEFAULT, type=float,
+                        help=f'camera position noise (default: {RP_VAL_DEFAULT})')
+        parser.add_argument('-Rq', default=RQ_VAL_DEFAULT,  type=float,
+                        help=f'camera rotation noise (default: {RQ_VAL_DEFAULT})')
 
-    def _parse_meas_noise_from_args(self):
-        self.Rp_val = float(sys.argv[3])
-        self.Rq_val = float(sys.argv[4])
+        return parser.parse_args()
 
     def print_config(self):
         print('Configuration: \n',
@@ -144,7 +138,7 @@ class Config(object):
                 
                 f'\t Num. cam. frames    : {self.max_vals}\n',
                 f'\t Num. IMU data       : {self.total_data_pts}\n',
-                f'\t(num. IMU b/w frames : {self.num_imu_between_frames})\n\n',
+                f'\t(num. IMU b/w frames : {self.interframe_vals})\n\n',
 
                 f'\t ## Noise values\n',
                 f'\t #  IMU measurement noise\n',
@@ -155,4 +149,3 @@ class Config(object):
                 f'\t cov_p      = {self.Rp_val}\n',
                 f'\t cov_q      = {self.Rq_val}\n',
                 )
-        print(f'----------------------------')

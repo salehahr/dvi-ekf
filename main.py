@@ -3,7 +3,7 @@ from Filter import Filter
 from tqdm import tqdm
 
 ## initialise objects
-config      = Config(__file__)
+config      = Config()
 camera      = config.get_camera()
 imu         = config.get_imu(camera, gen_ref=True)
 x0, cov0    = config.get_IC(imu, camera)
