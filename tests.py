@@ -17,7 +17,7 @@ from casadi import *
 from roboticstoolbox.backends.PyPlot import PyPlot
 import matplotlib.pyplot as plt
 
-cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=5)
+cam = Camera(filepath='./trajs/mandala0_gt.txt', max_vals=5)
 
 def do_plot(robot, q, elev=None, azim=None):
     env = PyPlot()
@@ -69,11 +69,12 @@ def view_selector(robot, q):
 class TestCamera(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.cam = Camera(filepath='./trajs/offline_mandala0_gt.txt', max_vals=10)
+        cls.cam = Camera(filepath='./trajs/mandala0_gt.txt', max_vals=10)
 
         num_imu_between_frames = 10
         cls.cam_interp = cls.cam.interpolate(num_imu_between_frames)
 
+    @unittest.skip('Skip plot')
     def test_plot(self):
         ax = self.cam.traj.plot()
         ax = self.cam_interp.traj.plot(axes=ax)
@@ -309,7 +310,7 @@ class TestFilter(unittest.TestCase):
 
         # imu
         imu = Imu(cls.probe, cam)
-        imu.eval_init(cls.probe.q, cls.probe.qd, cls.probe.qdd)
+        imu.eval_init()
         cls.imu = imu
 
         # fwkin

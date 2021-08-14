@@ -1,5 +1,6 @@
 import roboticstoolbox as rtb
 from spatialmath import SE3
+from spatialmath.base.symbolic import issymbol
 
 from casadi import *
 import numpy as np
@@ -173,7 +174,7 @@ class Probe(rtb.DHRobot):
         """ Modified to enable printing of table with symbolic offsets."""
 
         offsets = [L.offset for L in self]
-        offset_sym = [sym.issymbol(offset) for offset in offsets]
+        offset_sym = [issymbol(offset) for offset in offsets]
 
         # convert symbolic offsets to float
         for i, is_sym in enumerate(offset_sym):
