@@ -12,42 +12,45 @@ import symbols as sym
 import symbolic_eqns as eqns
 
 class Filter(object):
-    def __init__(self, imu, probe, IC, P0, meas_noise):
-        self.num_states = IC.size
-        self.num_error_states = IC.size - 2
+    def __init__(self, config, imu, x0, cov0):
+        self.num_states = x0.size
+        self.num_error_states = x0.size - 2
         self.num_meas = 7
         self.num_noise = 12
 
-        self.states = copy(IC)
-        # self.err_states = ErrorStates([0] * self.num_error_states) # defaults to zero
+        self.states = copy(x0)
         self._x = []
         self._u = []
 
         self.dt = 0.
-        self.traj = FilterTraj("kf")
 
         # imu / noise
         self.imu = imu
-        self.probe = probe
+        self.imu.eval_init()
+        self.probe = config.sym_probe
 
-        self.stdev_na = np.array(imu.stdev_na)
-        self.stdev_nom = np.array(imu.stdev_nom)
-        self.R = np.diag(meas_noise)
+        self.stdev_na = np.array(self.imu.stdev_na)
+        self.stdev_nom = np.array(self.imu.stdev_nom)
+        self.R = np.diag(config.meas_noise)
 
         # buffer
-        self._om_old = imu.om.squeeze()
-        self._acc_old = imu.acc.squeeze()
+        self._om_old = self.imu.om.squeeze()
+        self._acc_old = self.imu.acc.squeeze()
         self.R_WB_old = self.states.q.rot
-        self._states_old = copy(IC)
+        self._states_old = copy(x0)
 
         # covariance
-        self.P = P0
+        self.P = cov0
         assert(self.P.shape == (self.num_error_states, self.num_error_states))
 
         # static matrices
         self.Hx = np.zeros([self.num_meas, self.num_states])
         self.Hx[:3,-6:-3] = np.eye(3)
         self.Hx[3:7,-4:] = np.eye(4)
+
+        # plot at t=0
+        self.traj = FilterTraj("kf")
+        self.traj.append_state(config.min_t, self.states)
 
     @property
     def x(self):
@@ -69,7 +72,8 @@ class Filter(object):
 
     @property
     def Om_old(self):
-        return Quaternion(w=1., v=(0.5 * self.dt * self.om_old), do_normalise=True )
+        return Quaternion(w=1., v=(0.5 * self.dt * self.om_old),
+                do_normalise=True )
 
     @property
     def acc_old(self):

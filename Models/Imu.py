@@ -1,5 +1,5 @@
 from . import context
-from Filter import ImuTraj
+from Filter import ImuTraj, ImuRefTraj
 
 import numpy as np
 import sympy as sp
@@ -43,7 +43,9 @@ import symbolic_eqns as eqns
     """
 
 class Imu(object):
-    def __init__(self, probe, cam, stdev_na=None, stdev_nom=None):
+    def __init__(self, probe, cam,
+            stdev_na=None, stdev_nom=None,
+            gen_ref=False):
         # from datasheet
         self.stdev_na = stdev_na
         self.stdev_nom = stdev_nom
@@ -73,6 +75,7 @@ class Imu(object):
 
         # for trajectory reconstruction/plotting
         self.traj = None
+        self.ref = ImuRefTraj("imu ref", self) if gen_ref else None
         self._num_imu_between_frames = None
 
         self._flag_interpolated = False

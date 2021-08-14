@@ -87,8 +87,6 @@ class Trajectory(object):
         num_new_datapoints = (num_old_datapoints - 1) * num_imu_between_frames + 1
         new_t = np.linspace(tmin, tmax, num=num_new_datapoints)
 
-        print(f"Interpolating {self.name} data: {num_old_datapoints} --> {num_new_datapoints} values.")
-
         for label in self.labels:
             if label == 't':
                 interp_obj.t = new_t
