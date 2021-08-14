@@ -10,6 +10,7 @@ import casadi
 from . import context
 import symbols as sym
 import symbolic_eqns as eqns
+from Visuals import FilterPlot
 
 class Filter(object):
     def __init__(self, config, imu, x0, cov0):
@@ -48,7 +49,7 @@ class Filter(object):
         self.Hx[:3,-6:-3] = np.eye(3)
         self.Hx[3:7,-4:] = np.eye(4)
 
-        # plot at t=0
+        # plot
         self.traj = FilterTraj("kf")
         self.traj.append_state(config.min_t, self.states)
 
@@ -253,3 +254,6 @@ class Filter(object):
         self.P = G @ self.P @ G.T
 
         return K
+
+    def plot(self, config, t_end, camera_traj):
+        FilterPlot(self.traj, camera_traj, self.imu.ref).plot(config, t_end)

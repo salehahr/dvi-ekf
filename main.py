@@ -29,5 +29,4 @@ for i, t in enumerate(camera.t[1:]):
     old_t = t
 
 ## plot results
-from plotter import plot_trajectories
-plot_trajectories(config, t, kf.traj, camera, imu)
+kf.plot(config, t, camera.traj)
