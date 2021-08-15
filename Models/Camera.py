@@ -1,7 +1,9 @@
 import numpy as np
-from Filter import VisualTraj
 
 from .Interpolator import Interpolator
+
+from Filter import VisualTraj
+from Visuals import CameraPlot
 
 class Camera(object):
     """ Class for the camera sensor which reads data from a text file.
@@ -106,6 +108,9 @@ class Camera(object):
         alp = self.alp[:,i].reshape(3,1)
 
         return [p, R, v, om, acc, alp]
+
+    def plot(self):
+        CameraPlot(self).plot()
 
 class CameraInterpolated(Camera):
     def __init__(self, traj):

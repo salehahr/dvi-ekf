@@ -1,1 +1,1 @@
-from .Plotter import FilterPlot
+from .Plotter import FilterPlot, CameraPlot

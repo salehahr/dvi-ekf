@@ -1,23 +1,5 @@
-import math
-import matplotlib.pyplot as plt
-
-default_line_format = { 'linewidth' : 0.8,
-                        'linestyle' : '--',
-                        'color'     : 'darkgrey'}
-
-kf_line_format      = { 'linewidth' : 0.75,
-                        'linestyle' : '-',
-                        'color'     : 'blue'}
-
-imuref_line_format  = { 'linewidth' : 0.75,
-                        'linestyle' : '--',
-                        'color'     : 'tab:green'}
-
-def show_plot(plot_func, *args):
-    def wrapper(*args):
-        plot_func(*args)
-        plt.show()
-    return wrapper
+from . import line_formats as lf
+from .decorators import *
 
 class Plotter(object):
     def __init__(self):
@@ -34,7 +16,13 @@ class Plotter(object):
 
         return row, col
 
-    def _init_figure(self, axes, num_rows, num_cols):
+    def _get_ax(self, axes, ai, num_rows):
+        row, col = self._get_plot_rc(ai, num_rows)
+        a = axes[row][col]
+        a.set_visible(True)
+        return a
+
+    def _init_axes(self, axes, num_rows, num_cols):
         if axes is None:
             fig, axes = plt.subplots(num_rows, num_cols)
             fig.tight_layout()
@@ -46,6 +34,12 @@ class Plotter(object):
             a.set_xlim(left=self.min_t, right=self.max_t)
 
         return axes
+
+    def _plot_vals(self, ax, vals_dict: dict):
+        for name, v in vals_dict.items():
+            vals = v['vals']
+            if vals != []:
+                ax.plot(v['t'], vals, label=name)
 
     ### Ax postfix
     def _ax_postfix(self, a, label, *values):
@@ -84,16 +78,34 @@ class Plotter(object):
         return min_val, max_val
 
     ### Fig postfix
+    def _fig_postfix(self, filename, axes, offset, num_rows):
+        """ Late setting of line styles, save figure. """
+        self._set_line_styles(axes)
+        self._put_legend_near_first_plot(axes, offset, num_rows)
+        self.save(filename)
+
+    def _put_legend_near_first_plot(self, axes, offset, num_rows):
+        r0, c0 = self._get_plot_rc(offset, num_rows)
+        axes[r0][c0].legend(bbox_to_anchor=(1., 2.))
+
     def _set_line_styles(self, axes):
         for ax in axes.reshape(-1):
             for line in ax.get_lines():
                 self._set_plot_line_format(line)
 
     def _set_plot_line_format(self, line):
-        pass
+        label = line.get_label()
+        if label == 'kf':
+            self._apply_lf_dict(line, lf.kf)
+        elif label == 'imu ref':
+            self._apply_lf_dict(line, lf.imuref)
+        elif 'interpl' in label:
+            self._apply_lf_dict(line, lf.interpl)
+        else:
+            self._apply_lf_dict(line, lf.default)
 
-    def _apply_lf_dict(self, line, ls_dict):
-        for k, v in ls_dict.items():
+    def _apply_lf_dict(self, line, lf_dict):
+        for k, v in lf_dict.items():
             if isinstance(v, str):
                 v = '\'' + v + '\''
             else:
@@ -104,100 +116,92 @@ class Plotter(object):
         if filename:
             plt.savefig(filename, dpi=200)
 
+class CameraPlot(Plotter):
+    def __init__(self, camera):
+        self.min_t      = camera.traj.t[0]
+        self.max_t      = camera.traj.t[-1]
+
+        self.traj       = camera.traj
+        self.jump_labels = ['x']
+
+    @show_plot
+    def plot(self, axes=None):
+        labels      = self.traj.labels[1:]
+        num_cols    = 2
+        offset      = 1
+
+        self._get_plot_objects(filename=None, labels=labels,
+                        num_cols=num_cols, axes=axes)
+
+    @plot_loop
+    def _get_plot_objects(self, label, **kwargs):
+        objs = [self.traj]
+        vals = [self.traj.__dict__[label]]
+        return objs, vals
+
 class FilterPlot(Plotter):
     def __init__(self, traj, cam_traj, imu_ref):
         self.min_t = None
         self.max_t = None
-        super().__init__()
 
         self.traj       = traj
         self.cam_traj   = cam_traj
         self.imu_ref    = imu_ref
 
+        """ labels that start at row = 1 """
+        self.jump_labels = ['x', 'vx', 'rx', 'dof1', 'dof4', 'xc', 'rxc']
+
     @show_plot
     def plot(self, config, t_end):
-        super().plot()
-
         self.min_t = config.min_t
         self.max_t = min(self.traj.t[-1], config.max_t, t_end)
 
         self._plot_imu_states(config)
         self._plot_camera_states(config)
 
-    def _plot_core(self, labels, num_cols, offset, filename='',
-            cam=None, imu_ref=None, imu_recon=None, axes=None):
-        num_rows = math.ceil( len(labels) / num_cols )
-        axes = self._init_figure(axes, num_rows, num_cols)
-
-        ai = offset
-        for i, label in enumerate(labels):
-            if label in ['vx', 'rx', 'dof1', 'dof4', 'rxc']:
-                ai += 1
-
-            row, col = self._get_plot_rc(ai, num_rows)
-            a = axes[row][col]
-            a.set_visible(True)
-
-            val_filt   = self.traj.__dict__[label]
-            val_cam    = cam.__dict__[label[:-1]] if cam \
-                                else []
-            val_imuref = imu_ref.__dict__[label] if \
-                            (imu_ref and 'dof' not in label) \
-                                else []
-            val_recon  = imu_recon.__dict__[label] \
-                            if (imu_recon and label in imu_recon.__dict__) \
-                                else []
-
-            self._plot_vals(self.traj, val_filt, a)
-            self._plot_vals(cam, val_cam, a)
-            self._plot_vals(imu_ref, val_imuref, a)
-            self._plot_vals(imu_recon, val_recon, a)
-
-            self._ax_postfix(a, label, *val_filt, *val_cam,
-                                    *val_imuref, *val_recon)
-            ai += 1
-
-        # late setting of line styles
-        self._set_line_styles(axes)
-
-        # position legend near first plot
-        r0, c0 = self._get_plot_rc(offset, num_rows)
-        axes[r0][c0].legend(bbox_to_anchor=(1., 2.))
-
-        self.save(filename)
-
-        return axes
-
-    def _plot_vals(self, val_container, vals, ax):
-        if vals != []:
-            ax.plot(val_container.t, vals,
-                    label=val_container.name)
-
     def _plot_imu_states(self, config, imu_recon=None,
             axes=None):
         labels = self.traj.labels_imu + self.traj.labels_imu_dofs
         num_cols = 6
 
-        offset = len(labels) % 2
-        return self._plot_core(labels, num_cols, offset,
-            imu_ref=self.imu_ref, imu_recon=imu_recon,
-            filename=config.img_filepath_imu, axes=axes)
+        self._get_plot_objects(labels = labels,
+                        num_cols = num_cols,
+                        filename = config.img_filepath_imu,
+                        cam = None,
+                        imu_ref = self.imu_ref,
+                        imu_recon = imu_recon,
+                        axes = axes)
 
     def _plot_camera_states(self, config, axes=None):
         labels = self.traj.labels_camera
         num_cols = 3
-        offset = 1
 
-        return self._plot_core(labels, num_cols, offset, cam=self.cam_traj,
-            filename=config.img_filepath_cam, axes=axes)
+        self._get_plot_objects(labels = labels,
+                        num_cols = num_cols,
+                        filename = config.img_filepath_cam,
+                        cam = self.cam_traj,
+                        imu_ref = None,
+                        imu_recon = None,
+                        axes = axes)
 
-    def _set_plot_line_format(self, line):
-        super()._set_plot_line_format(line)
+    @plot_loop
+    def _get_plot_objects(self, label, **kwargs):
+        cam         = kwargs['cam']
+        imu_ref     = kwargs['imu_ref']
+        imu_recon   = kwargs['imu_recon']
 
-        label = line.get_label()
-        if label == 'kf':
-            self._apply_lf_dict(line, kf_line_format)
-        elif label == 'imu ref':
-            self._apply_lf_dict(line, imuref_line_format)
-        else:
-            self._apply_lf_dict(line, default_line_format)
+        val_filt   = self.traj.__dict__[label]
+        val_cam    = cam.__dict__[label[:-1]] if cam \
+                            else []
+        val_imuref = imu_ref.__dict__[label] if \
+                        (imu_ref and 'dof' not in label) \
+                            else []
+        val_recon  = imu_recon.__dict__[label] \
+                        if (imu_recon and label in imu_recon.__dict__) \
+                            else []
+
+        objs = [self.traj, cam, imu_ref, imu_recon]
+        vals = [val_filt, val_cam, val_imuref, val_recon]
+
+        return objs, vals
+

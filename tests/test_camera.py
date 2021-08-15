@@ -10,9 +10,8 @@ class TestCamera(unittest.TestCase):
 
     @unittest.skip('Skip plot')
     def test_plot(self):
-        ax = self.cam.traj.plot()
-        ax = self.cam_interp.traj.plot(axes=ax)
-        plt.show()
+        self.cam.plot()
+        self.cam_interp.plot()
 
 if __name__ == '__main__':
     from functions import run_only
