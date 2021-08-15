@@ -6,9 +6,7 @@ class TestCamera(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.cam = Camera(filepath='./trajs/mandala0_gt.txt', max_vals=10)
-
-        num_imu_between_frames = 10
-        cls.cam_interp = cls.cam.interpolate(num_imu_between_frames)
+        cls.cam_interp = cls.cam.interpolate(interframe_vals = 10)
 
     @unittest.skip('Skip plot')
     def test_plot(self):
