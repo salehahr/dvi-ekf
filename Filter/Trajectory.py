@@ -23,7 +23,7 @@ class Trajectory(object):
         self.cap = cap
 
         self._nvals = 0
-        self._flag_interpolated = False
+        self._is_interpolated = False
         self._num_imu_between_frames = 1
 
         self.clear()
@@ -39,15 +39,19 @@ class Trajectory(object):
         return len(self.t)
 
     @property
-    def flag_interpolated(self):
-        return self._flag_interpolated
+    def is_interpolated(self):
+        return self._is_interpolated
+
+    @is_interpolated.setter
+    def is_interpolated(self, val: bool):
+        self._is_interpolated = val
 
     @property
-    def num_imu_between_frames(self):
+    def interframe_vals(self):
         return self._num_imu_between_frames
 
-    @num_imu_between_frames.setter
-    def num_imu_between_frames(self, val):
+    @interframe_vals.setter
+    def interframe_vals(self, val):
         self._num_imu_between_frames = val
 
     def __iter__(self):
@@ -74,31 +78,6 @@ class Trajectory(object):
                 if cap is not None:
                     if i >= cap - 1:
                         break
-
-    def interpolate(self, old_t, num_imu_between_frames, interp_obj=None):
-        """ Generates data points between frames. """
-        interp_obj = self if (interp_obj is None) else interp_obj
-        interp_obj.num_imu_between_frames = num_imu_between_frames
-
-        tmin = old_t[0]
-        tmax = old_t[-1]
-        num_old_datapoints = len(old_t)
-
-        num_new_datapoints = (num_old_datapoints - 1) * num_imu_between_frames + 1
-        new_t = np.linspace(tmin, tmax, num=num_new_datapoints)
-
-        for label in self.labels:
-            if label == 't':
-                interp_obj.t = new_t
-                continue
-
-            val = self.__dict__[label]
-
-            # interpolating
-            np.interp(new_t, old_t, val)
-            interp_obj.__dict__[label] = np.interp(new_t, old_t, val)
-
-        interp_obj._flag_interpolated = True
 
     def plot(self, axes=None, min_t=None, max_t=None, dist=None,
         plot_euler=False, euler_extrinsic=True):
@@ -226,74 +205,6 @@ class Trajectory(object):
 
         return ax
 
-    def plot_velocities(self, axes=None, min_t=None, max_t=None):
-        num_labels = 3
-        num_rows = 3
-
-        if axes is None:
-            fig, axes = plt.subplots(num_rows, 1)
-            fig.tight_layout()
-
-        for row, label in enumerate(['vx', 'vy', 'vz']):
-            if 'imu' in self.name:
-                t = self.t
-            elif 'kf' in self.name:
-                t = self.t
-            else:
-                t = self.interpolated.t
-
-            axes[row].plot(t, self.__dict__[label],
-                label=self.name)
-
-            latex_label = self._get_latex_label(label)
-            axes[row].set_title(latex_label)
-            axes[row].set_xlim(left=min_t, right=max_t)
-            axes[row].grid(True)
-
-        # late setting of line styles
-        for ax in axes.reshape(-1):
-            for line in ax.get_lines():
-                self._set_plot_line_style(line)
-
-        # legend on last plot
-        axes[row].legend()
-
-        return axes
-
-    def plot_pc(self, axes=None, min_t=None, max_t=None):
-        num_labels = 3
-        num_rows = 3
-
-        if axes is None:
-            fig, axes = plt.subplots(num_rows, 1)
-            fig.tight_layout()
-
-        for row, label in enumerate(['cx', 'cy', 'cz']):
-            if 'imu' in self.name:
-                t = self.t
-            elif 'kf' in self.name:
-                t = self.t
-            else:
-                t = self.interpolated.t
-
-            axes[row].plot(t, self.__dict__[label],
-                label=self.name)
-
-            latex_label = self._get_latex_label(label)
-            axes[row].set_title(latex_label)
-            axes[row].set_xlim(left=min_t, right=max_t)
-            axes[row].grid(True)
-
-        # late setting of line styles
-        for ax in axes.reshape(-1):
-            for line in ax.get_lines():
-                self._set_plot_line_style(line)
-
-        # legend on last plot
-        axes[row].legend()
-
-        return axes
-
     def plot_sens_noise(self, Rp, Rq, Q, axes=None, min_t=None, max_t=None):
         num_labels = 4
         num_rows = 4
@@ -363,7 +274,6 @@ class VisualTraj(Trajectory):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
         super().__init__(name, labels, filepath, cap)
 
-        self.interpolated = None
         self.quats = None
 
         if self.qx:
@@ -400,13 +310,6 @@ class VisualTraj(Trajectory):
                 self.__dict__[label] = [data[i]]
             else:
                 self.__dict__[label].append(data[i])
-
-    def interpolate(self, num_imu_between_frames):
-        """ Generates interpolated/fitted data points between frames. """
-
-        self.interpolated = VisualTraj(self.name + ' interpl')
-        super().interpolate(self.t, num_imu_between_frames, self.interpolated)
-        self.interpolated._gen_quats_farray()
 
     def _set_plot_line_style(self, line):
         """ Defines line styles for IMU plot. """
@@ -553,7 +456,7 @@ class ImuTraj(Trajectory):
 
     def __init__(self, name="imu", filepath=None, vis_data=None,
         cap=None,
-        num_imu_between_frames=0,
+        interframe_vals=0,
         covariance = [0.] * 6,
         unnoised = False):
 
@@ -585,8 +488,7 @@ class ImuTraj(Trajectory):
             Involves transformation from SLAM world coordinates
             to IMU coordinates."""
 
-        self.vis_data.interpolate(self.num_imu_between_frames)
-        interpolated = self.vis_data.interpolated
+        interpolated = Interpolator(self.interframe_vals, self.vis_data).interpolated
         dt = interpolated.t[1] - interpolated.t[0]
 
         # get rotations for coordinate transformation
@@ -642,7 +544,7 @@ class ImuTraj(Trajectory):
 
         noisy = ImuTraj(name="noisy imu",
             filepath=filename_noisy,
-            num_imu_between_frames=self.num_imu_between_frames,
+            interframe_vals=self.interframe_vals,
             covariance=covariance)
         noisy.clear()
 
@@ -659,10 +561,6 @@ class ImuTraj(Trajectory):
 
         if self.filepath:
             self._write_to_file(filename_noisy)
-
-    def interpolate(self):
-        """ Generates IMU data points between frames. """
-        super().interpolate(self.t, self.num_imu_between_frames)
 
     def _write_to_file(self, filename=None):
         """ Writes IMU trajectory to file. """

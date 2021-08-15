@@ -1,6 +1,8 @@
 import numpy as np
 from Filter import VisualTraj
 
+from .Interpolator import Interpolator
+
 class Camera(object):
     """ Class for the camera sensor which reads data from a text file.
 
@@ -106,9 +108,9 @@ class Camera(object):
         self._num_imu_between_frames = self.traj.num_imu_between_frames
         return self._num_imu_between_frames
 
-    def interpolate(self, num_imu_between_frames):
-        self.traj.interpolate(num_imu_between_frames)
-        return Camera(filepath='', traj=self.traj.interpolated)
+    def interpolate(self, interframe_vals):
+        interpolated = Interpolator(interframe_vals, self.traj).interpolated
+        return Camera(filepath='', traj=interpolated)
 
     def generate_queue(self, old_t, new_t):
         """ After old_t, up till new_t. """
@@ -139,6 +141,9 @@ class Camera(object):
         alp = self.alp[:,i].reshape(3,1)
 
         return [p, R, v, om, acc, alp]
+
+class CameraInterpolated(Camera):
+    pass
 
 class Queue(object):
     def __init__(self):
