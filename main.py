@@ -22,7 +22,7 @@ for i, t in cam_timestamps:
 
     # update
     if not config.do_prop_only:
-        current_cam = camera.traj.at_index(i + 1) # not counting IC
+        current_cam = camera.at_index(i + 1) # not counting IC
         K = kf.update(current_cam)
         if K is None: break
 

@@ -55,7 +55,10 @@ class Plotter(object):
         elif 'dof' in label:
             return 'dof$_' + label[-1] + '$'
         elif label[-1] == 'c':
-            return '$' + label[0] + '_{' + label[1:] + '}$'
+            if 'deg' in label:
+                return '$' + label[0] + '_{' + label[1:-5] + 'c}$'
+            else:
+                return '$' + label[0] + '_{' + label[1:] + '}$'
         else:
             return '$' + label[0] + '_' + label[1] + '$'
 
@@ -149,7 +152,7 @@ class FilterPlot(Plotter):
         self.imu_ref    = imu_ref
 
         """ labels that start at row = 1 """
-        self.jump_labels = ['x', 'vx', 'rx', 'dof1', 'dof4', 'xc', 'rxc']
+        self.jump_labels = ['x', 'vx', 'rx', 'dof1', 'dof4', 'xc', 'rx_degc']
 
     @show_plot
     def plot(self, config, t_end):
@@ -191,6 +194,7 @@ class FilterPlot(Plotter):
         imu_recon   = kwargs['imu_recon']
 
         val_filt   = self.traj.__dict__[label]
+
         val_cam    = cam.__dict__[label[:-1]] if cam \
                             else []
         val_imuref = imu_ref.__dict__[label] if \

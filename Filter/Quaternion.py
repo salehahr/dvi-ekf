@@ -1,6 +1,5 @@
 import numpy as np
 import math
-# import quaternion # convenient for quat multiplication, normalisation
 from scipy.spatial.transform import Rotation as R
 
 def skew(x):
@@ -8,8 +7,13 @@ def skew(x):
                      [x[2],    0, -x[0]],
                      [-x[1], x[0],    0]])
 
+def raise_wrong_input(val):
+    print(f"Wrong input type to Quaternion! Is: {type(val)}")
+    raise TypeError
+
 class Quaternion(object):
-    """ Quaternion convenience class. """
+    """ Quaternion convenience class.
+        Euler rotations are extrinsic: rotations about the fixed CS. """
 
     def __init__(self, val=None, x=None, y=None, z=None, w=None, v=None, do_normalise=False, euler=''):
         self.x = x
@@ -35,19 +39,15 @@ class Quaternion(object):
                 self.z = val.z
                 self.w = val.w
             else:
-                print(f"Wrong input type to Quaternion! Is: {type(val)}")
-                raise TypeError
-
+                raise_wrong_input(val)
         elif v is not None and w is not None:
             self.x, self.y, self.z = v.reshape(3,)
-
-        elif x is not None and y is not None and z is not None and w is not None:
+        elif not None in [x, y, z, w]:
             pass
         else:
-            print("Wrong input type to Quaternion!")
-            raise TypeError
+            raise_wrong_input(val)
 
-        # normalize
+        # normalise
         if do_normalise:
             self.normalise()
 
@@ -60,12 +60,13 @@ class Quaternion(object):
 
     # rotation representations
     @property
-    def R(self):
+    def sp_rot(self):
+        """ Scipy Rotation object """
         return R.from_quat(self.xyzw)
 
     @property
     def rot(self):
-        return R.from_quat(self.xyzw).as_matrix()
+        return self.sp_rot.as_matrix()
 
     @property
     def wxyz(self):
@@ -76,16 +77,20 @@ class Quaternion(object):
         return np.asarray([self.x, self.y, self.z, self.w])
 
     @property
-    def euler_xyz(self):
-        return R.from_quat(self.xyzw).as_euler('xyz')
+    def euler_xyz_rad(self):
+        return self.sp_rot.as_euler('xyz', degrees=False)
 
     @property
     def euler_xyz_deg(self):
-        return R.from_quat(self.xyzw).as_euler('xyz', degrees=True)
+        return self.sp_rot.as_euler('xyz', degrees=True)
 
     @property
-    def euler_zyx(self):
-        return R.from_quat(self.xyzw).as_euler('zyx')
+    def euler_zyx_rad(self):
+        return self.sp_rot.as_euler('zyx', degrees=False)
+
+    @property
+    def euler_zyx_deg(self):
+        return self.sp_rot.as_euler('zyx', degrees=True)
 
     @property
     def conjugate(self):
@@ -110,7 +115,7 @@ class Quaternion(object):
 
         ax1 = np.zeros(3,) if math.isclose(ang1, 0) else \
                 self.v / np.linalg.norm(self.v)
-        # ax2 = R.from_quat(self.xyzw).as_rotvec()
+        # ax2 = self.sp_rot.as_rotvec()
         # ax3 = np.zeros(3,) if math.isclose(ang3, 0) else \
                 # self.v / np.sin (ang3)
         # print(f'ax1 {ax1}')

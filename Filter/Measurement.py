@@ -17,20 +17,20 @@ class VisualMeasurement(Measurement):
     """ Visual measurements from SLAM
     containing position and orientation. """
 
-    def __init__(self, t, pos, rot):
-        super().__init__(t, pos, rot)
+    def __init__(self, t, pos, q_xyzw):
+        super().__init__(t, pos, q_xyzw)
 
         self.pos = pos
         self.x = pos[0]
         self.y = pos[1]
         self.z = pos[2]
 
-        self.rot = rot
-        self.qx = rot[0]
-        self.qy = rot[1]
-        self.qz = rot[2]
-        self.qw = rot[3]
-        self.qrot = Quaternion(val=rot, do_normalise=True)
+        self.rot = q_xyzw
+        self.qx = q_xyzw[0]
+        self.qy = q_xyzw[1]
+        self.qz = q_xyzw[2]
+        self.qw = q_xyzw[3]
+        self.qrot = Quaternion(val=q_xyzw, do_normalise=True)
 
 class ImuMeasurement(Measurement):
     """ IMU measurements containing acceleration and angular velocity.

@@ -1,4 +1,4 @@
-import os
+import os, sys
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,15 +16,15 @@ class Trajectory(object):
         a filepath.
     """
 
-    def __init__(self, name, labels, filepath=None, cap=None):
+    def __init__(self, name: str, labels: list,
+                        filepath: str = None, cap: int = None):
         self.name = name
         self.labels = labels
         self.filepath = filepath
         self.cap = cap
 
-        self._nvals = 0
         self._is_interpolated = False
-        self._num_imu_between_frames = 1
+        self._interframe_vals = 1
 
         self.clear()
         if filepath:
@@ -48,11 +48,11 @@ class Trajectory(object):
 
     @property
     def interframe_vals(self):
-        return self._num_imu_between_frames
+        return self._interframe_vals
 
     @interframe_vals.setter
     def interframe_vals(self, val):
-        self._num_imu_between_frames = val
+        self._interframe_vals = val
 
     def __iter__(self):
         for attr, value in self.__dict__.items():
@@ -78,6 +78,16 @@ class Trajectory(object):
                 if cap is not None:
                     if i >= cap - 1:
                         break
+
+    def append_data(self, t, data_labels, data):
+        """ Appends new data not already belonging to the existing
+            labels. """
+
+        for i, label in enumerate(data_labels):
+            if label not in self.__dict__:
+                self.__dict__[label] = [data[i]]
+            else:
+                self.__dict__[label].append(data[i])
 
     def plot_3d(self, ax=None):
         if ax is None:
@@ -110,14 +120,13 @@ class VisualTraj(Trajectory):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
         super().__init__(name, labels, filepath, cap)
 
-        self.quats = None
+        self.quats  = None
+        self.rx_deg = None
+        self.ry_deg  = None
+        self.rz_deg = None
 
         if self.qx:
             self.gen_angle_arrays()
-
-    @property
-    def R(self):
-        return [q.rot for q in self.quats]
 
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
@@ -133,27 +142,19 @@ class VisualTraj(Trajectory):
         qy = self.qy[index]
         qz = self.qz[index]
         qw = self.qw[index]
-        rot = np.array([qx, qy, qz, qw])
+        q_xyzw = np.array([qx, qy, qz, qw])
 
-        return VisualMeasurement(t, pos, rot)
-
-    def append_data(self, t, data_labels, data):
-        """ Appends new data not already belonging to the existing
-            labels. """
-
-        for i, label in enumerate(data_labels):
-            if label not in self.__dict__:
-                self.__dict__[label] = [data[i]]
-            else:
-                self.__dict__[label].append(data[i])
+        return VisualMeasurement(t, pos, q_xyzw)
 
     def gen_angle_arrays(self):
-        self._gen_quats_farray()
+        self._gen_quats_array()
         self._gen_euler_angles()
 
-    def _gen_quats_farray(self):
+    def _gen_quats_array(self):
         self.quats = [Quaternion(x=self.qx[i],
-                        y=self.qy[i], z=self.qz[i], w=w, do_normalise=True)
+                        y=self.qy[i],
+                        z=self.qz[i],
+                        w=w, do_normalise=True)
                         for i, w in enumerate(self.qw)]
 
     def _gen_euler_angles(self):
@@ -161,39 +162,14 @@ class VisualTraj(Trajectory):
             intrinsic: XYZ: rotations about moving CS """
 
         euler = np.array([R.from_quat(q.xyzw).as_euler('xyz', degrees=True) for q in self.quats])
-        self.rx = euler[:,0]
-        self.ry = euler[:,1]
-        self.rz = euler[:,2]
+        self.rx_deg = euler[:,0]
+        self.ry_deg = euler[:,1]
+        self.rz_deg = euler[:,2]
 
-        euler = np.array([R.from_quat(q.xyzw).as_euler('XYZ', degrees=True) for q in self.quats])
-        self.rX = euler[:,0]
-        self.rY = euler[:,1]
-        self.rZ = euler[:,2]
-
-    def get_meas(self, old_t, current_t):
-        """ Gets measurement, if any, after old_t up to current_t. """
-
-        prev_index = self._get_index_at(old_t) # end of old imu queue
-        next_index = self._get_index_at(current_t)
-        assert(prev_index <= next_index)
-
-        if prev_index == next_index:
-            return None
-        else:
-            t = self.t[next_index]
-
-            x = self.x[next_index]
-            y = self.y[next_index]
-            z = self.z[next_index]
-            pos = np.vstack((x, y, z))
-
-            qx = self.qx[next_index]
-            qy = self.qy[next_index]
-            qz = self.qz[next_index]
-            qw = self.qw[next_index]
-            rot = np.vstack((qx, qy, qz, qw))
-
-            return VisualMeasurement(t, pos, rot)
+        # euler = np.array([R.from_quat(q.xyzw).as_euler('XYZ', degrees=True) for q in self.quats])
+        # self.rX_deg = euler[:,0]
+        # self.rY_deg = euler[:,1]
+        # self.rZ_deg = euler[:,2]
 
 class ImuRefTraj(Trajectory):
     """ Desired traj of the IMU. """
@@ -227,7 +203,7 @@ class FilterTraj(Trajectory):
         self.labels_imu_dofs = [ 'dof1', 'dof2', 'dof3',
                     'dof4', 'dof5', 'dof6']
         self.labels_camera = ['xc', 'yc', 'zc',
-                    'rxc', 'ryc', 'rzc',
+                    'rx_degc', 'ry_degc', 'rz_degc',
                     'qwc', 'qxc', 'qyc', 'qzc']
         labels = ['t', *self.labels_imu,
                     *self.labels_imu_dofs, *self.labels_camera]
@@ -235,15 +211,13 @@ class FilterTraj(Trajectory):
 
     def append_state(self, t, state):
         """ Appends new measurement from current state. """
-
-        euler_angs = R.from_quat(state.q.xyzw).as_euler('xyz', degrees=True)
-        euler_angs_C = R.from_quat(state.q_cam.xyzw).as_euler('xyz', degrees=True)
-        data = [t, *state.p, *state.v, *euler_angs, *state.q.wxyz,
+        data = [t, *state.p, *state.v,
+                    *state.q.euler_xyz_deg, *state.q.wxyz,
                     *state.dofs,
-                    *state.p_cam, *euler_angs_C, *state.q_cam.wxyz]
+                    *state.p_cam,
+                    *state.q_cam.euler_xyz_deg, *state.q_cam.wxyz]
 
         for i, label in enumerate(self.labels):
-            # print(f'{i} {label}: {data[i]}')
             self.__dict__[label].append(data[i])
 
     def write_to_file(self, filename=None, discard_interframe_vals=True):

@@ -17,9 +17,8 @@ class Camera(object):
     """
 
     def __init__(self, filepath, traj=None, max_vals=None):
-        self.traj_filepath = filepath
-        self.traj = traj if (traj) else \
-            VisualTraj("camera", self.traj_filepath, cap=max_vals)
+        self.traj = traj    if (traj) else \
+                    VisualTraj("camera", filepath, cap=max_vals)
         self.max_vals = len(self.traj.t)
 
         self.t      = self.traj.t
@@ -29,7 +28,7 @@ class Camera(object):
 
         # measured data
         self.p      = np.array((self.traj.x, self.traj.y, self.traj.z))
-        self.r      = np.array([q.euler_xyz for q in self.traj.quats]).T
+        self.r      = np.array([q.euler_xyz_rad for q in self.traj.quats]).T
         self.R      = [q.rot for q in self.traj.quats]
         self.q      = np.array([q.xyzw for q in self.traj.quats]).T
 
@@ -43,6 +42,10 @@ class Camera(object):
         self.om0    = self.om[:,0].reshape(3,1)
         self.acc0   = self.acc[:,0].reshape(3,1)
         self.alp0   = self.alp[:,0].reshape(3,1)
+
+    @property
+    def filepath(self):
+        return self.traj.filepath
 
     @property
     def v(self):
@@ -60,7 +63,7 @@ class Camera(object):
 
     @property
     def om(self):
-        ang_WC = np.asarray([q.euler_zyx for q in self.traj.quats])
+        ang_WC = np.asarray([q.euler_zyx_rad for q in self.traj.quats])
         rz, ry, rx = ang_WC[:,0], ang_WC[:,1], ang_WC[:,2]
 
         self._om = np.asarray( (np.gradient(rx, self.dt),
@@ -94,6 +97,9 @@ class Camera(object):
         queue.alp   = self.alp[:,old_i+1:new_i+1]
 
         return queue
+
+    def at_index(self, i):
+        return self.traj.at_index(i)
 
     def _get_index_at(self, T):
         """ Get index of camera data where the timestamp <= T. """

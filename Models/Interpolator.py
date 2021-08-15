@@ -30,7 +30,7 @@ class Interpolator(object):
         for label in self.uninterp_traj.labels:
             self._interpolate_label(label)
         self.flag_done = True
-        self.interp_traj._gen_quats_farray()
+        self.interp_traj._gen_quats_array()
 
     def _interpolate_label(self, label: str):
         """ Interpolate data corresponding to a single label. """
