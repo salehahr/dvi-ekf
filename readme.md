@@ -51,7 +51,7 @@ Only modifying `R_q`:
 
 ## Probe
 ```
-python3 old-tests/simple_rotation_anim.py
+python3 tests/simple_rotation_anim.py
 ```
 Unconstrained SLAM end | Constrained SLAM end
 --- | ---

@@ -14,14 +14,14 @@ Note: This repo was initially based on ![msf_eskf](https://github.com/skrogh/msf
 
 ## Offline trajectories
 ```
-python3 old-tests/plot_traj.py
+python3 tests/plot_traj.py
 ```
 ![](../img/offline_trajs.PNG)
 
 ## Fake IMU data
 ### Numerical
 ```
-python3 old-tests/plot_imu.py
+python3 tests/plot_imu.py
 ```
 
 How they were generated:
@@ -53,7 +53,7 @@ python3 simple_robot.py regen plot
 
 ## Reconstructed visual trajectory
 ```
-python3 old-tests/plot_reconstructed.py
+python3 tests/plot_reconstructed.py
 ```
 
 Aim here was to check whether the generation of fake IMU data was correct.
