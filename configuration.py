@@ -59,16 +59,17 @@ class Config(object):
         self.meas_noise = np.hstack(([self.Rp_val]*3, [self.Rq_val]*4))
         
         # simulation params
-        self.do_prop_only       = args.do_prop_only in ['prop', 'p']
         do_fast_sim             = bool(args.f)
         self.max_vals           = 10 if do_fast_sim else max_vals
         self.interframe_vals    = 1  if do_fast_sim else interframe_vals
+        self.do_prop_only       = args.do_prop_only in ['prop', 'p']
         self.min_t          = None
         self.max_t          = None
         self.cap_t          = None
         self.total_data_pts = None
 
         # plot params
+        self.do_plot        = not args.np
         self.traj_name      = args.traj_name
         img_filename        = self._gen_img_filename()
         self.img_filepath_imu = 'img/kf_' + img_filename + '_imu.png'
@@ -124,6 +125,9 @@ class Config(object):
         parser.add_argument('-f', nargs='?',
                         default=0, const=1, choices=[0, 1], type=int,
                         help='fast sim. (only 10 frames)')
+        parser.add_argument('-np', nargs='?',
+                        default=0, const=1, choices=[0, 1], type=int,
+                        help='no plotting')
         parser.add_argument('-Rp', default=RP_VAL_DEFAULT, type=float,
                         help=f'camera position noise (default: {RP_VAL_DEFAULT})')
         parser.add_argument('-Rq', default=RQ_VAL_DEFAULT,  type=float,

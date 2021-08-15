@@ -254,4 +254,6 @@ class Filter(object):
         return K
 
     def plot(self, config, t_end, camera_traj):
-        FilterPlot(self.traj, camera_traj, self.imu.ref).plot(config, t_end)
+        if config.do_plot:
+            FilterPlot(self.traj, camera_traj, self.imu.ref).plot(
+                config, t_end)
