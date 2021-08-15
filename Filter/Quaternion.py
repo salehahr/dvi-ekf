@@ -11,6 +11,20 @@ def raise_wrong_input(val):
     print(f"Wrong input type to Quaternion! Is: {type(val)}")
     raise TypeError
 
+def euler_error_checking(e1, e2, verbosity=False):
+    def ensure_close_deg(v1, v2, verbosity=False):
+        try:
+            assert(math.isclose(v1, v2, rel_tol=0.1, abs_tol=0.05))
+        except AssertionError as e:
+            if verbosity:
+                print(f'Error in Euler angle: {v1:+0.3f} vs {v2:+0.3f}')
+
+    x1, y1, z1 = e1
+    z2, y2, x2 = e2
+    ensure_close_deg(x1, x2, verbosity)
+    ensure_close_deg(y1, y2, verbosity)
+    ensure_close_deg(z1, z2, verbosity)
+
 class Quaternion(object):
     """ Quaternion convenience class.
         Euler rotations are extrinsic: rotations about the fixed CS. """
@@ -50,6 +64,12 @@ class Quaternion(object):
         # normalise
         if do_normalise:
             self.normalise()
+
+        # error checking
+        do_check = False
+        if do_check:
+            euler_error_checking(self.euler_xyz_deg,
+                                 self.euler_zyx_deg, verbosity=True)
 
     def __repr__(self):
         return f"Quaternion [x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f}, w={self.w:.3f}]"
