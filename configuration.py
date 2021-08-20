@@ -7,15 +7,13 @@ import sys, argparse
 import numpy as np
 
 # Data generation parameters
-""" Number of camera frames to be simulated """
-max_vals = None
-
-""" When to cap simulation """
-cap_t = None
-
 """ Number of IMU data between prev. frame up to
     and including the next frame """
-interframe_vals = 10
+NUM_IMU_DEFAULT = 10
+""" Number of camera frames to be simulated """
+NUM_CAM_DEFAULT = None
+""" When to cap simulation """
+cap_t = None
 
 # Probe model
 scope_length        = 50            # []
@@ -23,7 +21,7 @@ theta_cam_in_rad    = np.pi / 6     # [rad]
 
 probe = RigidSimpleProbe(scope_length=scope_length,
             theta_cam=theta_cam_in_rad)
-            
+
 # Camera parameters
 RP_VAL_DEFAULT = 0.1
 RQ_VAL_DEFAULT = 0.5
@@ -34,14 +32,14 @@ stdev_om  = [1e-3] * 3
 
 # Kalman filter parameters
 """ Values for initial covariance matrix """
-stdev_p = [0.1, 0.1, 0.1]
-stdev_v = [0.1, 0.1, 0.1]
-stdev_q = [0.05, 0.04, 0.025]
-stdev_dofs = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-stdev_p_cam = [0.1, 0.1, 0.1]
-stdev_q_cam = [0.05, 0.04, 0.025]
+stdev_dp = [0.1, 0.1, 0.1]
+stdev_dv = [0.1, 0.1, 0.1]
+stdev_theta = [0.05, 0.04, 0.025]
+stdev_ddofs = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+stdev_dp_cam = [0.1, 0.1, 0.1]
+stdev_theta_cam = [0.05, 0.04, 0.025]
 
-stdevs0 = np.hstack((stdev_p, stdev_v, stdev_q, stdev_dofs, stdev_p_cam, stdev_q_cam))
+stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_theta, stdev_ddofs, stdev_dp_cam, stdev_theta_cam))
 
 class Config(object):
     def __init__(self):
@@ -52,17 +50,19 @@ class Config(object):
             relative kinematics. """
         self.sym_probe       = SymProbe(probe)
         self.real_joint_dofs = probe.joint_dofs
-        
+
         # noises
         self.Rp_val     = args.Rp
         self.Rq_val     = args.Rq
         self.meas_noise = np.hstack(([self.Rp_val]*3, [self.Rq_val]*4))
         
         # simulation params
-        do_fast_sim             = bool(args.f)
-        self.max_vals           = 10 if do_fast_sim else max_vals
-        self.interframe_vals    = 1  if do_fast_sim else interframe_vals
-        self.do_prop_only       = args.do_prop_only in ['prop', 'p']
+        do_fast_sim                 = bool(args.f)
+        self.do_prop_only           = args.do_prop_only in ['prop', 'p']
+
+        self.max_vals               = 10 if do_fast_sim else args.nc
+        self.num_interframe_vals    = 1  if do_fast_sim else args.nb
+
         self.min_t          = None
         self.max_t          = None
         self.cap_t          = None
@@ -88,10 +88,10 @@ class Config(object):
         self.max_t      = camera.max_t
         self.cap_t      = camera.min_t + cap_t - 1 if cap_t else None
         self.total_data_pts = (self.max_vals - 1) * \
-                        self.interframe_vals + 1
+                        self.num_interframe_vals + 1
 
     def get_imu(self, camera=None, gen_ref=False):
-        camera_interp = camera.interpolate(self.interframe_vals)
+        camera_interp = camera.interpolate(self.num_interframe_vals)
         return Imu(probe, camera_interp, stdev_acc, stdev_om, gen_ref=gen_ref)
 
     def get_IC(self, imu, camera):
@@ -128,6 +128,12 @@ class Config(object):
         parser.add_argument('-np', nargs='?',
                         default=0, const=1, choices=[0, 1], type=int,
                         help='no plotting')
+
+        parser.add_argument('-nc', default=NUM_CAM_DEFAULT, type=int,
+                        help=f'max num of camera values (default: {NUM_CAM_DEFAULT})')
+        parser.add_argument('-nb', default=NUM_IMU_DEFAULT, type=int,
+                        help=f'num of IMU values b/w frames (default: {NUM_IMU_DEFAULT})')
+
         parser.add_argument('-Rp', default=RP_VAL_DEFAULT, type=float,
                         help=f'camera position noise (default: {RP_VAL_DEFAULT})')
         parser.add_argument('-Rq', default=RQ_VAL_DEFAULT,  type=float,
@@ -142,14 +148,22 @@ class Config(object):
                 
                 f'\t Num. cam. frames    : {self.max_vals}\n',
                 f'\t Num. IMU data       : {self.total_data_pts}\n',
-                f'\t(num. IMU b/w frames : {self.interframe_vals})\n\n',
+                f'\t(num. IMU b/w frames : {self.num_interframe_vals})\n\n',
 
                 f'\t ## Noise values\n',
+                f'\t #  Initial process noise\n',
+                f'\t std_dp             = {stdev_dp}\n',
+                f'\t std_dv             = {stdev_dv}\n',
+                f'\t std_theta          = {stdev_theta}\n',
+                f'\t stdev_ddofs        = {stdev_ddofs}\n',
+                f'\t stdev_dp_cam       = {stdev_dp_cam}\n',
+                f'\t stdev_theta_cam    = {stdev_theta_cam}\n\n',
+
                 f'\t #  IMU measurement noise\n',
                 f'\t std_acc    = {stdev_acc}\n',
                 f'\t std_om     = {stdev_om}\n\n',
                 
                 f'\t #  Camera measurement noise\n',
-                f'\t cov_p      = {self.Rp_val}\n',
-                f'\t cov_q      = {self.Rq_val}\n',
+                f'\t cov_pc     = {self.Rp_val}\n',
+                f'\t cov_qc     = {self.Rq_val}\n',
                 )
