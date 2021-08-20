@@ -17,16 +17,16 @@ NUM_CAM_DEFAULT = None
 cap_t = None
 
 # Probe model
-scope_length        = 50            # []
+scope_length        = 50            # [cm]
 theta_cam_in_rad    = np.pi / 6     # [rad]
 
 probe = RigidSimpleProbe(scope_length=scope_length,
             theta_cam=theta_cam_in_rad)
 
 # Camera parameters
-RP_VAL_DEFAULT = 0.1
-RQ_VAL_DEFAULT = 0.5
-SCALE          = 10
+RP_VAL_DEFAULT = 0.3                # [cm]
+RQ_VAL_DEFAULT = 5 * np.pi / 180    # [rad]
+SCALE          = 10                 # convert cam pos to cm
 
 # IMU parameters
 stdev_acc = [1e-3] * 3
@@ -65,7 +65,7 @@ class Config(object):
         # noises
         self.Rp_val     = args.Rp
         self.Rq_val     = args.Rq
-        self.meas_noise = np.hstack(([self.Rp_val]*3, [self.Rq_val]*4))
+        self.meas_noise = np.hstack(([self.Rp_val]*3, [self.Rq_val]*3))
         
         # simulation params
         do_fast_sim                 = bool(args.f)
@@ -175,6 +175,8 @@ class Config(object):
                 f'\t std_om     = {stdev_om}\n\n',
                 
                 f'\t #  Camera measurement noise\n',
-                f'\t cov_pc     = {self.Rp_val}\n',
-                f'\t cov_qc     = {self.Rq_val}\n',
+                f'\t cov_pc     = {self.Rp_val:.3f}',
+                f'\t stdev {np.sqrt(self.Rp_val):.3f} cm\n',
+                f'\t cov_qc     = {self.Rq_val:.3f}',
+                f'\t stdev {np.sqrt(self.Rq_val):.3f} rad\n',
                 )
