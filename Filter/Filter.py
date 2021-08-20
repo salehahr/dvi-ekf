@@ -49,7 +49,7 @@ class Filter(object):
 
         # plot
         self.traj = FilterTraj("kf")
-        self.traj.append_state(config.min_t, self.states)
+        self.traj.append_states(config.min_t, self.states)
 
     @property
     def x(self):
@@ -138,7 +138,7 @@ class Filter(object):
         self.R_WB_old = self.states.q.rot
 
         # for plotting
-        self.traj.append_state(t, self.states)
+        self.traj.append_states(t, self.states)
 
     def _predict_nominal(self, om, acc):
         est_probe = self.probe.get_est_fwkin(self.states.dofs)
@@ -216,7 +216,7 @@ class Filter(object):
 
         self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ Q @ self.Fi.T
 
-    def update(self, camera):
+    def update(self, t, camera):
         # compute gain        
         # H = self.Hx @ self.jac_X_deltx # 7x21
         H = np.zeros((6, self.num_error_states))
@@ -250,6 +250,9 @@ class Filter(object):
         G[6:9, 6:9] = np.eye(3) - skew(0.5 * err.theta)
         G[-3:, -3:] = np.eye(3) - skew(0.5 * err.theta_c)
         self.P = G @ self.P @ G.T
+
+        # for plotting
+        self.traj.append_updated_states(t, self.states)
 
         return K
 

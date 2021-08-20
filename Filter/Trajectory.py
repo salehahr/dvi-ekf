@@ -209,7 +209,7 @@ class FilterTraj(Trajectory):
                     *self.labels_imu_dofs, *self.labels_camera]
         super().__init__(name, labels)
 
-    def append_state(self, t, state):
+    def append_states(self, t, state):
         """ Appends new measurement from current state. """
         data = [t, *state.p, *state.v,
                     *state.q.euler_xyz_deg, *state.q.wxyz,
@@ -219,6 +219,17 @@ class FilterTraj(Trajectory):
 
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
+
+    def append_updated_states(self, t, state):
+        """ Appends new measurement from current state. """
+        data = [t, *state.p, *state.v,
+                    *state.q.euler_xyz_deg, *state.q.wxyz,
+                    *state.dofs,
+                    *state.p_cam,
+                    *state.q_cam.euler_xyz_deg, *state.q_cam.wxyz]
+
+        for i, label in enumerate(self.labels):
+            self.__dict__[label][-1] = data[i]
 
     def write_to_file(self, filename=None, discard_interframe_vals=True):
         with open(filename, 'w+') as f:
