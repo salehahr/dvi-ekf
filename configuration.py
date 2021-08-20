@@ -5,6 +5,7 @@ from Filter import States
 
 import sys, argparse
 import numpy as np
+np.set_printoptions(suppress=True, precision=3)
 
 # Data generation parameters
 """ Number of IMU data between prev. frame up to
@@ -32,14 +33,23 @@ stdev_om  = [1e-3] * 3
 
 # Kalman filter parameters
 """ Values for initial covariance matrix """
-stdev_dp = [0.1, 0.1, 0.1]
-stdev_dv = [0.1, 0.1, 0.1]
-stdev_theta = [0.05, 0.04, 0.025]
-stdev_ddofs = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-stdev_dp_cam = [0.1, 0.1, 0.1]
-stdev_theta_cam = [0.05, 0.04, 0.025]
+stdev_dp        = np.array([0.1, 0.1, 0.1])
+stdev_dv        = np.array([0.1, 0.1, 0.1])
+stdev_theta     = np.array([0.05, 0.04, 0.025])
+
+imu_rots_in_deg = [30, 30, 30]
+imu_rots_in_rad = [r * np.pi / 180 for r in imu_rots_in_deg]
+stdev_ddofs     = np.array([*imu_rots_in_rad, 10, 10, 10])      # [rad]
+
+stdev_dp_cam    = np.array([0.1, 0.1, 0.1])
+stdev_theta_cam = np.array([0.05, 0.04, 0.025])
 
 stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_theta, stdev_ddofs, stdev_dp_cam, stdev_theta_cam))
+
+def np_string(arr):
+    return np.array2string(arr,
+                    precision=2,
+                    suppress_small=True)
 
 class Config(object):
     def __init__(self):
@@ -155,7 +165,7 @@ class Config(object):
                 f'\t std_dp             = {stdev_dp}\n',
                 f'\t std_dv             = {stdev_dv}\n',
                 f'\t std_theta          = {stdev_theta}\n',
-                f'\t stdev_ddofs        = {stdev_ddofs}\n',
+                f'\t stdev_ddofs        = {np_string(stdev_ddofs)}\n',
                 f'\t stdev_dp_cam       = {stdev_dp_cam}\n',
                 f'\t stdev_theta_cam    = {stdev_theta_cam}\n\n',
 
