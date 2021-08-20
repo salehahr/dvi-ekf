@@ -234,7 +234,7 @@ class Filter(object):
 
         # compute error state
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
-        err_q = self.states.q_cam.conjugate * camera.qrot
+        err_q = camera.qrot.conjugate * self.states.q_cam
         res_q_cam = err_q.angle * err_q.axis
 
         res = np.hstack((res_p_cam, res_q_cam))
