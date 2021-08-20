@@ -16,9 +16,10 @@ class Camera(object):
         Also provides the initial conditions.
     """
 
-    def __init__(self, filepath, traj=None, max_vals=None):
+    def __init__(self, filepath, traj=None, max_vals=None, scale=None):
         self.traj = traj    if (traj) else \
-                    VisualTraj("camera", filepath, cap=max_vals)
+                    VisualTraj("camera", filepath, cap=max_vals,
+                        scale=scale)
         self.max_vals = len(self.traj.t)
 
         self.t      = self.traj.t

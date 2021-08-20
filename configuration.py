@@ -26,6 +26,7 @@ probe = RigidSimpleProbe(scope_length=scope_length,
 # Camera parameters
 RP_VAL_DEFAULT = 0.1
 RQ_VAL_DEFAULT = 0.5
+SCALE          = 10
 
 # IMU parameters
 stdev_acc = [1e-3] * 3
@@ -87,7 +88,7 @@ class Config(object):
 
     def get_camera(self):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
-        cam = Camera(filepath=filepath_cam, max_vals=self.max_vals)
+        cam = Camera(filepath=filepath_cam, max_vals=self.max_vals, scale=SCALE)
         self._gen_sim_params_from_cam(cam)
 
         return cam

@@ -116,9 +116,12 @@ class Trajectory(object):
 class VisualTraj(Trajectory):
     """ Visual trajectory containing time and pose. """
 
-    def __init__(self, name, filepath=None, cap=None):
+    def __init__(self, name, filepath=None, cap=None, scale=None):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
         super().__init__(name, labels, filepath, cap)
+
+        if scale:
+            self._apply_scale(scale)
 
         self.quats  = None
         self.rx_deg = None
@@ -127,6 +130,11 @@ class VisualTraj(Trajectory):
 
         if self.qx:
             self.gen_angle_arrays()
+
+    def _apply_scale(self, scale):
+        for label in ['x', 'y', 'z']:
+            self.__dict__[label] = [val * scale
+                    for val in self.__dict__[label]]
 
     def at_index(self, index):
         """ Returns single visual measurement at the given index. """
