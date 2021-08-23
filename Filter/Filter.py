@@ -28,9 +28,13 @@ class Filter(object):
         self.imu.eval_init()
         self.probe = config.sym_probe
 
+        self.scale_process_noise = config.scale_process_noise
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
-        self.R = np.diag(config.meas_noise)
+        self.stdev_dofs_p = config.stdev_dofs_p
+        self.stdev_dofs_r = config.stdev_dofs_r
+
+        self.R = config.scale_meas_noise * np.diag(config.meas_noise)
 
         # buffer
         self._om_old = self.imu.om.squeeze()
@@ -208,11 +212,11 @@ class Filter(object):
         Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
         Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
 
-        sigma_dofs_p = 0.02
-        sigma_dofs_r = 0.1
-        N_p = np.random.normal(loc=0, scale=sigma_dofs_p, size=(3,))
-        N_r = np.random.normal(loc=0, scale=sigma_dofs_r, size=(3,))
+        N_p = np.random.normal(loc=0, scale=self.stdev_dofs_p, size=(3,))
+        N_r = np.random.normal(loc=0, scale=self.stdev_dofs_r, size=(3,))
         Q[6:12, 6:12] = np.diag(np.hstack((N_r, N_p)))
+
+        Q = self.scale_process_noise * Q
 
         self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ Q @ self.Fi.T
 

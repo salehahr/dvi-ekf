@@ -40,22 +40,31 @@ ACCEL_NOISE         = 400 * 1e-6 * GRAVITY *\
 stdev_om  = [np.deg2rad(GYRO_NOISE)] * 3                # [rad/s]
 stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 
+# DOFs
+STDEV_DOFS_P        = 1                                 # [cm]
+STDEV_DOFS_R_deg    = 3                                 # [deg]
+STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)      # [rad]
+
 # Kalman filter parameters
 """ Values for initial covariance matrix """
-stdev_dp            = [STDEV_PC_DEFAULT * 1.5] * 3      # [cm]
+stdev_dp            = [STDEV_PC_DEFAULT * 3] * 3      # [cm]
 stdev_dv            = [0.1, 0.1, 0.1]                   # [cm/s]
-stdev_dtheta_deg    = [1, 1, 1]                         # [deg]
+stdev_dtheta_deg    = [1., 1, 1]                         # [deg]
 stdev_dtheta        = np.deg2rad(stdev_dtheta_deg)      # [rad]
 
 imu_rots_deg        = [30, 30, 30]                      # [deg]
 imu_rots_in_rad     = np.deg2rad(imu_rots_deg)          # [rad]
 stdev_ddofs         = [*imu_rots_in_rad, 10, 10, 10]    # [rad, cm]
 
-stdev_dp_cam            = [STDEV_PC_DEFAULT * 1.5] * 3  # [cm]
+stdev_dp_cam            = [STDEV_PC_DEFAULT * 3] * 3  # [cm]
 stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]               # [deg]
 stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg) # [rad]
 
 stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta, stdev_ddofs, stdev_dp_cam, stdev_dtheta_cam))
+
+""" For tuning process noise and measurement noise matrices """
+SCALE_PROCESS_NOISE = 1
+SCALE_MEASUREMENT_NOISE = 1
 
 def np_string(arr):
     if isinstance(arr, list):
@@ -76,10 +85,17 @@ class Config(object):
         self.real_joint_dofs = probe.joint_dofs
 
         # noises
-        self.Rpc_val    = args.Rp
-        self.Rqc_val    = args.Rq
-        self.meas_noise = np.hstack(([self.Rpc_val**2]*3,
-                            [self.Rqc_val**2]*3))
+        # # process
+        self.scale_process_noise    = args.kp
+        self.stdev_dofs_p           = STDEV_DOFS_P
+        self.stdev_dofs_r           = STDEV_DOFS_R
+
+        # # measurement
+        self.scale_meas_noise       = args.km
+        self.Rpc_val                = args.Rp
+        self.Rqc_val                = args.Rq
+        self.meas_noise             = np.hstack(([self.Rpc_val**2]*3,
+                                        [self.Rqc_val**2]*3))
         
         # simulation params
         do_fast_sim                 = bool(args.f)
@@ -133,7 +149,7 @@ class Config(object):
         if self.do_prop_only:
             return self.traj_name + '_prop'
         else:
-            return self.traj_name + f'_upd_Rp{self.Rpc_val:.3f}_Rq{self.Rqc_val:.3f}'
+            return self.traj_name + f'_upd_Kp{self.scale_process_noise}_Km{self.scale_meas_noise:.3f}'
 
     def _parse_arguments(self):
         parser = argparse.ArgumentParser(description='Run the VI-ESKF.')
@@ -160,9 +176,15 @@ class Config(object):
                         help=f'num of IMU values b/w frames (default: {NUM_IMU_DEFAULT})')
 
         parser.add_argument('-Rp', default=STDEV_PC_DEFAULT, type=float,
-                        help=f'camera position noise (default: {STDEV_PC_DEFAULT})')
+                        help=f'camera position noise (default: {STDEV_PC_DEFAULT:.3f})')
         parser.add_argument('-Rq', default=STDEV_RC_DEFAULT,  type=float,
-                        help=f'camera rotation noise (default: {STDEV_RC_DEFAULT})')
+                        help=f'camera rotation noise (default: {STDEV_RC_DEFAULT:.3f})')
+
+        parser.add_argument('-kp', default=SCALE_PROCESS_NOISE, type=float,
+                        help=f'scale factor for process noise (default: {SCALE_PROCESS_NOISE})')
+        parser.add_argument('-km', default=SCALE_MEASUREMENT_NOISE,
+                        type=float,
+                        help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE})')
 
         return parser.parse_args()
 
@@ -176,20 +198,28 @@ class Config(object):
                 f'\t(num. IMU b/w frames : {self.num_interframe_vals})\n\n',
 
                 f'\t ## Noise values\n',
-                f'\t #  Initial process noise\n',
+                f'\t #  P0: Initial process noise\n',
                 f'\t std_dp             = {np_string(stdev_dp)} \t cm\n',
                 f'\t std_dv             = {np_string(stdev_dv)} \t cm/s\n',
                 f'\t std_theta          = {np_string(stdev_dtheta_deg)} \t deg\n',
-                f'\t stdev_ddofs_rot    = {np_string(imu_rots_deg)} \t deg\n',
-                f'\t stdev_ddofs_trans  = {np_string(stdev_ddofs[-3:])} \t cm\n',
-                f'\t stdev_dp_cam       = {np_string(stdev_dp_cam)} \t cm\n',
-                f'\t stdev_dtheta_cam   = {np_string(stdev_dtheta_cam_deg)} \t deg\n\n',
+                f'\t std_ddofs_rot      = {np_string(imu_rots_deg)} \t deg\n',
+                f'\t std_ddofs_trans    = {np_string(stdev_ddofs[-3:])} \t cm\n',
+                f'\t std_dp_cam         = {np_string(stdev_dp_cam)} \t cm\n',
+                f'\t std_dtheta_cam     = {np_string(stdev_dtheta_cam_deg)} \t deg\n\n',
 
-                f'\t #  IMU measurement noise\n',
+                f'\t #  Q: IMU measurement noise\n',
                 f'\t std_acc    = {np_string(stdev_acc)} cm/s^2\n',
                 f'\t std_om     = {np_string(stdev_om)} rad/s\n\n',
                 
-                f'\t #  Camera measurement noise\n',
+                f'\t #  Q: IMU dofs random walk noise\n',
+                f'\t std_dofs_p = {self.stdev_dofs_p} cm\n',
+                f'\t std_dofs_r = {STDEV_DOFS_R_deg} deg\n\n',
+
+                f'\t #  R: Camera measurement noise\n',
                 f'\t stdev_pc   = {self.Rpc_val:.3f} cm \n',
-                f'\t stdev_qc   = {self.Rqc_val:.3f} rad\n',
+                f'\t stdev_qc   = {self.Rqc_val:.3f} rad\n\n',
+
+                f'\t ## KF tuning\n',
+                f'\t k_PROC     = {self.scale_process_noise}\n',
+                f'\t k_MEAS     = {self.scale_meas_noise}\n',
                 )
