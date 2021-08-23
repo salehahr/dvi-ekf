@@ -58,6 +58,21 @@ class Filter(object):
         # metrics
         self.dof_metric = 0
 
+    def reset(self, config, x0, cov0):
+        self.states = copy(x0)
+        self.P = np.copy(cov0)
+        self._x = []
+        self._u = []
+        self.dt = 0.
+
+        # imu / noise
+        self.imu.reset()
+        self.imu.eval_init()
+
+        self.traj.reset()
+        self.traj.append_propagated_states(config.min_t, self.states)
+        self.dof_metric = 0
+
     @property
     def x(self):
         self._x = self.states.vec

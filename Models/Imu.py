@@ -79,6 +79,14 @@ class Imu(object):
         for attr, value in self.__dict__.items():
             yield attr, value
 
+    def reset(self):
+        self.t = []
+        self._om = []
+        self._acc = []
+
+        self.traj.reset()
+        self.ref.reset()
+
     def __repr__(self):
         return f"IMU object containing {self.nvals} values."
 

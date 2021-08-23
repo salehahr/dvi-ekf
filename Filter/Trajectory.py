@@ -34,6 +34,10 @@ class Trajectory(object):
                 file = open(filepath, 'w+')
                 file.close()
 
+    def reset(self):
+        for label in self.labels:
+            self.__dict__[label] = []
+
     @property
     def nvals(self):
         return len(self.t)
@@ -204,6 +208,7 @@ class ImuRefTraj(Trajectory):
 
 class FilterTraj(Trajectory):
     def __init__(self, name):
+        self.labels = []
         self.labels_imu = ['x', 'y', 'z',
                     'vx', 'vy', 'vz',
                     'rx', 'ry', 'rz',
