@@ -53,7 +53,7 @@ class Filter(object):
 
         # plot
         self.traj = FilterTraj("kf")
-        self.traj.append_states(config.min_t, self.states)
+        self.traj.append_propagated_states(config.min_t, self.states)
 
     @property
     def x(self):
@@ -142,7 +142,7 @@ class Filter(object):
         self.R_WB_old = self.states.q.rot
 
         # for plotting
-        self.traj.append_states(t, self.states)
+        self.traj.append_propagated_states(t, self.states)
 
     def _predict_nominal(self, om, acc):
         est_probe = self.probe.get_est_fwkin(self.states.dofs)

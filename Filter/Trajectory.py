@@ -217,25 +217,24 @@ class FilterTraj(Trajectory):
                     *self.labels_imu_dofs, *self.labels_camera]
         super().__init__(name, labels)
 
-    def append_states(self, t, state):
+    def _process_data(self, t, state):
         """ Appends new measurement from current state. """
-        data = [t, *state.p, *state.v,
+        dof_rots_deg = np.rad2deg(state.dofs[:3])
+        dof_trans    = state.dofs[3:]
+        return [t, *state.p, *state.v,
                     *state.q.euler_xyz_deg, *state.q.wxyz,
-                    *state.dofs,
+                    *dof_rots_deg,
+                    *dof_trans,
                     *state.p_cam,
                     *state.q_cam.euler_xyz_deg, *state.q_cam.wxyz]
 
+    def append_propagated_states(self, t, state):
+        data = self._process_data(t, state)
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
 
     def append_updated_states(self, t, state):
-        """ Appends new measurement from current state. """
-        data = [t, *state.p, *state.v,
-                    *state.q.euler_xyz_deg, *state.q.wxyz,
-                    *state.dofs,
-                    *state.p_cam,
-                    *state.q_cam.euler_xyz_deg, *state.q_cam.wxyz]
-
+        data = self._process_data(t, state)
         for i, label in enumerate(self.labels):
             self.__dict__[label][-1] = data[i]
 
