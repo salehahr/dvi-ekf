@@ -12,6 +12,7 @@ from Visuals import FilterPlot
 
 class Filter(object):
     def __init__(self, config, imu, x0, cov0):
+        self._run_id = None
         self.num_states = x0.size
         self.num_error_states = x0.size - 2
         self.num_meas = 7
@@ -72,6 +73,14 @@ class Filter(object):
         self.traj.reset()
         self.traj.append_propagated_states(config.min_t, self.states)
         self.dof_metric = 0
+
+    @property
+    def run_id(self):
+        return self._run_id
+
+    @run_id.setter
+    def run_id(self, val):
+        self._run_id = val
 
     @property
     def x(self):

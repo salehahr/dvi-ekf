@@ -8,6 +8,9 @@ import math
 import numpy as np
 np.set_printoptions(suppress=True, precision=3)
 
+# Simulation params
+NUM_KF_RUNS = 1
+
 # Data generation parameters
 """ Number of IMU data between prev. frame up to
     and including the next frame """
@@ -98,6 +101,7 @@ class Config(object):
                                         [self.Rqc_val**2]*3))
         
         # simulation params
+        self.num_kf_runs            = args.runs
         do_fast_sim                 = bool(args.f)
         self.do_prop_only           = args.do_prop_only in ['prop', 'p']
 
@@ -115,6 +119,8 @@ class Config(object):
         img_filename        = self._gen_img_filename()
         self.img_filepath_imu = 'img/kf_' + img_filename + '_imu.png'
         self.img_filepath_cam = 'img/kf_' + img_filename + '_cam.png'
+
+        self.print_config()
 
     def get_camera(self):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
@@ -185,6 +191,10 @@ class Config(object):
         parser.add_argument('-km', default=SCALE_MEASUREMENT_NOISE,
                         type=float,
                         help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE})')
+
+        parser.add_argument('-runs', default=NUM_KF_RUNS,
+                        type=int,
+                        help=f'num of KF runs (default: {NUM_KF_RUNS})')
 
         return parser.parse_args()
 
