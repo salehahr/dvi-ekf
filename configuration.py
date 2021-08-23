@@ -4,6 +4,7 @@ from Models import RigidSimpleProbe, SymProbe
 from Filter import States
 
 import sys, argparse
+import math
 import numpy as np
 np.set_printoptions(suppress=True, precision=3)
 
@@ -24,32 +25,44 @@ probe = RigidSimpleProbe(scope_length=scope_length,
             theta_cam=theta_cam_in_rad)
 
 # Camera parameters
-RP_VAL_DEFAULT = 0.3                # [cm]
-RQ_VAL_DEFAULT = 5 * np.pi / 180    # [rad]
-SCALE          = 10                 # convert cam pos to cm
+STDEV_PC_DEFAULT = 0.3              # [cm]
+STDEV_RC_DEFAULT = np.deg2rad(5)    # [rad]
+SCALE            = 10               # convert cam pos to cm
 
 # IMU parameters
-stdev_acc = [1e-3] * 3
-stdev_om  = [1e-3] * 3
+NOISE_SAMPLE_RATE   = 10            # Hz (not output data rate)
+GYRO_NOISE          = 0.005 *\
+                        math.sqrt(NOISE_SAMPLE_RATE)    # [deg/s]
+GRAVITY             = 9.81 * 100                        # [cm/s^2]
+ACCEL_NOISE         = 400 * 1e-6 * GRAVITY *\
+                        math.sqrt(NOISE_SAMPLE_RATE)    # [cm/s^2]
+
+stdev_om  = [np.deg2rad(GYRO_NOISE)] * 3                # [rad/s]
+stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 
 # Kalman filter parameters
 """ Values for initial covariance matrix """
-stdev_dp        = np.array([0.1, 0.1, 0.1])
-stdev_dv        = np.array([0.1, 0.1, 0.1])
-stdev_theta     = np.array([0.05, 0.04, 0.025])
+stdev_dp            = [STDEV_PC_DEFAULT * 1.5] * 3      # [cm]
+stdev_dv            = [0.1, 0.1, 0.1]                   # [cm/s]
+stdev_dtheta_deg    = [1, 1, 1]                         # [deg]
+stdev_dtheta        = np.deg2rad(stdev_dtheta_deg)      # [rad]
 
-imu_rots_in_deg = [30, 30, 30]
-imu_rots_in_rad = [r * np.pi / 180 for r in imu_rots_in_deg]
-stdev_ddofs     = np.array([*imu_rots_in_rad, 10, 10, 10])      # [rad]
+imu_rots_deg        = [30, 30, 30]                      # [deg]
+imu_rots_in_rad     = np.deg2rad(imu_rots_deg)          # [rad]
+stdev_ddofs         = [*imu_rots_in_rad, 10, 10, 10]    # [rad, cm]
 
-stdev_dp_cam    = np.array([0.1, 0.1, 0.1])
-stdev_theta_cam = np.array([0.05, 0.04, 0.025])
+stdev_dp_cam            = [STDEV_PC_DEFAULT * 1.5] * 3  # [cm]
+stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]               # [deg]
+stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg) # [rad]
 
-stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_theta, stdev_ddofs, stdev_dp_cam, stdev_theta_cam))
+stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta, stdev_ddofs, stdev_dp_cam, stdev_dtheta_cam))
 
 def np_string(arr):
+    if isinstance(arr, list):
+        arr = np.array(arr)
+
     return np.array2string(arr,
-                    precision=2,
+                    precision=4,
                     suppress_small=True)
 
 class Config(object):
@@ -63,9 +76,10 @@ class Config(object):
         self.real_joint_dofs = probe.joint_dofs
 
         # noises
-        self.Rp_val     = args.Rp
-        self.Rq_val     = args.Rq
-        self.meas_noise = np.hstack(([self.Rp_val]*3, [self.Rq_val]*3))
+        self.Rpc_val    = args.Rp
+        self.Rqc_val    = args.Rq
+        self.meas_noise = np.hstack(([self.Rpc_val**2]*3,
+                            [self.Rqc_val**2]*3))
         
         # simulation params
         do_fast_sim                 = bool(args.f)
@@ -119,7 +133,7 @@ class Config(object):
         if self.do_prop_only:
             return self.traj_name + '_prop'
         else:
-            return self.traj_name + f'_upd_Rp{self.Rp_val}_Rq{self.Rq_val}'
+            return self.traj_name + f'_upd_Rp{self.Rpc_val:.3f}_Rq{self.Rqc_val:.3f}'
 
     def _parse_arguments(self):
         parser = argparse.ArgumentParser(description='Run the VI-ESKF.')
@@ -145,10 +159,10 @@ class Config(object):
         parser.add_argument('-nb', default=NUM_IMU_DEFAULT, type=int,
                         help=f'num of IMU values b/w frames (default: {NUM_IMU_DEFAULT})')
 
-        parser.add_argument('-Rp', default=RP_VAL_DEFAULT, type=float,
-                        help=f'camera position noise (default: {RP_VAL_DEFAULT})')
-        parser.add_argument('-Rq', default=RQ_VAL_DEFAULT,  type=float,
-                        help=f'camera rotation noise (default: {RQ_VAL_DEFAULT})')
+        parser.add_argument('-Rp', default=STDEV_PC_DEFAULT, type=float,
+                        help=f'camera position noise (default: {STDEV_PC_DEFAULT})')
+        parser.add_argument('-Rq', default=STDEV_RC_DEFAULT,  type=float,
+                        help=f'camera rotation noise (default: {STDEV_RC_DEFAULT})')
 
         return parser.parse_args()
 
@@ -163,20 +177,19 @@ class Config(object):
 
                 f'\t ## Noise values\n',
                 f'\t #  Initial process noise\n',
-                f'\t std_dp             = {stdev_dp}\n',
-                f'\t std_dv             = {stdev_dv}\n',
-                f'\t std_theta          = {stdev_theta}\n',
-                f'\t stdev_ddofs        = {np_string(stdev_ddofs)}\n',
-                f'\t stdev_dp_cam       = {stdev_dp_cam}\n',
-                f'\t stdev_theta_cam    = {stdev_theta_cam}\n\n',
+                f'\t std_dp             = {np_string(stdev_dp)} \t cm\n',
+                f'\t std_dv             = {np_string(stdev_dv)} \t cm/s\n',
+                f'\t std_theta          = {np_string(stdev_dtheta_deg)} \t deg\n',
+                f'\t stdev_ddofs_rot    = {np_string(imu_rots_deg)} \t deg\n',
+                f'\t stdev_ddofs_trans  = {np_string(stdev_ddofs[-3:])} \t cm\n',
+                f'\t stdev_dp_cam       = {np_string(stdev_dp_cam)} \t cm\n',
+                f'\t stdev_dtheta_cam   = {np_string(stdev_dtheta_cam_deg)} \t deg\n\n',
 
                 f'\t #  IMU measurement noise\n',
-                f'\t std_acc    = {stdev_acc}\n',
-                f'\t std_om     = {stdev_om}\n\n',
+                f'\t std_acc    = {np_string(stdev_acc)} cm/s^2\n',
+                f'\t std_om     = {np_string(stdev_om)} rad/s\n\n',
                 
                 f'\t #  Camera measurement noise\n',
-                f'\t cov_pc     = {self.Rp_val:.3f}',
-                f'\t stdev {np.sqrt(self.Rp_val):.3f} cm\n',
-                f'\t cov_qc     = {self.Rq_val:.3f}',
-                f'\t stdev {np.sqrt(self.Rq_val):.3f} rad\n',
+                f'\t stdev_pc   = {self.Rpc_val:.3f} cm \n',
+                f'\t stdev_qc   = {self.Rqc_val:.3f} rad\n',
                 )
