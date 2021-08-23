@@ -1,18 +1,16 @@
 from configuration import Config
-from Filter import Filter
 from tqdm import tqdm, trange
 import copy
 
 ## initialise objects
-config      = Config()
-camera      = config.get_camera()
-imu         = config.get_imu(camera, gen_ref=True)
-x0, cov0    = config.get_IC(imu, camera)
-kf          = Filter(config, imu, x0, cov0)
-cap_t       = config.cap_t
-num_kf_runs = config.num_kf_runs
+config          = Config()
+kf, camera, imu = config.init_filter_objects()
+x0, cov0        = config.get_IC(imu, camera)
 
-dof_metric, dof_mse_best = 0, 1000
+## simulation runs
+num_kf_runs, cap_t      = config.num_kf_runs, config.cap_t
+dof_mses, dof_mse_best  = [], 1e10
+
 for k in range(num_kf_runs):
 
     ## filter main loop (t>=1)
@@ -39,17 +37,20 @@ for k in range(num_kf_runs):
         if cap_t is not None and t >= cap_t: break
 
         old_t = t
-        cam_timestamps.set_postfix({'MSE': f'{kf.dof_metric:.2E}'})
+        cam_timestamps.set_postfix({'sum error': f'{kf.dof_metric:.2E}'})
 
-    # save best run
-    if kf.dof_metric < dof_mse_best: kf_best = copy.deepcopy(kf)
+    # save run
+    kf.dof_metric = kf.dof_metric / (i * 6) # normalise
+    dof_mses.append(kf.dof_metric)
+
+    if kf.dof_metric < dof_mse_best:
+        dof_mse_best = kf.dof_metric
+        kf_best = copy.deepcopy(kf)
 
     # reset for next run
-    dof_metric += kf.dof_metric
     kf.reset(config, x0, cov0)
 
-
 ## results
-dof_metric = dof_metric / (num_kf_runs * i * 6) # runs * meas * len(dofs)
-print(f'Best run: #{kf_best.run_id}; average MSE = {dof_metric:.2E}')
+dof_mse = sum(dof_mses) / len(dof_mses)
+print(f'Best run: #{kf_best.run_id}; average MSE = {dof_mse:.2E}')
 kf_best.plot(config, t, camera.traj)

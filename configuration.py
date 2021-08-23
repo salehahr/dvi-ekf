@@ -1,7 +1,7 @@
 from Models import Camera, Imu
 from Models import RigidSimpleProbe, SymProbe
 
-from Filter import States
+from Filter import States, Filter
 
 import sys, argparse
 import math
@@ -9,7 +9,7 @@ import numpy as np
 np.set_printoptions(suppress=True, precision=3)
 
 # Simulation params
-NUM_KF_RUNS = 1
+NUM_KF_RUNS_DEFAULT = 1
 
 # Data generation parameters
 """ Number of IMU data between prev. frame up to
@@ -120,8 +120,6 @@ class Config(object):
         self.img_filepath_imu = 'img/kf_' + img_filename + '_imu.png'
         self.img_filepath_cam = 'img/kf_' + img_filename + '_cam.png'
 
-        self.print_config()
-
     def get_camera(self):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
         cam = Camera(filepath=filepath_cam, max_vals=self.max_vals, scale=SCALE)
@@ -150,6 +148,16 @@ class Config(object):
         cov0 = np.square(np.diag(stdevs0))
 
         return IC, cov0
+
+    def init_filter_objects(self):
+        camera      = self.get_camera()
+        imu         = self.get_imu(camera, gen_ref=True)
+        x0, cov0    = self.get_IC(imu, camera)
+        kf          = Filter(self, imu, x0, cov0)
+
+        self.print_config()
+
+        return kf, camera, imu
 
     def _gen_img_filename(self):
         if self.do_prop_only:
@@ -192,9 +200,9 @@ class Config(object):
                         type=float,
                         help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE})')
 
-        parser.add_argument('-runs', default=NUM_KF_RUNS,
+        parser.add_argument('-runs', default=NUM_KF_RUNS_DEFAULT,
                         type=int,
-                        help=f'num of KF runs (default: {NUM_KF_RUNS})')
+                        help=f'num of KF runs (default: {NUM_KF_RUNS_DEFAULT})')
 
         return parser.parse_args()
 
