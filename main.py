@@ -26,6 +26,8 @@ for i, t in cam_timestamps:
         K = kf.update(t, current_cam)
         if K is None: break
 
+    kf.calculate_metric(config.real_joint_dofs)
+
     # capping of simulation data
     if cap_t is not None and t >= cap_t: break
 

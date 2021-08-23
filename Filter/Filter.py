@@ -43,7 +43,7 @@ class Filter(object):
         self._states_old = copy(x0)
 
         # covariance
-        self.P = cov0
+        self.P = np.copy(cov0)
         assert(self.P.shape == (self.num_error_states, self.num_error_states))
 
         # static matrices
@@ -54,6 +54,9 @@ class Filter(object):
         # plot
         self.traj = FilterTraj("kf")
         self.traj.append_propagated_states(config.min_t, self.states)
+
+        # metrics
+        self.dof_metric = 0
 
     @property
     def x(self):
@@ -259,6 +262,11 @@ class Filter(object):
         self.traj.append_updated_states(t, self.states)
 
         return K
+
+    def calculate_metric(self, real_dofs):
+        real_imu_dofs = casadi.DM(real_dofs[0][:6]).full().squeeze()
+        res = self.states.dofs - real_imu_dofs
+        self.dof_metric += np.dot(res, res)
 
     def plot(self, config, t_end, camera_traj):
         if config.do_plot:
