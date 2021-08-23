@@ -141,7 +141,22 @@ class Config(object):
 
     def get_IC(self, imu, camera):
         W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(camera.vec0)
-        dofs0 = probe.imu_dofs.copy()
+        dofs0_real = probe.imu_dofs.copy()
+        dofs0_rot_real, dofs0_tr_real = dofs0_real[:3], dofs0_real[3:]
+
+        # perturbations
+        delta_ang_rad = np.deg2rad(3)
+        delta_trans_cm = 3
+
+        # # random perturbations
+        # delta_dof_rot = np.random.normal(loc=0, scale=delta_ang_rad, size=(3,))
+        # delta_dof_tr = np.random.normal(loc=0, scale=delta_trans_cm, size=(3,))
+
+        # const. perturbations
+        delta_dof_rot = [delta_ang_rad, *dofs0_rot_real[1:]]
+        delta_dof_tr  = [x + delta_trans_cm for x in dofs0_tr_real]
+
+        dofs0 = [*delta_dof_rot, *delta_dof_tr]
 
         IC   = States(W_p_BW_0, WW_v_BW_0, R_WB_0,
                         dofs0, camera.p0, camera.q0)
