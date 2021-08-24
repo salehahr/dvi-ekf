@@ -28,11 +28,7 @@ class Trajectory(object):
 
         self.clear()
         if filepath:
-            try:
-                self._parse(cap)
-            except FileNotFoundError:
-                file = open(filepath, 'w+')
-                file.close()
+            self._parse_if_file_exists(filepath, cap)
 
     def reset(self):
         for label in self.labels:
@@ -67,9 +63,20 @@ class Trajectory(object):
         for label in self.labels:
             self.__dict__[label] = []
 
+    def _parse_if_file_exists(self, filepath, cap):
+        if os.path.exists(self.filepath):
+            self._parse(cap)
+        else:
+            ans = input(f"File \'{filepath}\' not found. Create? (Y/N)")
+
+            if ans.lower() == 'y':
+                file = open(filepath, 'w+')
+                file.close()
+            else:
+                sys.exit()
+
     def _parse(self, cap):
         """ Extract data from file."""
-
         with open(self.filepath, 'r') as f:
             for i, line in enumerate(f):
                 data = line.split()
