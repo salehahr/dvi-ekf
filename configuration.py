@@ -84,8 +84,10 @@ class Config(object):
         # probe
         """ Container for probe object containing only the symbolic
             relative kinematics. """
-        self.sym_probe       = SymProbe(probe)
-        self.real_joint_dofs = probe.joint_dofs
+        self.sym_probe          = SymProbe(probe)
+        self.real_joint_dofs    = probe.joint_dofs.copy()
+        self.real_imu_dofs      = probe.imu_dofs.copy()
+        self.current_imu_dofs   = self.get_dof_IC()
 
         # noises
         # # process
@@ -139,10 +141,9 @@ class Config(object):
         camera_interp = camera.interpolate(self.num_interframe_vals)
         return Imu(probe, camera_interp, stdev_acc, stdev_om, gen_ref=gen_ref)
 
-    def get_IC(self, imu, camera):
-        W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(camera.vec0)
-        dofs0_real = probe.imu_dofs.copy()
-        dofs0_rot_real, dofs0_tr_real = dofs0_real[:3], dofs0_real[3:]
+    def get_dof_IC(self):
+        dofs0_rot_real = self.real_imu_dofs[:3]
+        dofs0_tr_real  = self.real_imu_dofs[3:]
 
         # perturbations
         delta_ang_rad = np.deg2rad(3)
@@ -158,11 +159,20 @@ class Config(object):
 
         dofs0 = [*delta_dof_rot, *delta_dof_tr]
 
-        IC   = States(W_p_BW_0, WW_v_BW_0, R_WB_0,
-                        dofs0, camera.p0, camera.q0)
+        return dofs0
+
+    def print_dofs(self):
+        print(f'DOFs (real) : {np_string(self.real_imu_dofs)}')
+        print(f'DOFs (IC)   : {np_string(self.current_imu_dofs)}\n')
+
+    def get_IC(self, imu, camera):
+        W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(camera.vec0)
+
+        x0   = States(W_p_BW_0, WW_v_BW_0, R_WB_0,
+                        self.current_imu_dofs, camera.p0, camera.q0)
         cov0 = np.square(np.diag(stdevs0))
 
-        return IC, cov0
+        return x0, cov0
 
     def init_filter_objects(self):
         camera      = self.get_camera()
@@ -171,6 +181,7 @@ class Config(object):
         kf          = Filter(self, imu, x0, cov0)
 
         self.print_config()
+        self.print_dofs()
 
         return kf, camera, imu
 
@@ -232,25 +243,25 @@ class Config(object):
 
                 f'\t ## Noise values\n',
                 f'\t #  P0: Initial process noise\n',
-                f'\t std_dp             = {np_string(stdev_dp)} \t cm\n',
-                f'\t std_dv             = {np_string(stdev_dv)} \t cm/s\n',
-                f'\t std_theta          = {np_string(stdev_dtheta_deg)} \t deg\n',
-                f'\t std_ddofs_rot      = {np_string(imu_rots_deg)} \t deg\n',
-                f'\t std_ddofs_trans    = {np_string(stdev_ddofs[-3:])} \t cm\n',
-                f'\t std_dp_cam         = {np_string(stdev_dp_cam)} \t cm\n',
-                f'\t std_dtheta_cam     = {np_string(stdev_dtheta_cam_deg)} \t deg\n\n',
+                f'\t std_dp             = {stdev_dp[0]:.1f} \t cm\n',
+                f'\t std_dv             = {stdev_dv[0]:.1f} \t cm/s\n',
+                f'\t std_dtheta         = {stdev_dtheta_deg[0]:.1f} \t deg\n',
+                f'\t std_ddofs_rot      = {imu_rots_deg[0]:.1f} \t deg\n',
+                f'\t std_ddofs_trans    = {stdev_ddofs[-1]:.1f} \t cm\n',
+                f'\t std_dp_cam         = {stdev_dp_cam[0]:.1f} \t cm\n',
+                f'\t std_dtheta_cam     = {stdev_dtheta_cam_deg[0]:.1f} \t deg\n\n',
 
                 f'\t #  Q: IMU measurement noise\n',
-                f'\t std_acc    = {np_string(stdev_acc)} cm/s^2\n',
-                f'\t std_om     = {np_string(stdev_om)} rad/s\n\n',
+                f'\t std_acc    = {ACCEL_NOISE:.1E} cm/s^2\n',
+                f'\t std_om     = {GYRO_NOISE:.1E} deg/s\n\n',
                 
                 f'\t #  Q: IMU dofs random walk noise\n',
                 f'\t std_dofs_p = {self.stdev_dofs_p} cm\n',
-                f'\t std_dofs_r = {STDEV_DOFS_R_deg} deg\n\n',
+                f'\t std_dofs_r = {np.rad2deg(self.stdev_dofs_r):.1f} deg\n\n',
 
                 f'\t #  R: Camera measurement noise\n',
                 f'\t stdev_pc   = {self.Rpc_val:.3f} cm \n',
-                f'\t stdev_qc   = {self.Rqc_val:.3f} rad\n\n',
+                f'\t stdev_qc   = {np.rad2deg(self.Rqc_val):.1f} deg\n\n',
 
                 f'\t ## KF tuning\n',
                 f'\t k_PROC     = {self.scale_process_noise}\n',
