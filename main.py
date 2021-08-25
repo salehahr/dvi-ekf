@@ -22,19 +22,8 @@ for k in range(num_kf_runs):
     kf.run_id       = k + 1
 
     for i, t in cam_timestamps:
-        # propagate
-        kf.propagate_imu(old_t, t, config.real_joint_dofs)
-
-        # update
-        if not config.do_prop_only:
-            current_cam = camera.at_index(i + 1) # not counting IC
-            K = kf.update(t, current_cam)
-            if K is None: break
-
-        kf.calculate_metric(config.real_joint_dofs)
-
-        # capping of simulation data
-        if cap_t is not None and t >= cap_t: break
+        i_cam = i + 1 # not counting IC
+        kf.run_one_epoch(old_t, t, i_cam, camera, config.real_joint_dofs)
 
         old_t = t
         cam_timestamps.set_postfix({'sum error': f'{kf.dof_metric:.2E}'})

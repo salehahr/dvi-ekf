@@ -24,6 +24,13 @@ class Filter(object):
 
         self.dt = 0.
 
+        # simulation
+        self.do_prop_only = config.do_prop_only
+        # self.cap_t = config.cap_t
+
+        # # ground truth
+        # self.real_joint_dofs = config.real_joint_dofs
+
         # imu / noise
         self.imu = imu
         self.imu.eval_init()
@@ -142,6 +149,24 @@ class Filter(object):
 
         return X_deltx
 
+    def run_one_epoch(self, old_t, t, i_cam, camera, real_joint_dofs):
+        """
+            Kalman filter run between old camera frame and
+            current camera frame (prediction steps + update step).
+            Calculates the unnormalised DOF MSE.
+
+            i_cam must be already adjusted so that the IC is not counted
+        """
+        # propagate
+        self.propagate_imu(old_t, t, real_joint_dofs)
+
+        # update
+        if not self.do_prop_only:
+            current_cam = camera.at_index(i_cam) # not counting IC
+            self.update(t, current_cam)
+
+        self.calculate_metric(real_joint_dofs)
+
     def propagate_imu(self, t0, tn, real_joint_dofs):
         cam_queue = self.imu.cam.generate_queue(t0, tn)
 
@@ -158,7 +183,7 @@ class Filter(object):
 
             old_ti = ti
 
-    def propagate(self, t, om, acc, do_prop_only=False):
+    def propagate(self, t, om, acc):
         self._predict_nominal(om, acc)
         self._predict_error()
         self._predict_error_covariance()
