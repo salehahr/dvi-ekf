@@ -220,7 +220,7 @@ class Imu(object):
             the relative kinematics relations C to B.
         """
         # return W_p_BW, R_WB, WW_v_BW
-        return [casadi.DM(r).full() \
+        return [casadi.DM(r).full().squeeze() \
                     for r in eqns.f_imu(*current_cam, *self.fwkin)]
 
     def write_array_to_file(self, filepath):
