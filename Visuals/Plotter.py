@@ -81,10 +81,11 @@ class Plotter(object):
         return min_val, max_val
 
     ### Fig postfix
-    def _fig_postfix(self, filename, axes, offset, num_rows):
+    def _fig_postfix(self, filename, axes, offset, num_rows, config):
         """ Late setting of line styles, save figure. """
         self._set_line_styles(axes)
         self._put_legend_near_first_plot(axes, offset, num_rows)
+        self._set_title(config)
         self.save(filename)
 
     def _put_legend_near_first_plot(self, axes, offset, num_rows):
@@ -114,6 +115,19 @@ class Plotter(object):
             else:
                 v = str(v)
             eval(f'line.set_{k}(' + v + ')')
+
+    def _set_title(self, config):
+        MSE = config.dof_metric
+        Kp = config.scale_process_noise
+        Km = config.scale_meas_noise
+
+        st = plt.suptitle(f"DOF_MSE {MSE:.3f}  (Kp {Kp:.2E}, Km {Km:.2E})",
+            fontsize=10)
+
+        # shift subplots down:
+        st.set_y(0.95)
+        fig = plt.gcf()
+        fig.subplots_adjust(top=0.85)
 
     def save(self, filename):
         if filename:
@@ -180,6 +194,7 @@ class FilterPlot(Plotter):
         self._get_plot_objects(labels = labels,
                         labels_cam  = labels_cam,
                         labels_imu  = labels_imu,
+                        config      = config,
                         num_cols    = num_cols,
                         filename    = config.img_filepath_compact,
                         cam         = self.cam_traj,
@@ -195,6 +210,7 @@ class FilterPlot(Plotter):
         self._get_plot_objects(labels = labels,
                         labels_cam  = [],
                         labels_imu  = self.traj.labels_imu,
+                        config      = config,
                         num_cols = num_cols,
                         filename = config.img_filepath_imu,
                         cam = None,
@@ -209,6 +225,7 @@ class FilterPlot(Plotter):
         self._get_plot_objects(labels = labels,
                         labels_cam  = labels,
                         labels_imu  = [],
+                        config      = config,
                         num_cols = num_cols,
                         filename = config.img_filepath_cam,
                         cam = self.cam_traj,
