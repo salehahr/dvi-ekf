@@ -296,7 +296,13 @@ class Filter(object):
         self.traj.write_to_file(filename)
         self.imu.ref.write_to_file('./trajs/imu_ref.txt')
 
-    def plot(self, config, t_end, camera_traj):
-        if config.do_plot:
+    def plot(self, config, t_end, camera_traj, compact):
+        if not config.do_plot:
+            return
+
+        if compact:
+            FilterPlot(self.traj, camera_traj, self.imu.ref).plot_compact(
+            config, t_end)
+        else:
             FilterPlot(self.traj, camera_traj, self.imu.ref).plot(
-                config, t_end)
+            config, t_end)

@@ -11,4 +11,4 @@ kf.traj         = FilterTraj('kf', filepath)
 kf.imu.ref      = ImuRefTraj('imu ref', _, filepath_imu)
 
 t = kf.traj.t[-1]
-kf.plot(config, t, camera.traj)
+kf.plot(config, t, camera.traj, compact=True)

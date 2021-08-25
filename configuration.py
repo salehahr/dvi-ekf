@@ -123,11 +123,12 @@ class Config(object):
         self.total_data_pts = None
 
         # plot params
-        self.do_plot        = not args.np if not plot_only else not plot_only
+        self.do_plot        = not args.np if not plot_only else plot_only
         self.traj_name      = args.traj_name if not traj_name else traj_name
         img_filename        = self._gen_img_filename()
         self.img_filepath_imu = 'img/kf_' + img_filename + '_imu.png'
         self.img_filepath_cam = 'img/kf_' + img_filename + '_cam.png'
+        self.img_filepath_compact = 'img/kf_' + img_filename + '_compact.png'
 
     def get_camera(self):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
