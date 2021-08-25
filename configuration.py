@@ -93,14 +93,14 @@ class Config(object):
 
         # noises
         # # process
-        self.scale_process_noise    = args.kp if not plot_only \
-                            else SCALE_PROCESS_NOISE
+        self.scale_process_noise    = float(args.kp) if not plot_only \
+                            else float(SCALE_PROCESS_NOISE)
         self.stdev_dofs_p           = STDEV_DOFS_P
         self.stdev_dofs_r           = STDEV_DOFS_R
 
         # # measurement
-        self.scale_meas_noise       = args.km if not plot_only \
-                            else SCALE_MEASUREMENT_NOISE
+        self.scale_meas_noise       = float(args.km) if not plot_only \
+                            else float(SCALE_MEASUREMENT_NOISE)
         self.Rpc_val                = args.Rp if not plot_only \
                             else STDEV_PC_DEFAULT
         self.Rqc_val                = args.Rq if not plot_only \
@@ -112,7 +112,7 @@ class Config(object):
         self.num_kf_runs            = args.runs if not plot_only else 1
         do_fast_sim                 = bool(args.f) if not plot_only else True
         self.do_prop_only           = args.do_prop_only in ['prop', 'p'] \
-                if not pu else pu
+                if not pu else not pu
 
         self.max_vals               = 10 if do_fast_sim else args.nc
         self.num_interframe_vals    = 1  if do_fast_sim else args.nb
@@ -122,13 +122,37 @@ class Config(object):
         self.cap_t          = None
         self.total_data_pts = None
 
+        # saving
+        self.dof_metric = None
+        self.saved_configs = ['scale_process_noise',
+                    'scale_meas_noise',
+                    'max_vals',
+                    'num_interframe_vals',
+                    'min_t',
+                    'max_t',
+                    'total_data_pts',
+                    'traj_name',
+                    'dof_metric']
+
         # plot params
         self.do_plot        = not args.np if not plot_only else plot_only
         self.traj_name      = args.traj_name if not traj_name else traj_name
-        img_filename        = self._gen_img_filename()
-        self.img_filepath_imu = 'img/kf_' + img_filename + '_imu.png'
-        self.img_filepath_cam = 'img/kf_' + img_filename + '_cam.png'
-        self.img_filepath_compact = 'img/kf_' + img_filename + '_compact.png'
+        self.img_filepath_imu = 'img/kf_' + self.img_filename + '_imu.png'
+        self.img_filepath_cam = 'img/kf_' + self.img_filename + '_cam.png'
+        self.img_filepath_compact   = 'img/kf_' + self.img_filename + \
+                                        '_compact.png'
+
+    @property
+    def img_filename(self):
+        return self._gen_img_filename()
+
+    @property
+    def traj_kf_filepath(self):
+        return 'trajs/kf_best_' + self.img_filename + '.txt'
+
+    @property
+    def traj_imuref_filepath(self):
+        return 'trajs/imu_ref_' + self.img_filename + '.txt'
 
     def get_camera(self):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
@@ -198,6 +222,25 @@ class Config(object):
             return self.traj_name + '_prop'
         else:
             return self.traj_name + f'_upd_Kp{self.scale_process_noise}_Km{self.scale_meas_noise:.3f}'
+
+    def save(self, filename):
+        configs = '\n'.join([str(self.__dict__[s])
+                    for s in self.saved_configs])
+
+        with open(filename, 'w+') as f:
+            f.write(configs)
+
+    def read(self, filename):
+        with open(filename, 'r') as f:
+            lines = [l.strip() for _, l in enumerate(f)]
+
+        for i, c in enumerate(self.saved_configs):
+            if c == 'traj_name':
+                self.__dict__[c] = lines[i]
+            elif c in ['total_data_pts', 'num_interframe_vals']:
+                self.__dict__[c] = int(lines[i])
+            else:
+                self.__dict__[c] = float(lines[i])
 
     def _parse_arguments(self):
         parser = argparse.ArgumentParser(description='Run the VI-ESKF.')

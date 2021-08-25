@@ -4,6 +4,17 @@ import math
 def show_plot(plot_func, *args):
     def wrapper(*args):
         plot_func(*args)
+        config = args[1]
+        MSE = config.dof_metric
+
+        if MSE:
+            st = plt.suptitle(f"MSE {MSE:.3f}", fontsize=14)
+
+            # shift subplots down:
+            st.set_y(0.95)
+            fig = plt.gcf()
+            fig.subplots_adjust(top=0.85)
+
         plt.show()
     return wrapper
 

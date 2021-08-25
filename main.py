@@ -53,5 +53,5 @@ for k in range(num_kf_runs):
 ## results
 dof_mse = sum(dof_mses) / len(dof_mses)
 print(f'Best run: #{kf_best.run_id}; average MSE = {dof_mse:.2E}')
-kf_best.save('./trajs/kf_best.txt')
+kf_best.save(config)
 kf_best.plot(config, t, camera.traj, compact=True)
