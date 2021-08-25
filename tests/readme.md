@@ -2,16 +2,6 @@
 The Python files here are to be run from the main (parent) folder!
 Note: This repo was initially based on ![msf_eskf](https://github.com/skrogh/msf_ekf).
 
-## Table of contents
-* [Offline trajectories](#offline-trajectories)
-* [Fake IMU data](#fake-imu-data)
-* [Reconstructed visual trajectory](#reconstructed-visual-trajectory)
-  * [Comparing velocities](#comparing-velocities)
-* [KF propagation only](#kf-propagation-only)
-* [Full KF](#full-kf)
-  * [Playing with noise values](#playing-with-noise-values)
-  * [Last status update](#last-status-update)
-
 ## Offline trajectories
 ```
 python3 tests/plot_traj.py
@@ -168,3 +158,11 @@ Zoomed in:
         green ref. traj.
 * What I've already tried: constraining the quaternions, see
     [constrain_quats](../../tree/constrain_quats) branch.
+
+## Probe
+```
+python3 tests/simple_rotation_anim.py
+```
+Unconstrained SLAM end | Constrained SLAM end
+--- | ---
+![](../img/probe_uncon.gif) | ![](../img/probe_con.gif)
