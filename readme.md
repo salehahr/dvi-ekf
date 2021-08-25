@@ -15,7 +15,37 @@ nc = 70 (half the total frames in mandala0_mono trajectory)
 nb = 50 (IMU frequency)
 ```
 
-![](img/tuning-settings.png)
+```
+Configuration:
+         Trajectory          : mandala0_mono
+         Propagate only      : False
+
+         Num. cam. frames    : 70
+         Num. IMU data       : 3451
+        (num. IMU b/w frames : 50)
+
+         ## Noise values
+         #  P0: Initial process noise
+         std_dp             = 0.9        cm
+         std_dv             = 0.1        cm/s
+         std_dtheta         = 1.0        deg
+         std_ddofs_rot      = 30.0       deg
+         std_ddofs_trans    = 10.0       cm
+         std_dp_cam         = 0.9        cm
+         std_dtheta_cam     = 0.2        deg
+
+         #  Q: IMU measurement noise
+         std_acc    = 1.2E+00 cm/s^2
+         std_om     = 1.6E-02 deg/s
+
+         #  Q: IMU dofs random walk noise
+         std_dofs_p = 0.02 cm
+         std_dofs_r = 0.1 deg
+
+         #  R: Camera measurement noise
+         stdev_pc   = 0.300 cm
+         stdev_qc   = 5.0 deg
+```
 
 ### Sensitivity analysis `K_p`
 1e-4 | 1   | 2
