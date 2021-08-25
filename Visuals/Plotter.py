@@ -103,6 +103,8 @@ class Plotter(object):
             self._apply_lf_dict(line, lf.kf)
         elif label == 'imu ref':
             self._apply_lf_dict(line, lf.imuref)
+        elif label == 'dof ref':
+            self._apply_lf_dict(line, lf.imuref)
         elif 'interpl' in label:
             self._apply_lf_dict(line, lf.interpl)
         else:
@@ -194,6 +196,7 @@ class FilterPlot(Plotter):
         self._get_plot_objects(labels = labels,
                         labels_cam  = labels_cam,
                         labels_imu  = labels_imu,
+                        labels_imu_dofs = labels_imu_dofs,
                         config      = config,
                         num_cols    = num_cols,
                         filename    = config.img_filepath_compact,
@@ -235,11 +238,13 @@ class FilterPlot(Plotter):
 
     @plot_loop
     def _get_plot_objects(self, label, **kwargs):
+        config      = kwargs['config']
         cam         = kwargs['cam']
         imu_ref     = kwargs['imu_ref']
         imu_recon   = kwargs['imu_recon']
         labels_cam  = kwargs['labels_cam']
         labels_imu  = kwargs['labels_imu']
+        labels_imu_dofs  = kwargs['labels_imu_dofs']
 
         val_filt   = self.traj.__dict__[label]
 
@@ -253,7 +258,20 @@ class FilterPlot(Plotter):
                         if (imu_recon and label in imu_recon.__dict__) \
                             else []
 
-        objs = [self.traj, cam, imu_ref, imu_recon]
-        vals = [val_filt, val_cam, val_imuref, val_recon]
+        if label in labels_imu_dofs:
+            idx = labels_imu_dofs.index(label)
+            dof_ref = DofRef(config.min_t, config.max_t)
+            val_dof_ref = [config.real_imu_dofs[idx]] * 2
+        else:
+            dof_ref, val_dof_ref = None, []
+
+        objs = [self.traj, cam, imu_ref, imu_recon, dof_ref]
+        vals = [val_filt, val_cam, val_imuref, val_recon, val_dof_ref]
 
         return objs, vals
+
+class DofRef(object):
+    def __init__(self, min_t, max_t):
+        self.name = 'dof ref'
+        self.t = [min_t, max_t]
+        self.vals = []
