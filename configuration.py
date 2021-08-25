@@ -212,9 +212,6 @@ class Config(object):
         x0, cov0    = self.get_IC(imu, camera)
         kf          = Filter(self, imu, x0, cov0)
 
-        self.print_config()
-        self.print_dofs()
-
         return kf, camera, imu
 
     def _gen_img_filename(self):
@@ -318,3 +315,4 @@ class Config(object):
                 f'\t k_PROC     = {self.scale_process_noise}\n',
                 f'\t k_MEAS     = {self.scale_meas_noise}\n',
                 )
+        self.print_dofs()
