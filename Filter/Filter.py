@@ -1,6 +1,7 @@
 from copy import copy
 from math import factorial
 import numpy as np
+from tqdm import tqdm
 
 from .Quaternion import Quaternion, skew
 from .Trajectory import FilterTraj
@@ -26,7 +27,8 @@ class Filter(object):
 
         # simulation
         self.do_prop_only = config.do_prop_only
-        # self.cap_t = config.cap_t
+        self.min_t = config.min_t
+        self.cap_t = config.cap_t
 
         # # ground truth
         # self.real_joint_dofs = config.real_joint_dofs
@@ -148,6 +150,29 @@ class Filter(object):
         X_deltx[19:23,18:21] = Q_deltth_C
 
         return X_deltx
+
+    def run(self, camera, real_joint_dofs, k, run_desc_str):
+        """ Filter main loop (t>=1) over all camera frames,
+            not counting IC.
+            k already adjusted to start at 1.
+        """
+        old_t           = self.min_t
+        cam_timestamps  = tqdm(enumerate(camera.t[1:]),
+                            total=camera.max_vals, initial=1,
+                            desc=run_desc_str,
+                            dynamic_ncols=True, postfix={'MSE': ''})
+        self.run_id     = k
+
+        for i, t in cam_timestamps:
+            i_cam = i + 1 # not counting IC
+            self.run_one_epoch(old_t, t,
+                i_cam, camera, real_joint_dofs)
+
+            old_t = t
+            cam_timestamps.set_postfix({'sum error': f'{self.dof_metric:.2E}'})
+
+        # normalise dof_metric
+        self.dof_metric = self.dof_metric / (i * 6)
 
     def run_one_epoch(self, old_t, t, i_cam, camera, real_joint_dofs):
         """
@@ -323,10 +348,11 @@ class Filter(object):
         self.traj.write_to_file(config.traj_kf_filepath)
         self.imu.ref.write_to_file(config.traj_imuref_filepath)
 
-    def plot(self, config, t_end, camera_traj, compact):
+    def plot(self, config, camera_traj, compact):
         if not config.do_plot:
             return
 
+        t_end = self.traj.t[-1]
         if compact:
             FilterPlot(self.traj, camera_traj, self.imu.ref).plot_compact(
             config, t_end)
