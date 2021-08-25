@@ -7,15 +7,15 @@ the calibration parameters in a camera-IMU sensor probe setup.
 ## Tuning the KF
 ### Settings
 ```
-py main.py mandala0_mono pu -nb 100 -runs 5
+py main.py mandala0_mono pu -nb 50 -runs 5
 ```
 ![](img/tuning-settings.png)
 
 ### Sensitivity analysis `K_p`
-1e-3 | 1
----  | ---
-![](img/kf_mandala0_mono_upd_Kp0.001_Km1.000_imu.png) |
-![](img/kf_mandala0_mono_upd_Kp0.001_Km1.000_cam.png) |
+1e-2 | 1   | 2
+---  | --- | ---
+![](img/kf_mandala0_mono_upd_Kp0.01_Km1.000_compact.png) | ![](img/kf_mandala0_mono_upd_Kp1.0_Km1.000_compact.png)| ![](img/kf_mandala0_mono_upd_Kp2.0_Km1.000_compact.png) |
+
 
 ## Old results
 Using `stdev_a, stdev_om = 1e-3`  
