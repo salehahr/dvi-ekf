@@ -90,7 +90,7 @@ class Plotter(object):
 
     def _put_legend_near_first_plot(self, axes, offset, num_rows):
         r0, c0 = self._get_plot_rc(offset, num_rows)
-        axes[r0][c0].legend(bbox_to_anchor=(1., 2.))
+        axes[r0][c0].legend(bbox_to_anchor=(1., 1.2), loc='lower right')
 
     def _set_line_styles(self, axes):
         for ax in axes.reshape(-1):
@@ -101,9 +101,7 @@ class Plotter(object):
         label = line.get_label()
         if label == 'kf':
             self._apply_lf_dict(line, lf.kf)
-        elif label == 'imu ref':
-            self._apply_lf_dict(line, lf.imuref)
-        elif label == 'dof ref':
+        elif 'ref' in label:
             self._apply_lf_dict(line, lf.imuref)
         elif 'interpl' in label:
             self._apply_lf_dict(line, lf.interpl)
@@ -129,7 +127,7 @@ class Plotter(object):
         # shift subplots down:
         st.set_y(0.95)
         fig = plt.gcf()
-        fig.subplots_adjust(top=0.85)
+        fig.subplots_adjust(top=0.8)
 
     def save(self, filename):
         if filename:
@@ -264,6 +262,9 @@ class FilterPlot(Plotter):
             val_dof_ref = [config.real_imu_dofs[idx]] * 2
         else:
             dof_ref, val_dof_ref = None, []
+
+        if cam:
+            cam.name = 'ref'
 
         objs = [self.traj, cam, imu_ref, imu_recon, dof_ref]
         vals = [val_filt, val_cam, val_imuref, val_recon, val_dof_ref]
