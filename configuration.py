@@ -50,16 +50,16 @@ STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)      # [rad]
 
 # Kalman filter parameters
 """ Values for initial covariance matrix """
-stdev_dp            = [STDEV_PC_DEFAULT * 3] * 3      # [cm]
+stdev_dp            = [STDEV_PC_DEFAULT * 3] * 3        # [cm]
 stdev_dv            = [0.1, 0.1, 0.1]                   # [cm/s]
-stdev_dtheta_deg    = [1., 1, 1]                         # [deg]
+stdev_dtheta_deg    = [1., 1, 1]                        # [deg]
 stdev_dtheta        = np.deg2rad(stdev_dtheta_deg)      # [rad]
 
 imu_rots_deg        = [30, 30, 30]                      # [deg]
 imu_rots_in_rad     = np.deg2rad(imu_rots_deg)          # [rad]
 stdev_ddofs         = [*imu_rots_in_rad, 10, 10, 10]    # [rad, cm]
 
-stdev_dp_cam            = [STDEV_PC_DEFAULT * 3] * 3  # [cm]
+stdev_dp_cam            = [STDEV_PC_DEFAULT * 3] * 3    # [cm]
 stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]               # [deg]
 stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg) # [rad]
 
@@ -83,31 +83,6 @@ class Config(object):
         if not plot_only:
             args = self._parse_arguments()
 
-        # probe
-        """ Container for probe object containing only the symbolic
-            relative kinematics. """
-        self.sym_probe          = SymProbe(probe)
-        self.real_joint_dofs    = probe.joint_dofs.copy()
-        self.real_imu_dofs      = probe.imu_dofs.copy()
-        self.current_imu_dofs   = self.get_dof_IC()
-
-        # noises
-        # # process
-        self.scale_process_noise    = float(args.kp) if not plot_only \
-                            else float(SCALE_PROCESS_NOISE)
-        self.stdev_dofs_p           = STDEV_DOFS_P
-        self.stdev_dofs_r           = STDEV_DOFS_R
-
-        # # measurement
-        self.scale_meas_noise       = float(args.km) if not plot_only \
-                            else float(SCALE_MEASUREMENT_NOISE)
-        self.Rpc_val                = args.Rp if not plot_only \
-                            else STDEV_PC_DEFAULT
-        self.Rqc_val                = args.Rq if not plot_only \
-                            else STDEV_RC_DEFAULT
-        self.meas_noise             = np.hstack(([self.Rpc_val**2]*3,
-                                        [self.Rqc_val**2]*3))
-        
         # simulation params
         self.num_kf_runs            = args.runs if not plot_only else 1
         do_fast_sim                 = bool(args.f) if not plot_only else True
@@ -121,6 +96,31 @@ class Config(object):
         self.max_t          = None
         self.cap_t          = None
         self.total_data_pts = None
+
+        # probe
+        """ Container for probe object containing only the symbolic
+            relative kinematics. """
+        self.sym_probe          = SymProbe(probe)
+        self.real_joint_dofs    = probe.joint_dofs.copy()
+        self.real_imu_dofs      = probe.imu_dofs.copy()
+        self.current_imu_dofs   = self.get_dof_IC()
+
+        # noises
+        # # process
+        self.scale_process_noise    = float(args.kp) if not plot_only \
+                            else float(SCALE_PROCESS_NOISE)
+        self.stdev_dofs_p           = STDEV_DOFS_P / self.num_interframe_vals
+        self.stdev_dofs_r           = STDEV_DOFS_R / self.num_interframe_vals
+
+        # # measurement
+        self.scale_meas_noise       = float(args.km) if not plot_only \
+                            else float(SCALE_MEASUREMENT_NOISE)
+        self.Rpc_val                = args.Rp if not plot_only \
+                            else STDEV_PC_DEFAULT
+        self.Rqc_val                = args.Rq if not plot_only \
+                            else STDEV_RC_DEFAULT
+        self.meas_noise             = np.hstack(([self.Rpc_val**2]*3,
+                                        [self.Rqc_val**2]*3))
 
         # saving
         self.dof_metric = None
