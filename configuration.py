@@ -78,8 +78,10 @@ def np_string(arr):
                     suppress_small=True)
 
 class Config(object):
-    def __init__(self):
-        args = self._parse_arguments()
+    def __init__(self, traj_name=None, pu=None):
+        plot_only = traj_name and pu
+        if not plot_only:
+            args = self._parse_arguments()
 
         # probe
         """ Container for probe object containing only the symbolic
@@ -91,21 +93,26 @@ class Config(object):
 
         # noises
         # # process
-        self.scale_process_noise    = args.kp
+        self.scale_process_noise    = args.kp if not plot_only \
+                            else SCALE_PROCESS_NOISE
         self.stdev_dofs_p           = STDEV_DOFS_P
         self.stdev_dofs_r           = STDEV_DOFS_R
 
         # # measurement
-        self.scale_meas_noise       = args.km
-        self.Rpc_val                = args.Rp
-        self.Rqc_val                = args.Rq
+        self.scale_meas_noise       = args.km if not plot_only \
+                            else SCALE_MEASUREMENT_NOISE
+        self.Rpc_val                = args.Rp if not plot_only \
+                            else STDEV_PC_DEFAULT
+        self.Rqc_val                = args.Rq if not plot_only \
+                            else STDEV_RC_DEFAULT
         self.meas_noise             = np.hstack(([self.Rpc_val**2]*3,
                                         [self.Rqc_val**2]*3))
         
         # simulation params
-        self.num_kf_runs            = args.runs
-        do_fast_sim                 = bool(args.f)
-        self.do_prop_only           = args.do_prop_only in ['prop', 'p']
+        self.num_kf_runs            = args.runs if not plot_only else 1
+        do_fast_sim                 = bool(args.f) if not plot_only else True
+        self.do_prop_only           = args.do_prop_only in ['prop', 'p'] \
+                if not pu else pu
 
         self.max_vals               = 10 if do_fast_sim else args.nc
         self.num_interframe_vals    = 1  if do_fast_sim else args.nb
@@ -116,8 +123,8 @@ class Config(object):
         self.total_data_pts = None
 
         # plot params
-        self.do_plot        = not args.np
-        self.traj_name      = args.traj_name
+        self.do_plot        = not args.np if not plot_only else not plot_only
+        self.traj_name      = args.traj_name if not traj_name else traj_name
         img_filename        = self._gen_img_filename()
         self.img_filepath_imu = 'img/kf_' + img_filename + '_imu.png'
         self.img_filepath_cam = 'img/kf_' + img_filename + '_cam.png'

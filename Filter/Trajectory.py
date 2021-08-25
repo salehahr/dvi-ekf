@@ -124,6 +124,20 @@ class Trajectory(object):
         """ Get index for which timestamp matches the argument T. """
         return max([i for i, t in enumerate(self.t) if t <= T])
 
+    def write_to_file(self, filename=None, discard_interframe_vals=False):
+        with open(filename, 'w+') as f:
+            data_str = ''
+
+            for n in range(self.nvals):
+                for label in self.labels:
+                    data = self.__dict__[label][n]
+                    if label == 't':
+                        data_str += f'{data:.6f}'
+                    else:
+                        data_str += f' {data:.9f}'
+                data_str += ' \n'
+            f.write(data_str)
+
 class VisualTraj(Trajectory):
     """ Visual trajectory containing time and pose. """
 
@@ -193,12 +207,12 @@ class VisualTraj(Trajectory):
 class ImuRefTraj(Trajectory):
     """ Desired traj of the IMU. """
 
-    def __init__(self, name, imu):
+    def __init__(self, name, imu, filepath=None):
         labels = ['t', 'x', 'y', 'z',
                     'vx', 'vy', 'vz',
                     'rx', 'ry', 'rz',
                     'qw', 'qx', 'qy', 'qz']
-        super().__init__(name, labels)
+        super().__init__(name, labels, filepath)
         self.imu = imu
 
     def append_value(self, t, current_cam):
@@ -214,7 +228,7 @@ class ImuRefTraj(Trajectory):
             self.__dict__[label].append(data[i])
 
 class FilterTraj(Trajectory):
-    def __init__(self, name):
+    def __init__(self, name, filepath=None):
         self.labels = []
         self.labels_imu = ['x', 'y', 'z',
                     'vx', 'vy', 'vz',
@@ -227,7 +241,7 @@ class FilterTraj(Trajectory):
                     'qwc', 'qxc', 'qyc', 'qzc']
         labels = ['t', *self.labels_imu,
                     *self.labels_imu_dofs, *self.labels_camera]
-        super().__init__(name, labels)
+        super().__init__(name, labels, filepath)
 
     def _process_data(self, t, state):
         """ Appends new measurement from current state. """
@@ -249,18 +263,6 @@ class FilterTraj(Trajectory):
         data = self._process_data(t, state)
         for i, label in enumerate(self.labels):
             self.__dict__[label][-1] = data[i]
-
-    def write_to_file(self, filename=None, discard_interframe_vals=True):
-        with open(filename, 'w+') as f:
-            for i, t in enumerate(self.t):
-                res = abs(round(t) - t)
-                if res > 0.00001 and discard_interframe_vals:
-                    continue
-
-                pc_str = f"{self.xc[i]:.9f} {self.yc[i]:.9f} {self.zc[i]:.9f} "
-                qc_str = f"{self.qxc[i]:.9f} {self.qyc[i]:.9f} {self.qzc[i]:.9f} {self.qwc[i]:.9f}"
-                data_str = f"{t:.6f} " + pc_str + qc_str
-                f.write(data_str + '\n')
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and

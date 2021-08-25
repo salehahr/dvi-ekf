@@ -292,6 +292,10 @@ class Filter(object):
         res = self.states.dofs - real_imu_dofs
         self.dof_metric += np.dot(res, res)
 
+    def save(self, filename=None):
+        self.traj.write_to_file(filename)
+        self.imu.ref.write_to_file('./trajs/imu_ref.txt')
+
     def plot(self, config, t_end, camera_traj):
         if config.do_plot:
             FilterPlot(self.traj, camera_traj, self.imu.ref).plot(
