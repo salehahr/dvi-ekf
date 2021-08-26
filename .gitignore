@@ -2,3 +2,4 @@
 trajs/archive/*.txt
 diff.py
 *.swp
+configs.txt

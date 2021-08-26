@@ -168,9 +168,8 @@ class Filter(object):
         self.propagate_imu(old_t, t)
 
         # update
-        if not self.config.do_prop_only:
-            current_cam = camera.at_index(i_cam) # not counting IC
-            self.update(t, current_cam)
+        current_cam = camera.at_index(i_cam) # not counting IC
+        self.update(t, current_cam)
 
     def propagate_imu(self, t0, tn):
         cam_queue = self.imu.cam.generate_queue(t0, tn)

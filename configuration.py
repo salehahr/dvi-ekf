@@ -67,8 +67,8 @@ stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg) # [rad]
 stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta, stdev_ddofs, stdev_dp_cam, stdev_dtheta_cam))
 
 """ For tuning process noise and measurement noise matrices """
-SCALE_PROCESS_NOISE = 1
-SCALE_MEASUREMENT_NOISE = 1
+SCALE_PROCESS_NOISE_DEFAULT = 6e-3
+SCALE_MEASUREMENT_NOISE_DEFAULT = 1
 
 def np_string(arr):
     if isinstance(arr, list):
@@ -79,15 +79,15 @@ def np_string(arr):
                     suppress_small=True)
 
 class Config(object):
-    def __init__(self, traj_name=None, pu=None):
-        plot_only = traj_name and pu
-        if not plot_only:
+    def __init__(self, traj_name=None):
+        do_plot_only = traj_name is not None
+        if not do_plot_only:
             args = self._parse_arguments()
 
         # simulation params
-        self.num_kf_runs            = args.runs if not plot_only else 1
-        do_fast_sim                 = bool(args.f) if not plot_only else True
-        self.mode                   = args.m
+        self.num_kf_runs    = args.runs if not do_plot_only else 1
+        do_fast_sim         = bool(args.f) if not do_plot_only else True
+        self.mode           = args.m
 
         self.max_vals               = 10 if do_fast_sim else args.nc
         self.num_interframe_vals    = 1  if do_fast_sim else args.nb
@@ -107,15 +107,15 @@ class Config(object):
 
         # noises
         # # process
-        self.scale_process_noise    = float(args.kp) if not plot_only \
-                            else float(SCALE_PROCESS_NOISE)
+        self.scale_process_noise    = float(args.kp) if not do_plot_only \
+                            else float(SCALE_PROCESS_NOISE_DEFAULT)
 
         self.stdev_dofs_p   = args.rwp if args.rwp else STDEV_DOFS_P / self.num_interframe_vals
         self.stdev_dofs_r   = args.rwr if args.rwr else STDEV_DOFS_R / self.num_interframe_vals
 
         # # measurement
-        self.scale_meas_noise       = float(args.km) if not plot_only \
-                            else float(SCALE_MEASUREMENT_NOISE)
+        self.scale_meas_noise       = float(args.km) if not do_plot_only \
+                            else float(SCALE_MEASUREMENT_NOISE_DEFAULT)
         self.Rpc_val                = STDEV_PC_DEFAULT
         self.Rqc_val                = STDEV_RC_DEFAULT
         self.meas_noise             = np.hstack(([self.Rpc_val**2]*3,
@@ -134,7 +134,7 @@ class Config(object):
                     'dof_metric']
 
         # plot params
-        self.do_plot        = not args.np if not plot_only else plot_only
+        self.do_plot        = not args.np if not do_plot_only else do_plot_only
         self.traj_name      = args.traj_name if not traj_name else traj_name
         self.img_filepath_imu = 'img/kf_' + self.img_filename + '_imu.png'
         self.img_filepath_cam = 'img/kf_' + self.img_filename + '_cam.png'
@@ -261,11 +261,12 @@ class Config(object):
         parser.add_argument('-nb', default=NUM_IMU_DEFAULT, type=int,
                         help=f'num of IMU values b/w frames (default: {NUM_IMU_DEFAULT})')
 
-        parser.add_argument('-kp', default=SCALE_PROCESS_NOISE, type=float,
-                        help=f'scale factor for process noise (default: {SCALE_PROCESS_NOISE})')
-        parser.add_argument('-km', default=SCALE_MEASUREMENT_NOISE,
+        parser.add_argument('-kp', default=SCALE_PROCESS_NOISE_DEFAULT,
                         type=float,
-                        help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE})')
+                        help=f'scale factor for process noise (default: {SCALE_PROCESS_NOISE_DEFAULT})')
+        parser.add_argument('-km', default=SCALE_MEASUREMENT_NOISE_DEFAULT,
+                        type=float,
+                        help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE_DEFAULT})')
 
         parser.add_argument('-rwp', type=float,
                         help=f'random walk noise - imu pos')
