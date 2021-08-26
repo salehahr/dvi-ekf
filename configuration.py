@@ -86,10 +86,6 @@ class Config(object):
         # simulation params
         self.num_kf_runs            = args.runs if not plot_only else 1
         do_fast_sim                 = bool(args.f) if not plot_only else True
-        self.do_prop_only           = args.do_prop_only in ['prop', 'p'] \
-                if not pu else not pu
-        self.do_prop_only           = args.do_prop_only in ['prop', 'p'] \
-                if not pu else not pu
         self.mode                   = args.m
 
         self.max_vals               = 10 if do_fast_sim else args.nc
@@ -216,8 +212,8 @@ class Config(object):
 
         return kf, camera, imu
 
-    def _gen_img_filename(self):
-        if self.do_prop_only:
+    def _gen_img_filename(self, prop_only=False):
+        if prop_only:
             return self.traj_name + '_prop'
         else:
             return self.traj_name + f'_upd_Kp{self.scale_process_noise}_Km{self.scale_meas_noise:.3f}'
@@ -247,10 +243,6 @@ class Config(object):
         # positional args
         parser.add_argument('traj_name', type=str,
                         help='mandala0_mono, trans_x, rot_x, ...')
-        prop_choices = ['prop', 'p', 'update', 'u', 'pu']
-        parser.add_argument('do_prop_only', metavar='prop',
-                        choices=prop_choices,
-                        help=f'do propagation only or do prop + update;\n{prop_choices}')
 
         # optional arguments
         parser.add_argument('-f', nargs='?',
@@ -289,7 +281,6 @@ class Config(object):
     def print_config(self):
         print('Configuration: \n',
                 f'\t Trajectory          : {self.traj_name}\n',
-                f'\t Propagate only      : {self.do_prop_only}\n',
                 f'\t Mode                : {self.mode}\n\n',
                 
                 f'\t Num. cam. frames    : {self.max_vals}\n',
