@@ -1,6 +1,6 @@
 import copy
 from tqdm import trange
-from scipy.optimize import basinhopping, differential_evolution
+from scipy.optimize import differential_evolution
 import numpy as np
 
 class Simulator(object):
@@ -98,42 +98,7 @@ class Simulator(object):
 
         self.dof_mse_avg = sum(self.dof_mses) / len(self.dof_mses)
 
-    def optimise(self):
-        def optim_func(x):
-            self.kp, self.km, self.rwp, self.rwr = x
-            self.run()
-            return self.dof_mse_avg
-
-        def print_fun(x, f, accepted):
-            print(f"for x {x}: average MSE {f:.4f} accepted {int(accepted)}")
-
-        kp0 = self.config.scale_process_noise
-        km0 = self.config.scale_meas_noise
-        rwp0 = self.config.stdev_dofs_p
-        rwr0 = self.config.stdev_dofs_r
-        x0 = [kp0, km0, rwp0, rwr0]
-
-        # global minimum: kp = 4.024E-01, mse = 4.996
-        bnds = ((0, None), (0, None), (0, 3), (0, np.deg2rad(10)))
-        minimizer_kwargs = {'method'    : 'L-BFGS-B',
-                            'bounds'    : bnds}
-
-        self.run_progress = False
-        self.kf.progress_bar = False
-
-        print("Initial config.")
-        self.config.print_config()
-        ret = basinhopping(optim_func, x0,
-                            minimizer_kwargs=minimizer_kwargs,
-                            callback=print_fun,
-                            niter=1)
-
-        # results
-        print(f"\nglobal minimum using params: {ret.x},\nmse = {ret.fun:.3f}")
-        self.save_params(ret.x)
-        self.dof_mse = ret.fun
-
-    def optimise_de(self):
+   def optimise(self):
         def optim_func(x):
             self.kp, self.km, self.rwp, self.rwr = x
             self.run()
@@ -154,6 +119,8 @@ class Simulator(object):
         self.kf.progress_bar = False
 
         print('Running optimiser (differential evolution)... ')
+        print('Initial config')
+        self.config.print_config()
 
         ret = differential_evolution(optim_func, 
                             bounds,

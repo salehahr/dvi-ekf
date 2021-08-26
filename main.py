@@ -6,8 +6,7 @@ config  = Config()
 sim     = Simulator(config)
 
 if config.mode == 'tune':
-    # sim.optimise()
-    sim.optimise_de()
+    sim.optimise()
 else:
     sim.run_progress = False
     sim.run(disp_config=True, save_best=True)
