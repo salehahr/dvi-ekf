@@ -44,8 +44,9 @@ stdev_om  = [np.deg2rad(GYRO_NOISE)] * 3                # [rad/s]
 stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 
 # DOFs
-STDEV_DOFS_P        = 1                                 # [cm]
-STDEV_DOFS_R_deg    = 3                                 # [deg]
+""" How much the DOFs are allowed to move in one update. """
+STDEV_DOFS_P        = 0.25                              # [cm]
+STDEV_DOFS_R_deg    = 1                                 # [deg]
 STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)      # [rad]
 
 # Kalman filter parameters
