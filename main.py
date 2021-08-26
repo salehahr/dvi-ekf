@@ -5,12 +5,10 @@ from Filter import Simulator
 config  = Config()
 sim     = Simulator(config)
 
-## tune
-# sim.optimise()
-sim.optimise_de()
-
-## simulation runs
-sim.run(disp_config=True, save_best=True)
-
-## results
-sim.save_and_plot()
+if config.mode == 'tune':
+    # sim.optimise()
+    sim.optimise_de()
+else:
+    sim.run_progress = False
+    sim.run(disp_config=True, save_best=True)
+    sim.save_and_plot()

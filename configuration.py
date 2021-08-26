@@ -88,6 +88,9 @@ class Config(object):
         do_fast_sim                 = bool(args.f) if not plot_only else True
         self.do_prop_only           = args.do_prop_only in ['prop', 'p'] \
                 if not pu else not pu
+        self.do_prop_only           = args.do_prop_only in ['prop', 'p'] \
+                if not pu else not pu
+        self.mode                   = args.m
 
         self.max_vals               = 10 if do_fast_sim else args.nc
         self.num_interframe_vals    = 1  if do_fast_sim else args.nb
@@ -116,10 +119,8 @@ class Config(object):
         # # measurement
         self.scale_meas_noise       = float(args.km) if not plot_only \
                             else float(SCALE_MEASUREMENT_NOISE)
-        self.Rpc_val                = args.Rp if not plot_only \
-                            else STDEV_PC_DEFAULT
-        self.Rqc_val                = args.Rq if not plot_only \
-                            else STDEV_RC_DEFAULT
+        self.Rpc_val                = STDEV_PC_DEFAULT
+        self.Rqc_val                = STDEV_RC_DEFAULT
         self.meas_noise             = np.hstack(([self.Rpc_val**2]*3,
                                         [self.Rqc_val**2]*3))
 
@@ -258,16 +259,14 @@ class Config(object):
         parser.add_argument('-np', nargs='?',
                         default=0, const=1, choices=[0, 1], type=int,
                         help='no plotting')
+        parser.add_argument('-m', metavar='mode',
+                        choices=['tune', 'run'], default='run',
+                        help=f'tune or run KF')
 
         parser.add_argument('-nc', default=NUM_CAM_DEFAULT, type=int,
                         help=f'max num of camera values (default: {NUM_CAM_DEFAULT})')
         parser.add_argument('-nb', default=NUM_IMU_DEFAULT, type=int,
                         help=f'num of IMU values b/w frames (default: {NUM_IMU_DEFAULT})')
-
-        parser.add_argument('-Rp', default=STDEV_PC_DEFAULT, type=float,
-                        help=f'camera position noise (default: {STDEV_PC_DEFAULT:.3f})')
-        parser.add_argument('-Rq', default=STDEV_RC_DEFAULT,  type=float,
-                        help=f'camera rotation noise (default: {STDEV_RC_DEFAULT:.3f})')
 
         parser.add_argument('-kp', default=SCALE_PROCESS_NOISE, type=float,
                         help=f'scale factor for process noise (default: {SCALE_PROCESS_NOISE})')
@@ -290,7 +289,8 @@ class Config(object):
     def print_config(self):
         print('Configuration: \n',
                 f'\t Trajectory          : {self.traj_name}\n',
-                f'\t Propagate only      : {self.do_prop_only}\n\n',
+                f'\t Propagate only      : {self.do_prop_only}\n',
+                f'\t Mode                : {self.mode}\n\n',
                 
                 f'\t Num. cam. frames    : {self.max_vals}\n',
                 f'\t Num. IMU data       : {self.total_data_pts}\n',
