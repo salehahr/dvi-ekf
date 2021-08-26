@@ -1,0 +1,55 @@
+python3 main.py mandala0_mono -nb 50 -nc 70 -m tune
+Running optimiser (differential evolution)... 
+Initial config
+Configuration: 
+ 	 Trajectory          : mandala0_mono
+ 	 Mode                : tune
+
+ 	 Num. cam. frames    : 70
+ 	 Num. IMU data       : 3451
+ 	(num. IMU b/w frames : 50)
+
+ 	 ## Noise values
+ 	 #  P0: Initial process noise
+ 	 std_dp             = 0.9 	 cm
+ 	 std_dv             = 0.1 	 cm/s
+ 	 std_dtheta         = 1.0 	 deg
+ 	 std_ddofs_rot      = 30.0 	 deg
+ 	 std_ddofs_trans    = 10.0 	 cm
+ 	 std_dp_cam         = 0.9 	 cm
+ 	 std_dtheta_cam     = 0.2 	 deg
+
+ 	 #  Q: IMU measurement noise
+ 	 std_acc    = 1.2E+00 cm/s^2
+ 	 std_om     = 1.6E-02 deg/s
+
+ 	 #  Q: IMU dofs random walk noise
+ 	 std_dofs_p = 0.005 cm
+ 	 std_dofs_r = 0.0 deg
+
+ 	 #  R: Camera measurement noise
+ 	 stdev_pc   = 0.300 cm 
+ 	 stdev_qc   = 5.0 deg
+
+ 	 ## KF tuning
+ 	 k_PROC     = 0.006
+ 	 k_MEAS     = 1.0
+
+DOFs (real) : [ 0.  0.  0.  0.  0. 20.]
+DOFs (IC)   : [ 0.0524  0.      0.      3.      3.     23.    ]
+
+differential_evolution step 1: f(x)= 1.78247
+current param set: [0.007]
+differential_evolution step 2: f(x)= 1.78247
+current param set: [0.007]
+differential_evolution step 3: f(x)= 1.18172
+current param set: [0.004]
+differential_evolution step 4: f(x)= 1.18172
+current param set: [0.004]
+differential_evolution step 5: f(x)= 1.18172
+current param set: [0.004]
+differential_evolution step 6: f(x)= 1.18172
+current param set: [0.004]
+differential_evolution step 7: f(x)= 0.300153
+current param set: [0.009]
+
