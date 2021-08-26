@@ -68,7 +68,7 @@ class Simulator(object):
     def best_run_id(self):
         return self.kf_best.run_id
 
-    def run(self, disp_config=False, save_best=False):
+    def run(self, disp_config=False, save_best=False, verbose=True):
         self.kf.config = self.config
 
         if disp_config: self.config.print_config()
@@ -82,7 +82,7 @@ class Simulator(object):
             run_id = k + 1
             run_desc_str = f'KF run {run_id}/{self.num_kf_runs}'
 
-            self.kf.run(self.camera, run_id, run_desc_str)
+            self.kf.run(self.camera, run_id, run_desc_str, verbose)
 
             # save run and mse
             self.dof_mses.append(self.kf.dof_metric)
@@ -97,23 +97,25 @@ class Simulator(object):
             run_bar.set_postfix({'dof_mse_best': f'{self.dof_mse_best:.2E}'})
 
         self.dof_mse_avg = sum(self.dof_mses) / len(self.dof_mses)
+        if verbose:
+            print(f'\tDOF MSE: {self.dof_mse_avg:.2E}')
 
-   def optimise(self):
+    def optimise(self):
         def optim_func(x):
             self.kp, self.km, self.rwp, self.rwr = x
-            self.run()
+            self.run(verbose=False)
             return self.dof_mse_avg
 
         def print_fun(x0, convergence):
             print(f"current param set: {x0}")
 
-        kp0 = self.config.scale_process_noise
-        km0 = self.config.scale_meas_noise
-        rwp0 = self.config.stdev_dofs_p
-        rwr0 = self.config.stdev_dofs_r
-        x0 = [kp0, km0, rwp0, rwr0]
+        def optim_func_kp_only(x):
+            self.kp = x
+            self.run(verbose=False)
+            return self.dof_mse_avg
 
-        bounds = ((0, 5), (0, 5), (0, 3), (0, np.deg2rad(10)))
+        bounds = ((0, 1), (0, 5), (0, 3), (0, np.deg2rad(10)))
+        bounds_kp_only = ((1e-4, 1e-2),)
 
         self.run_progress = False
         self.kf.progress_bar = False
@@ -122,8 +124,11 @@ class Simulator(object):
         print('Initial config')
         self.config.print_config()
 
-        ret = differential_evolution(optim_func, 
-                            bounds,
+        ret = differential_evolution(
+                            # optim_func, 
+                            optim_func_kp_only, 
+                            # bounds,
+                            bounds_kp_only,
                             strategy = 'best1bin',
                             disp = True,
                             # x0 = x0,

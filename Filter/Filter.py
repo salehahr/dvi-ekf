@@ -133,7 +133,7 @@ class Filter(object):
     def states_old(self, val):
         self._states_old.set(val.vec)
 
-    def run(self, camera, k, run_desc_str):
+    def run(self, camera, k, run_desc_str, verbose=True):
         """ Filter main loop (t>=1) over all camera frames,
             not counting IC.
             k already adjusted to start at 1.
@@ -155,7 +155,6 @@ class Filter(object):
         # normalise dof_metric
         self.calculate_metric()
         self.dof_metric = self.dof_metric / 6
-        print(f'\tDOF error at t_end: {self.dof_metric:.2E}')
 
     def run_one_epoch(self, old_t, t, i_cam, camera):
         """
