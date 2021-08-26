@@ -48,9 +48,9 @@ Configuration:
 ```
 
 ### Sensitivity analysis `K_p`
-1e-4 | 1   | 2
----  | --- | ---
-![](img/kf_mandala0_mono_upd_Kp0.0001_Km1.000_compact.png) | ![](img/kf_mandala0_mono_upd_Kp1.0_Km1.000_compact.png)| ![](img/kf_mandala0_mono_upd_Kp2.0_Km1.000_compact.png) |
+1e-4 | 1e-3 | 1   | 2
+---  | --- | --- | ---
+![](img/kf_mandala0_mono_upd_Kp0.0001_Km1.000_compact.png) | ![](img/kf_mandala0_mono_upd_Kp0.001_Km1.000_compact.png)| ![](img/kf_mandala0_mono_upd_Kp1.0_Km1.000_compact.png)| ![](img/kf_mandala0_mono_upd_Kp2.0_Km1.000_compact.png) |
 
 
 ## Old results
