@@ -26,25 +26,21 @@ class Filter(object):
         self.dt = 0.
 
         # simulation
-        self.do_prop_only = config.do_prop_only
-        self.min_t = config.min_t
-        self.cap_t = config.cap_t
+        self._config = config
+        self.progress_bar = True
 
-        # # ground truth
-        # self.real_joint_dofs = config.real_joint_dofs
-
-        # imu / noise
+        # objects
         self.imu = imu
-        self.imu.eval_init()
         self.probe = config.sym_probe
 
-        self.scale_process_noise = config.scale_process_noise
+        # imu / noise
+        self.imu.eval_init()
+
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
-        self.stdev_dofs_p = config.stdev_dofs_p
-        self.stdev_dofs_r = config.stdev_dofs_r
 
-        self.R = config.scale_meas_noise * np.diag(config.meas_noise)
+        self.R = self.config.scale_meas_noise *\
+                    np.diag(self.config.meas_noise)
 
         # buffer
         self._om_old = self.imu.om.squeeze()
@@ -68,7 +64,7 @@ class Filter(object):
         # metrics
         self.dof_metric = 0
 
-    def reset(self, config, x0, cov0):
+    def reset(self, x0, cov0):
         self.states = copy(x0)
         self.P = np.copy(cov0)
         self._x = []
@@ -80,8 +76,15 @@ class Filter(object):
         self.imu.eval_init()
 
         self.traj.reset()
-        self.traj.append_propagated_states(config.min_t, self.states)
+        self.traj.append_propagated_states(self.config.min_t, self.states)
         self.dof_metric = 0
+
+    @property
+    def config(self):
+        return self._config
+    @config.setter
+    def config(self, obj):
+        self._config = obj
 
     @property
     def run_id(self):
@@ -130,43 +133,22 @@ class Filter(object):
     def states_old(self, val):
         self._states_old.set(val.vec)
 
-    @property
-    def jac_X_deltx(self):
-        X_deltx = np.zeros((self.num_states, self.num_error_states))
-
-        def jac_true_wrt_err_quats(quat):
-            x, y, z, w = quat.xyzw
-            return 0.5 * np.array([[-x, -y, -z],
-                                   [ w, -z,  y],
-                                   [ z,  w, -x],
-                                   [-y,  x,  w]])
-
-        Q_deltth = jac_true_wrt_err_quats(self.states.q)
-        Q_deltth_C = jac_true_wrt_err_quats(self.states.q_cam)
-
-        X_deltx[0:6,0:6] = np.eye(6)
-        X_deltx[6:10,6:9] = Q_deltth
-        X_deltx[10:19,9:18] = np.eye(9)
-        X_deltx[19:23,18:21] = Q_deltth_C
-
-        return X_deltx
-
-    def run(self, camera, real_joint_dofs, k, run_desc_str):
+    def run(self, camera, k, run_desc_str):
         """ Filter main loop (t>=1) over all camera frames,
             not counting IC.
             k already adjusted to start at 1.
         """
-        old_t           = self.min_t
+        old_t           = self.config.min_t
         cam_timestamps  = tqdm(enumerate(camera.t[1:]),
                             total=camera.max_vals, initial=1,
                             desc=run_desc_str,
-                            dynamic_ncols=True, postfix={'MSE': ''})
+                            dynamic_ncols=True, postfix={'MSE': ''},
+                            disable=not self.progress_bar)
         self.run_id     = k
 
         for i, t in cam_timestamps:
             i_cam = i + 1 # not counting IC
-            self.run_one_epoch(old_t, t,
-                i_cam, camera, real_joint_dofs)
+            self.run_one_epoch(old_t, t, i_cam, camera)
 
             old_t = t
             cam_timestamps.set_postfix({'sum error': f'{self.dof_metric:.2E}'})
@@ -174,7 +156,7 @@ class Filter(object):
         # normalise dof_metric
         self.dof_metric = self.dof_metric / (i * 6)
 
-    def run_one_epoch(self, old_t, t, i_cam, camera, real_joint_dofs):
+    def run_one_epoch(self, old_t, t, i_cam, camera):
         """
             Kalman filter run between old camera frame and
             current camera frame (prediction steps + update step).
@@ -183,22 +165,23 @@ class Filter(object):
             i_cam must be already adjusted so that the IC is not counted
         """
         # propagate
-        self.propagate_imu(old_t, t, real_joint_dofs)
+        self.propagate_imu(old_t, t)
 
         # update
-        if not self.do_prop_only:
+        if not self.config.do_prop_only:
             current_cam = camera.at_index(i_cam) # not counting IC
             self.update(t, current_cam)
 
-        self.calculate_metric(real_joint_dofs)
+        self.calculate_metric()
 
-    def propagate_imu(self, t0, tn, real_joint_dofs):
+    def propagate_imu(self, t0, tn):
         cam_queue = self.imu.cam.generate_queue(t0, tn)
 
         old_ti = t0
         for ii, ti in enumerate(cam_queue.t):
             interp = cam_queue.at_index(ii)
-            om, acc = self.imu.eval_expr_single(ti, *real_joint_dofs,
+            om, acc = self.imu.eval_expr_single(ti,
+                *self.config.real_joint_dofs,
                 interp.acc, interp.R,
                 interp.om, interp.alp, )
             self.imu.ref.append_value(ti, interp.vec)
@@ -289,23 +272,23 @@ class Filter(object):
         Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
         Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
 
-        N_p = np.random.normal(loc=0, scale=self.stdev_dofs_p, size=(3,))
-        N_r = np.random.normal(loc=0, scale=self.stdev_dofs_r, size=(3,))
+        N_p = np.random.normal(loc=0, scale=self.config.stdev_dofs_p,
+            size=(3,))
+        N_r = np.random.normal(loc=0, scale=self.config.stdev_dofs_r,
+            size=(3,))
         Q[6:12, 6:12] = np.diag(np.hstack((N_r, N_p)))
 
-        Q = self.scale_process_noise * Q
+        Q = self.config.scale_process_noise * Q
 
         self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ Q @ self.Fi.T
 
     def update(self, t, camera):
         # compute gain        
-        # H = self.Hx @ self.jac_X_deltx # 7x21
         H = np.zeros((6, self.num_error_states))
         H[0:3, -6:-3] = np.eye(3)
         H[3:6, -3:  ] = np.eye(3)
 
-        R = self.R[:6,:6]
-        S = H @ self.P @ H.T + R # 6x6
+        S = H @ self.P @ H.T + self.R # 6x6
         try:
             K = self.P @ H.T @ np.linalg.inv(S) # 21x6
         except np.linalg.LinAlgError as e:
@@ -324,7 +307,7 @@ class Filter(object):
         # correct predicted state and covariance
         self.states.apply_correction(err)
         I = np.eye(self.num_error_states)
-        self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ R @ K.T
+        self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ self.R @ K.T
 
         # reset error states
         G = np.eye(self.num_error_states)
@@ -337,25 +320,24 @@ class Filter(object):
 
         return K
 
-    def calculate_metric(self, real_dofs):
-        real_imu_dofs = casadi.DM(real_dofs[0][:6]).full().squeeze()
-        res = self.states.dofs - real_imu_dofs
+    def calculate_metric(self):
+        res = self.states.dofs - self.config.real_imu_dofs
         self.dof_metric += np.dot(res, res)
 
-    def save(self, config):
-        config.dof_metric = self.dof_metric
-        config.save('./configs.txt')
-        self.traj.write_to_file(config.traj_kf_filepath)
-        self.imu.ref.write_to_file(config.traj_imuref_filepath)
+    def save(self):
+        self.config.dof_metric = self.dof_metric
+        self.config.save('./configs.txt')
+        self.traj.write_to_file(self.config.traj_kf_filepath)
+        self.imu.ref.write_to_file(self.config.traj_imuref_filepath)
 
-    def plot(self, config, camera_traj, compact):
-        if not config.do_plot:
+    def plot(self, camera_traj, compact):
+        if not self.config.do_plot:
             return
 
         t_end = self.traj.t[-1]
         if compact:
             FilterPlot(self.traj, camera_traj, self.imu.ref).plot_compact(
-            config, t_end)
+            self.config, t_end)
         else:
             FilterPlot(self.traj, camera_traj, self.imu.ref).plot(
-            config, t_end)
+            self.config, t_end)
