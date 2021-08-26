@@ -109,8 +109,9 @@ class Config(object):
         # # process
         self.scale_process_noise    = float(args.kp) if not plot_only \
                             else float(SCALE_PROCESS_NOISE)
-        self.stdev_dofs_p           = STDEV_DOFS_P / self.num_interframe_vals
-        self.stdev_dofs_r           = STDEV_DOFS_R / self.num_interframe_vals
+
+        self.stdev_dofs_p   = args.rwp if args.rwp else STDEV_DOFS_P / self.num_interframe_vals
+        self.stdev_dofs_r   = args.rwr if args.rwr else STDEV_DOFS_R / self.num_interframe_vals
 
         # # measurement
         self.scale_meas_noise       = float(args.km) if not plot_only \
@@ -273,6 +274,12 @@ class Config(object):
         parser.add_argument('-km', default=SCALE_MEASUREMENT_NOISE,
                         type=float,
                         help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE})')
+
+        parser.add_argument('-rwp', type=float,
+                        help=f'random walk noise - imu pos')
+        parser.add_argument('-rwr', 
+                        type=float,
+                        help=f'random walk noise - imu rot')
 
         parser.add_argument('-runs', default=NUM_KF_RUNS_DEFAULT,
                         type=int,
