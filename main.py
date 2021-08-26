@@ -5,8 +5,9 @@ from Filter import Simulator
 config  = Config()
 sim     = Simulator(config)
 
-# ## tune
+## tune
 # sim.optimise()
+sim.optimise_de()
 
 ## simulation runs
 sim.run(disp_config=True, save_best=True)

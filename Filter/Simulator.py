@@ -1,6 +1,6 @@
 import copy
 from tqdm import trange
-from scipy.optimize import basinhopping
+from scipy.optimize import basinhopping, differential_evolution
 import numpy as np
 
 class Simulator(object):
@@ -131,6 +131,43 @@ class Simulator(object):
         # results
         print(f"\nglobal minimum using params: {ret.x},\nmse = {ret.fun:.3f}")
         self.save_params(ret.x)
+        self.dof_mse = ret.fun
+
+    def optimise_de(self):
+        def optim_func(x):
+            self.kp, self.km, self.rwp, self.rwr = x
+            self.run()
+            return self.dof_mse_avg
+
+        def print_fun(x0, convergence):
+            print(f"current param set: {x0}")
+
+        kp0 = self.config.scale_process_noise
+        km0 = self.config.scale_meas_noise
+        rwp0 = self.config.stdev_dofs_p
+        rwr0 = self.config.stdev_dofs_r
+        x0 = [kp0, km0, rwp0, rwr0]
+
+        bounds = ((0, 5), (0, 5), (0, 3), (0, np.deg2rad(10)))
+
+        self.run_progress = False
+        self.kf.progress_bar = False
+
+        print('Running optimiser (differential evolution)... ')
+
+        ret = differential_evolution(optim_func, 
+                            bounds,
+                            strategy = 'best1bin',
+                            disp = True,
+                            # x0 = x0,
+                            callback = print_fun)
+
+        print("Initial config.")
+        self.config.print_config()
+
+        # results
+        print(f"\nglobal minimum using params: {ret.x},\nmse = {ret.fun:.3f}")
+        self.save_params(ret.x, filename='./opt-tune-params-de.txt')
         self.dof_mse = ret.fun
 
     def save_params(self, x, filename=None):
