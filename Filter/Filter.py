@@ -142,7 +142,7 @@ class Filter(object):
         cam_timestamps  = tqdm(enumerate(camera.t[1:]),
                             total=camera.max_vals, initial=1,
                             desc=run_desc_str,
-                            dynamic_ncols=True, postfix={'MSE': ''},
+                            dynamic_ncols=True,
                             disable=not self.progress_bar)
         self.run_id     = k
 
@@ -151,10 +151,11 @@ class Filter(object):
             self.run_one_epoch(old_t, t, i_cam, camera)
 
             old_t = t
-            cam_timestamps.set_postfix({'sum error': f'{self.dof_metric:.2E}'})
 
         # normalise dof_metric
-        self.dof_metric = self.dof_metric / (i * 6)
+        self.calculate_metric()
+        self.dof_metric = self.dof_metric / 6
+        print(f'\tDOF error at t_end: {self.dof_metric:.2E}')
 
     def run_one_epoch(self, old_t, t, i_cam, camera):
         """
@@ -171,8 +172,6 @@ class Filter(object):
         if not self.config.do_prop_only:
             current_cam = camera.at_index(i_cam) # not counting IC
             self.update(t, current_cam)
-
-        self.calculate_metric()
 
     def propagate_imu(self, t0, tn):
         cam_queue = self.imu.cam.generate_queue(t0, tn)
