@@ -276,7 +276,7 @@ class Filter(object):
             size=(3,))
         Q[6:12, 6:12] = np.diag(np.hstack((N_r, N_p)))
 
-        Q = self.config.scale_process_noise * Q
+        Q[0:6, 0:6] = self.config.scale_process_noise * Q[0:6, 0:6]
 
         self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ Q @ self.Fi.T
 
