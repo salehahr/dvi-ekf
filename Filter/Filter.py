@@ -27,7 +27,7 @@ class Filter(object):
 
         # simulation
         self._config = config
-        self.progress_bar = True
+        self.show_progress = True
 
         # objects
         self.imu = imu
@@ -136,14 +136,14 @@ class Filter(object):
     def run(self, camera, k, run_desc_str, verbose=True):
         """ Filter main loop (t>=1) over all camera frames,
             not counting IC.
-            k already adjusted to start at 1.
+            arg: k should already be adjusted to start at 1.
         """
         old_t           = self.config.min_t
         cam_timestamps  = tqdm(enumerate(camera.t[1:]),
                             total=camera.max_vals, initial=1,
                             desc=run_desc_str,
                             dynamic_ncols=True,
-                            disable=not self.progress_bar)
+                            disable=not self.show_progress)
         self.run_id     = k
 
         for i, t in cam_timestamps:
@@ -159,7 +159,8 @@ class Filter(object):
     def run_one_epoch(self, old_t, t, i_cam, camera):
         """
             Kalman filter run between old camera frame and
-            current camera frame (prediction steps + update step).
+            current camera frame.
+            1 epoch = (>=1 prediction steps) + (1 update step)
             Calculates the unnormalised DOF MSE.
 
             i_cam must be already adjusted so that the IC is not counted
@@ -172,6 +173,10 @@ class Filter(object):
         self.update(t, current_cam)
 
     def propagate_imu(self, t0, tn):
+        """ Generates IMU data between old and current camera frame,
+            then uses this data to propagate the states as many times
+            as there are IMU data between frames.
+        """
         cam_queue = self.imu.cam.generate_queue(t0, tn)
 
         old_ti = t0
@@ -265,6 +270,10 @@ class Filter(object):
                         )['jac']).full()
 
     def _predict_error_covariance(self):
+        """ Calculates the predicted covariance.
+            Q is calculated from IMU noise and
+            from the DOF random walk params.
+        """
         Q = np.eye(self.num_noise)
         Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
         Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)

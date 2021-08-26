@@ -8,6 +8,6 @@ sim     = Simulator(config)
 if config.mode == 'tune':
     sim.optimise()
 else:
-    sim.run_progress = False
+    sim.show_run_progress = False
     sim.run(disp_config=True, save_best=True)
     sim.save_and_plot()

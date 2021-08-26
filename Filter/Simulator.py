@@ -22,7 +22,7 @@ class Simulator(object):
         # simulation run params
         self.num_kf_runs = config.num_kf_runs
         self.cap_t      = config.cap_t
-        self.run_progress = True
+        self.show_run_progress = True
 
         # results
         self.dof_mses = []
@@ -69,14 +69,18 @@ class Simulator(object):
         return self.kf_best.run_id
 
     def run(self, disp_config=False, save_best=False, verbose=True):
+        """ Runs KF on the camera trajectory several times.
+            Calculates the mean squared error of the DOFs,
+                averaged from all the KF runs.
+        """
+        # make sure that KF has the right config
         self.kf.config = self.config
-
         if disp_config: self.config.print_config()
 
         run_bar = trange(self.num_kf_runs,
                     desc='KF runs',
-                    postfix={'MSE': ''},
-                    disable = not self.run_progress)
+                    disable = not self.show_run_progress)
+
         self.dof_mses = []
         for k in run_bar:
             run_id = k + 1
@@ -94,13 +98,15 @@ class Simulator(object):
 
             # reset for next run
             self.kf.reset(self.x0, self.cov0)
-            run_bar.set_postfix({'dof_mse_best': f'{self.dof_mse_best:.2E}'})
 
         self.dof_mse_avg = sum(self.dof_mses) / len(self.dof_mses)
         if verbose:
             print(f'\tDOF MSE: {self.dof_mse_avg:.2E}')
 
     def optimise(self):
+        """ For tuning the KF parameters.
+            Currently only for kp (scale factor for process noise).
+        """
         def optim_func(x):
             self.kp, self.km, self.rwp, self.rwr = x
             self.run(verbose=False)
@@ -117,8 +123,8 @@ class Simulator(object):
         bounds = ((0, 1), (0, 5), (0, 3), (0, np.deg2rad(10)))
         bounds_kp_only = ((1e-4, 1e-2),)
 
-        self.run_progress = False
-        self.kf.progress_bar = False
+        self.show_run_progress = False
+        self.kf.show_progress = False
 
         print('Running optimiser (differential evolution)... ')
         print('Initial config')

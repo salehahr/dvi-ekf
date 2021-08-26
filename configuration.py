@@ -28,11 +28,14 @@ probe = RigidSimpleProbe(scope_length=scope_length,
             theta_cam=theta_cam_in_rad)
 
 # Camera parameters
+""" Noise """
 STDEV_PC_DEFAULT = 0.3              # [cm]
 STDEV_RC_DEFAULT = np.deg2rad(5)    # [rad]
-SCALE            = 10               # convert cam pos to cm
+""" Scale to convert cam pos to cm in mandala trajectory """
+SCALE            = 10
 
 # IMU parameters
+""" From MPU 6050 datasheet """
 NOISE_SAMPLE_RATE   = 10            # Hz (not output data rate)
 GYRO_NOISE          = 0.005 *\
                         math.sqrt(NOISE_SAMPLE_RATE)    # [deg/s]
@@ -44,22 +47,27 @@ stdev_om  = [np.deg2rad(GYRO_NOISE)] * 3                # [rad/s]
 stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 
 # DOFs
-""" How much the DOFs are allowed to move in one update. """
-STDEV_DOFS_P        = 0.25                              # [cm]
-STDEV_DOFS_R_deg    = 1                                 # [deg]
-STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)      # [rad]
+""" How much the DOFs are allowed to move in one update.
+    (later on in Config.__init__: gets divided by num_interframe_vals
+        if not given as an argument to main.py) """
+STDEV_DOFS_P_DEFAULT    = 0.25                              # [cm]
+STDEV_DOFS_R_deg        = 1                                 # [deg]
+STDEV_DOFS_R_DEFAULT    = np.deg2rad(STDEV_DOFS_R_deg)      # [rad]
 
 # Kalman filter parameters
 """ Values for initial covariance matrix """
+""" Uncertainties of the IMU error states """
 stdev_dp            = [STDEV_PC_DEFAULT * 3] * 3        # [cm]
 stdev_dv            = [0.1, 0.1, 0.1]                   # [cm/s]
 stdev_dtheta_deg    = [1., 1, 1]                        # [deg]
 stdev_dtheta        = np.deg2rad(stdev_dtheta_deg)      # [rad]
 
+""" High initial uncertainties for the error dofs """
 imu_rots_deg        = [30, 30, 30]                      # [deg]
 imu_rots_in_rad     = np.deg2rad(imu_rots_deg)          # [rad]
 stdev_ddofs         = [*imu_rots_in_rad, 10, 10, 10]    # [rad, cm]
 
+""" Uncertainties of the camera error states """
 stdev_dp_cam            = [STDEV_PC_DEFAULT * 3] * 3    # [cm]
 stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]               # [deg]
 stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg) # [rad]
@@ -71,6 +79,7 @@ SCALE_PROCESS_NOISE_DEFAULT = 6e-3
 SCALE_MEASUREMENT_NOISE_DEFAULT = 1
 
 def np_string(arr):
+    """ For formatting np arrays when printing. """
     if isinstance(arr, list):
         arr = np.array(arr)
 
@@ -85,13 +94,16 @@ class Config(object):
             args = self._parse_arguments()
 
         # simulation params
-        self.num_kf_runs    = args.runs if not do_plot_only else 1
-        do_fast_sim         = bool(args.f) if not do_plot_only else True
+        self.num_kf_runs    = args.runs if not do_plot_only \
+                                else NUM_KF_RUNS_DEFAULT
         self.mode           = args.m
+        do_fast_sim         = bool(args.f) if not do_plot_only else True
 
         self.max_vals               = 10 if do_fast_sim else args.nc
         self.num_interframe_vals    = 1  if do_fast_sim else args.nb
 
+        """ these get initialised after loading the Camera obj.
+            ._gen_sim_params_from_cam() """
         self.min_t          = None
         self.max_t          = None
         self.cap_t          = None
@@ -103,15 +115,17 @@ class Config(object):
         self.sym_probe          = SymProbe(probe)
         self.real_joint_dofs    = probe.joint_dofs.copy()
         self.real_imu_dofs      = probe.imu_dofs.copy()
-        self.current_imu_dofs   = self.get_dof_IC()
+        self.est_imu_dofs_IC    = self.get_dof_IC()
 
-        # noises
+        # noise
         # # process
         self.scale_process_noise    = float(args.kp) if not do_plot_only \
                             else float(SCALE_PROCESS_NOISE_DEFAULT)
 
-        self.stdev_dofs_p   = args.rwp if args.rwp else STDEV_DOFS_P / self.num_interframe_vals
-        self.stdev_dofs_r   = args.rwr if args.rwr else STDEV_DOFS_R / self.num_interframe_vals
+        self.stdev_dofs_p   = args.rwp if args.rwp \
+                else STDEV_DOFS_P_DEFAULT / self.num_interframe_vals
+        self.stdev_dofs_r   = args.rwr if args.rwr \
+                else STDEV_DOFS_R_DEFAULT / self.num_interframe_vals
 
         # # measurement
         self.scale_meas_noise       = float(args.km) if not do_plot_only \
@@ -133,34 +147,31 @@ class Config(object):
                     'traj_name',
                     'dof_metric']
 
-        # plot params
-        self.do_plot        = not args.np if not do_plot_only else do_plot_only
+        # plot variables
+        self.do_plot        = not args.np if not do_plot_only \
+                                else do_plot_only
         self.traj_name      = args.traj_name if not traj_name else traj_name
         self.img_filepath_imu = 'img/kf_' + self.img_filename + '_imu.png'
         self.img_filepath_cam = 'img/kf_' + self.img_filename + '_cam.png'
         self.img_filepath_compact   = 'img/kf_' + self.img_filename + \
                                         '_compact.png'
+        self.traj_kf_filepath = 'trajs/kf_best_' + self.img_filename + '.txt'
+        self.traj_imuref_filepath = 'trajs/imu_ref_' + self.img_filename + '.txt'
 
     @property
     def img_filename(self):
         return self._gen_img_filename()
 
-    @property
-    def traj_kf_filepath(self):
-        return 'trajs/kf_best_' + self.img_filename + '.txt'
-
-    @property
-    def traj_imuref_filepath(self):
-        return 'trajs/imu_ref_' + self.img_filename + '.txt'
-
     def get_camera(self):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
-        cam = Camera(filepath=filepath_cam, max_vals=self.max_vals, scale=SCALE)
+        cam = Camera(filepath=filepath_cam,
+                max_vals=self.max_vals, scale=SCALE)
         self._gen_sim_params_from_cam(cam)
 
         return cam
 
     def _gen_sim_params_from_cam(self, camera):
+        """ Updates time-related info from camera data. """
         self.max_vals   = camera.max_vals
         self.min_t      = camera.min_t
         self.max_t      = camera.max_t
@@ -169,10 +180,18 @@ class Config(object):
                         self.num_interframe_vals + 1
 
     def get_imu(self, camera=None, gen_ref=False):
+        """ Generates IMU object from interpolated camera data. """
         camera_interp = camera.interpolate(self.num_interframe_vals)
-        return Imu(probe, camera_interp, stdev_acc, stdev_om, gen_ref=gen_ref)
+        return Imu(probe, camera_interp,
+                stdev_acc, stdev_om, gen_ref=gen_ref)
 
     def get_dof_IC(self):
+        """ Generates initial conditions of the IMU dofs,
+            which are not the same as the real DOFs.
+
+            DOFs (real) : [ 0.    0.  0.  0.  0. 20.]
+            DOFs (IC)   : [ 0.05  0.  0.  3.  3. 23.]
+        """
         dofs0_rot_real = self.real_imu_dofs[:3]
         dofs0_tr_real  = self.real_imu_dofs[3:]
 
@@ -192,15 +211,12 @@ class Config(object):
 
         return dofs0
 
-    def print_dofs(self):
-        print(f'DOFs (real) : {np_string(self.real_imu_dofs)}')
-        print(f'DOFs (IC)   : {np_string(self.current_imu_dofs)}\n')
-
     def get_IC(self, imu, camera):
+        """ Perfect initial conditions except for DOFs. """
         W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(camera.vec0)
 
         x0   = States(W_p_BW_0, WW_v_BW_0, R_WB_0,
-                        self.current_imu_dofs, camera.p0, camera.q0)
+                        self.est_imu_dofs_IC, camera.p0, camera.q0)
         cov0 = np.square(np.diag(stdevs0))
 
         return x0, cov0
@@ -220,6 +236,7 @@ class Config(object):
             return self.traj_name + f'_upd_Kp{self.scale_process_noise}_Km{self.scale_meas_noise:.3f}'
 
     def save(self, filename):
+        """ Saves come config parameters to text file. """
         configs = '\n'.join([str(self.__dict__[s])
                     for s in self.saved_configs])
 
@@ -227,6 +244,7 @@ class Config(object):
             f.write(configs)
 
     def read(self, filename):
+        """ Reads config parameters from text file. """
         with open(filename, 'r') as f:
             lines = [l.strip() for _, l in enumerate(f)]
 
@@ -269,10 +287,10 @@ class Config(object):
                         help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE_DEFAULT})')
 
         parser.add_argument('-rwp', type=float,
-                        help=f'random walk noise - imu pos')
+                        help=f'random walk noise - imu pos - goes into process noise matrix, is generated every propagation step')
         parser.add_argument('-rwr', 
                         type=float,
-                        help=f'random walk noise - imu rot')
+                        help=f'random walk noise - imu rot - goes into process noise matrix, is generated every propagation step')
 
         parser.add_argument('-runs', default=NUM_KF_RUNS_DEFAULT,
                         type=int,
@@ -305,7 +323,7 @@ class Config(object):
                 
                 f'\t #  Q: IMU dofs random walk noise\n',
                 f'\t std_dofs_p = {self.stdev_dofs_p} cm\n',
-                f'\t std_dofs_r = {np.rad2deg(self.stdev_dofs_r):.1f} deg\n\n',
+                f'\t std_dofs_r = {np.rad2deg(self.stdev_dofs_r):.4f} deg\n\n',
 
                 f'\t #  R: Camera measurement noise\n',
                 f'\t stdev_pc   = {self.Rpc_val:.3f} cm \n',
@@ -316,3 +334,7 @@ class Config(object):
                 f'\t k_MEAS     = {self.scale_meas_noise}\n',
                 )
         self.print_dofs()
+
+    def print_dofs(self):
+        print(f'DOFs (real) : {np_string(self.real_imu_dofs)}')
+        print(f'DOFs (IC)   : {np_string(self.est_imu_dofs_IC)}\n')
