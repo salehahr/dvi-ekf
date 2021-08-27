@@ -132,6 +132,8 @@ class Config(object):
         # # measurement
         self.scale_meas_noise       = float(args.km) if not do_plot_only \
                             else float(SCALE_MEASUREMENT_NOISE_DEFAULT)
+        self.scale_meas_noise_p     = float(args.kmp)
+        self.scale_meas_noise_r     = float(args.kmr)
         self.Rpc_val                = STDEV_PC_DEFAULT
         self.Rqc_val                = STDEV_RC_DEFAULT
         self.meas_noise             = np.hstack(([self.Rpc_val**2]*3,
@@ -299,6 +301,12 @@ class Config(object):
         parser.add_argument('-km', default=SCALE_MEASUREMENT_NOISE_DEFAULT,
                         type=float,
                         help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE_DEFAULT})')
+        parser.add_argument('-kmp', default=SCALE_MEASUREMENT_NOISE_DEFAULT,
+                        type=float,
+                        help=f'scale factor for pos measurement noise (default: {SCALE_MEASUREMENT_NOISE_DEFAULT})')
+        parser.add_argument('-kmr', default=SCALE_MEASUREMENT_NOISE_DEFAULT,
+                        type=float,
+                        help=f'scale factor for rot measurement noise (default: {SCALE_MEASUREMENT_NOISE_DEFAULT})')
 
         parser.add_argument('-rwp', type=float,
                         help=f'random walk noise - imu pos - goes into process noise matrix, is generated every propagation step')
@@ -347,7 +355,8 @@ class Config(object):
 
                 f'\t ## KF tuning\n',
                 f'\t k_PROC     = {self.scale_process_noise}\n',
-                f'\t k_MEAS     = {self.scale_meas_noise}\n',
+                f'\t k_MEAS_p   = {self.scale_meas_noise_p}\n',
+                f'\t k_MEAS_r   = {self.scale_meas_noise_r}\n',
                 )
         self.print_dofs()
 
