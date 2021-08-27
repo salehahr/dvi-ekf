@@ -40,8 +40,10 @@ class Filter(object):
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
 
-        self.R = self.config.scale_meas_noise *\
-                    np.diag(self.config.meas_noise)
+        R = np.diag(self.config.meas_noise)
+        R[0:3, 0:3] = self.config.scale_meas_noise_p * R[0:3, 0:3]
+        R[3:6, 3:6] = self.config.scale_meas_noise_r * R[3:6, 3:6]
+        self.R = R
 
         Q = np.eye(self.num_noise)
         Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
