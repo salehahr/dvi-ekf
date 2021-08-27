@@ -43,7 +43,7 @@ class Simulator(object):
     @property
     def km(self):
         return self._km
-    @kp.setter
+    @km.setter
     def km(self, val):
         self._km = val
         self.config.scale_meas_noise = val
@@ -51,7 +51,7 @@ class Simulator(object):
     @property
     def rwp(self):
         return self._rwp
-    @kp.setter
+    @rwp.setter
     def rwp(self, val):
         self._rwp = val
         self.config.stdev_dofs_p = val
@@ -59,7 +59,7 @@ class Simulator(object):
     @property
     def rwr(self):
         return self._rwr
-    @kp.setter
+    @rwr.setter
     def rwr(self, val):
         self._rwr = val
         self.config.stdev_dofs_r = val
