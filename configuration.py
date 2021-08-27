@@ -15,7 +15,7 @@ NUM_KF_RUNS_DEFAULT = 1
 """ Number of IMU data between prev. frame up to
     and including the next frame """
 NUM_IMU_DEFAULT = 10
-""" Number of camera frames to be simulated """
+""" Number of camera frames to be simulated (None = all) """
 NUM_CAM_DEFAULT = None
 """ When to cap simulation """
 cap_t = None
@@ -29,8 +29,8 @@ probe = RigidSimpleProbe(scope_length=scope_length,
 
 # Camera parameters
 """ Noise """
-STDEV_PC_DEFAULT = 0.3              # [cm]
-STDEV_RC_DEFAULT = np.deg2rad(5)    # [rad]
+STDEV_PC_DEFAULT = 0.2                  # [cm]
+STDEV_RC_DEFAULT = np.deg2rad(0.7)      # [rad]
 """ Scale to convert cam pos to cm in mandala trajectory """
 SCALE            = 10
 
@@ -68,9 +68,9 @@ imu_rots_in_rad     = np.deg2rad(imu_rots_deg)          # [rad]
 stdev_ddofs         = [*imu_rots_in_rad, 10, 10, 10]    # [rad, cm]
 
 """ Uncertainties of the camera error states """
-stdev_dp_cam            = [STDEV_PC_DEFAULT * 3] * 3    # [cm]
-stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]               # [deg]
-stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg) # [rad]
+stdev_dp_cam            = [STDEV_PC_DEFAULT] * 3            # [cm]
+stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]                   # [deg]
+stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg)  # [rad]
 
 stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta, stdev_ddofs, stdev_dp_cam, stdev_dtheta_cam))
 
