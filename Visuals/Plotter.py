@@ -121,8 +121,11 @@ class Plotter(object):
         Kp = config.scale_process_noise
         Km = config.scale_meas_noise
 
-        st = plt.suptitle(f"DOF_MSE {MSE:.3f}  (Kp {Kp:.2E}, Km {Km:.2E})",
+        if MSE:
+            st = plt.suptitle(f"DOF_MSE {MSE:.3f}  (Kp {Kp:.2E}, Km {Km:.2E})",
             fontsize=10)
+        else:
+            st = plt.suptitle('')
 
         # shift subplots down:
         st.set_y(0.95)
@@ -142,13 +145,16 @@ class CameraPlot(Plotter):
         self.jump_labels = ['x']
 
     @show_plot
-    def plot(self, axes=None):
+    def plot(self, config, axes=None):
         labels      = self.traj.labels[1:]
         num_cols    = 2
         offset      = 1
 
-        self._get_plot_objects(filename=None, labels=labels,
-                        num_cols=num_cols, axes=axes)
+        self._get_plot_objects(filename=None,
+                        labels=labels,
+                        num_cols=num_cols,
+                        axes=axes,
+                        config=config)
 
     @plot_loop
     def _get_plot_objects(self, label, **kwargs):
