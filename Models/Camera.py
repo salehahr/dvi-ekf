@@ -127,6 +127,10 @@ class Camera(object):
         self.notch_d = np.concatenate(traj_d).ravel()
         self.notch_dd = np.concatenate(traj_dd).ravel()
 
+        self.traj.notch = np.concatenate(traj).ravel()
+        self.traj.notch_d = np.concatenate(traj_d).ravel()
+        self.traj.notch_dd = np.concatenate(traj_dd).ravel()
+
     def _gen_t_partition(self):
         partitions = np.array([0, 0.1, 0.45, 0.5, 0.9, 1])
         t_part = [0] * (len(partitions)-1)
@@ -175,6 +179,9 @@ class Camera(object):
 
     def plot(self, config):
         CameraPlot(self).plot(config)
+
+    def plot_notch(self, config):
+        CameraPlot(self).plot_notch(config)
 
 class CameraInterpolated(Camera):
     def __init__(self, traj):

@@ -140,6 +140,7 @@ class CameraPlot(Plotter):
     def __init__(self, camera):
         self.min_t      = camera.traj.t[0]
         self.max_t      = camera.traj.t[-1]
+        self.camera = camera
 
         self.traj       = camera.traj
         self.jump_labels = ['x']
@@ -156,11 +157,38 @@ class CameraPlot(Plotter):
                         axes=axes,
                         config=config)
 
+    @show_plot
+    def plot_notch(self, config, axes=None):
+        self.jump_labels = []
+        labels_camera = ['x', 'y', 'z', 'rx', 'ry', 'rz']
+        labels_notch = ['notch', 'notch_d', 'notch_dd']
+        labels = labels_camera + labels_notch
+        num_cols = 3
+
+        self._get_plot_objects(filename=None,
+                        labels=labels,
+                        num_cols=num_cols,
+                        axes=axes,
+                        config=config)
+
     @plot_loop
     def _get_plot_objects(self, label, **kwargs):
-        objs = [self.traj]
-        vals = [self.traj.__dict__[label]]
-        return objs, vals
+        print(label)
+        if label.startswith('r'):
+            rx = self.camera.r[0,:]
+            ry = self.camera.r[1,:]
+            rz = self.camera.r[2,:]
+
+            objs = [self.traj]
+            vals = [eval(f'{label}')]
+            
+            return objs, vals
+        elif 'notch' not in label:
+            objs = [self.traj]
+            vals = [self.traj.__dict__[label]]
+            return objs, vals
+        else:
+            return [None], [None]
 
 class FilterPlot(Plotter):
     def __init__(self, traj, cam_traj, imu_ref):
