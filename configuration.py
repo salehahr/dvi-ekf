@@ -112,6 +112,8 @@ class Config(object):
         # probe
         """ Container for probe object containing only the symbolic
             relative kinematics. """
+        freeze = [0, 1, 1, 0, 0, 0]
+        self.frozen_dofs        = freeze
         self.sym_probe          = SymProbe(probe)
         self.real_joint_dofs    = probe.joint_dofs.copy()
         self.real_imu_dofs      = probe.imu_dofs.copy()
@@ -225,7 +227,7 @@ class Config(object):
         camera      = self.get_camera()
         imu         = self.get_imu(camera, gen_ref=True)
         x0, cov0    = self.get_IC(imu, camera)
-        kf          = Filter(self, imu, x0, cov0)
+        kf          = Filter(self, imu, x0, cov0, self.frozen_dofs)
 
         return kf, camera, imu
 
@@ -306,6 +308,8 @@ class Config(object):
                 f'\t Num. cam. frames    : {self.max_vals}\n',
                 f'\t Num. IMU data       : {self.total_data_pts}\n',
                 f'\t(num. IMU b/w frames : {self.num_interframe_vals})\n\n',
+
+                f'\t Frozen DOFs          : {self.frozen_dofs}\n\n',
 
                 f'\t ## Noise values\n',
                 f'\t #  P0: Initial process noise\n',
