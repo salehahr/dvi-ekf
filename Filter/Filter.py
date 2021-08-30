@@ -50,7 +50,7 @@ class Filter(object):
         covp = [(self.config.stdev_dofs_p)**2] * 3
         covr = [(self.config.stdev_dofs_r)**2] *3
         Q[6:12, 6:12] = np.diag(np.hstack((covr, covp)))
-        Q[0:6, 0:6] = self.config.scale_process_noise * Q[0:6, 0:6]
+        Q = self.config.scale_process_noise * Q
         self.Q = Q
 
         # buffer
