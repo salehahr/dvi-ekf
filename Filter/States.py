@@ -7,7 +7,7 @@ class States(object):
         self._p = np.asarray(p).reshape(3,)
         self._v = np.asarray(v).reshape(3,)
         self._q = Quaternion(val=q, do_normalise=True)
-        self._dofs = dofs
+        self._dofs = np.array(dofs).reshape(6,)
         self._p_cam = p_cam.reshape(3,)
         self._q_cam = Quaternion(val=q_cam, do_normalise=True)
 
@@ -15,12 +15,18 @@ class States(object):
                     + len(dofs) + len(p_cam) + len(self.q_cam.xyzw)
         assert(self.size == 23)
 
+        self.frozen_dofs = [False] * 6
+
     def apply_correction(self, err):
         self.p += err.dp.reshape(3,)
         self.v += err.dv.reshape(3,)
         self.q = self.q * err.dq
         self.q.normalise()
-        self.dofs += err.ddofs.reshape(6,)
+
+        for i, fr in enumerate(self.frozen_dofs):
+            if not fr:
+                self._dofs[i] += err.ddofs[i]
+
         self.p_cam += err.dpc.reshape(3,)
         self.q_cam = self.q_cam * err.dqc
         self.q_cam.normalise()
@@ -29,7 +35,11 @@ class States(object):
         self.p = vec[0].squeeze()
         self.v = vec[1].squeeze()
         self.q = vec[2].squeeze()
-        self.dofs = vec[3].squeeze()
+
+        for i, fr in enumerate(self.frozen_dofs):
+            if not fr:
+                self._dofs[i] = vec[3].squeeze()[i]
+
         self.p_cam = vec[4].squeeze()
         self.q_cam = vec[5].squeeze()
 

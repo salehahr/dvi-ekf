@@ -12,7 +12,7 @@ from .context import syms, eqns
 from Visuals import FilterPlot
 
 class Filter(object):
-    def __init__(self, config, imu, x0, cov0):
+    def __init__(self, config, imu, x0, cov0, frozen_dofs):
         self._run_id = None
         self.num_states = x0.size
         self.num_error_states = x0.size - 2
@@ -20,6 +20,7 @@ class Filter(object):
         self.num_noise = 12
 
         self.states = copy(x0)
+        self.states.frozen_dofs = [bool(fr) for fr in frozen_dofs]
         self._x = []
         self._u = []
 
