@@ -42,6 +42,16 @@ class Filter(object):
         self.R = self.config.scale_meas_noise *\
                     np.diag(self.config.meas_noise)
 
+        Q = np.eye(self.num_noise)
+        Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
+        Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
+
+        covp = [(self.config.stdev_dofs_p)**2] * 3
+        covr = [(self.config.stdev_dofs_r)**2] *3
+        Q[6:12, 6:12] = np.diag(np.hstack((covr, covp)))
+        Q[0:6, 0:6] = self.config.scale_process_noise * Q[0:6, 0:6]
+        self.Q = Q
+
         # buffer
         self._om_old = self.imu.om.squeeze()
         self._acc_old = self.imu.acc.squeeze()
@@ -274,19 +284,7 @@ class Filter(object):
             Q is calculated from IMU noise and
             from the DOF random walk params.
         """
-        Q = np.eye(self.num_noise)
-        Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
-        Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
-
-        N_p = np.random.normal(loc=0, scale=self.config.stdev_dofs_p,
-            size=(3,))
-        N_r = np.random.normal(loc=0, scale=self.config.stdev_dofs_r,
-            size=(3,))
-        Q[6:12, 6:12] = np.diag(np.hstack((N_r, N_p)))
-
-        Q[0:6, 0:6] = self.config.scale_process_noise * Q[0:6, 0:6]
-
-        self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ Q @ self.Fi.T
+        self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ self.Q @ self.Fi.T
 
     def update(self, t, camera):
         # compute gain        
