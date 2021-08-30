@@ -173,8 +173,8 @@ class Camera(object):
 
         return [p, R, v, om, acc, alp]
 
-    def plot(self):
-        CameraPlot(self).plot()
+    def plot(self, config):
+        CameraPlot(self).plot(config)
 
 class CameraInterpolated(Camera):
     def __init__(self, traj):
