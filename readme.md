@@ -4,6 +4,9 @@ the calibration parameters in a camera-IMU sensor probe setup.
 
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
+## Notch
+![](img/kf_mandala0_mono_upd_Kp1.0_Km1.000_compact.png)
+
 ## Freeze + tune Kp
 Kp = 1e-3 * 6 | Kp = 3
 --- | ---
