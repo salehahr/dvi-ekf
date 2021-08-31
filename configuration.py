@@ -112,7 +112,7 @@ class Config(object):
         # probe
         """ Container for probe object containing only the symbolic
             relative kinematics. """
-        freeze = [0, 1, 1, 0, 0, 0]
+        freeze = [1, 1, 1, 1, 1, 1]
         self.frozen_dofs        = freeze
         self.sym_probe          = SymProbe(probe)
         self.real_joint_dofs    = probe.joint_dofs.copy()
@@ -194,24 +194,28 @@ class Config(object):
             DOFs (real) : [ 0.    0.  0.  0.  0. 20.]
             DOFs (IC)   : [ 0.05  0.  0.  3.  3. 23.]
         """
-        dofs0_rot_real = self.real_imu_dofs[:3]
-        dofs0_tr_real  = self.real_imu_dofs[3:]
+        # dofs0_rot_real = self.real_imu_dofs[:3]
+        # dofs0_tr_real  = self.real_imu_dofs[3:]
 
-        # perturbations
-        delta_ang_rad = np.deg2rad(3)
-        delta_trans_cm = 3
+        # # perturbations
+        # delta_ang_rad = np.deg2rad(3)
+        # delta_trans_cm = 3
 
-        # # random perturbations
-        # delta_dof_rot = np.random.normal(loc=0, scale=delta_ang_rad, size=(3,))
-        # delta_dof_tr = np.random.normal(loc=0, scale=delta_trans_cm, size=(3,))
+        # # # random perturbations
+        # # delta_dof_rot = np.random.normal(loc=0, scale=delta_ang_rad, size=(3,))
+        # # delta_dof_tr = np.random.normal(loc=0, scale=delta_trans_cm, size=(3,))
 
-        # const. perturbations
-        delta_dof_rot = [delta_ang_rad, *dofs0_rot_real[1:]]
-        delta_dof_tr  = [x + delta_trans_cm for x in dofs0_tr_real]
+        # # const. perturbations
+        # delta_dof_rot = [delta_ang_rad, *dofs0_rot_real[1:]]
+        # delta_dof_tr  = [x + delta_trans_cm for x in dofs0_tr_real]
 
-        dofs0 = [*delta_dof_rot, *delta_dof_tr]
+        # dofs0 = [*delta_dof_rot, *delta_dof_tr]
 
-        return dofs0
+        # dofs0 = [delta_ang_rad, *self.real_imu_dofs[1:]]
+
+        # return dofs0
+        # TO CHANGE temporarily set to perfect IC
+        return self.real_imu_dofs
 
     def get_IC(self, imu, camera):
         """ Perfect initial conditions except for DOFs. """
