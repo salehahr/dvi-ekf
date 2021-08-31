@@ -5,4 +5,4 @@ from symbolics import symbols as syms
 from symbolics import equations as eqns
 from symbolics import functions as symfcns
 
-from Filter import VisualTraj
+from Filter import VisualTraj, Quaternion

@@ -1,9 +1,12 @@
 import numpy as np
 
 from .Interpolator import Interpolator
+from .context import Quaternion
 
 from Filter import VisualTraj
 from Visuals import CameraPlot
+
+from copy import copy
 
 class Camera(object):
     """ Class for the camera sensor which reads data from a text file.
@@ -16,7 +19,7 @@ class Camera(object):
         Also provides the initial conditions.
     """
 
-    def __init__(self, filepath, traj=None, max_vals=None, scale=None):
+    def __init__(self, filepath, traj=None, max_vals=None, scale=None, notch=False):
         self.traj = traj    if (traj) else \
                     VisualTraj("camera", filepath, cap=max_vals,
                         scale=scale)
@@ -45,12 +48,16 @@ class Camera(object):
         self.alp0   = self.alp[:,0].reshape(3,1)
 
         # notch
+        self.has_rotated = notch
+
+        self.rotated = None
         self.notch = None
         self.notch_d = None
         self.notch_dd = None
 
-        if self.max_vals > 10:
+        if notch:
             self._gen_notch_values()
+            self.gen_rotated()
 
     @property
     def filepath(self):
@@ -90,6 +97,30 @@ class Camera(object):
     def interpolate(self, interframe_vals):
         interp_traj = Interpolator(interframe_vals, self.traj).interpolated
         return CameraInterpolated(interp_traj)
+
+    def gen_rotated(self):
+        rotated_traj = VisualTraj("camera rot")
+        rotated_traj.t = copy(self.t)
+        rotated_traj.x = copy(self.traj.x)
+        rotated_traj.y = copy(self.traj.y)
+        rotated_traj.z = copy(self.traj.z)
+        rotated_traj.quats = []
+
+        for i, t in enumerate(self.t):
+            real_quat = self.traj.quats[i]
+
+            ang_notch = self.get_notch_at(i)[0]
+            notch_quat = Quaternion(val=np.array([0, 0, ang_notch]), euler='xyz')
+
+            rotated_quat = real_quat * notch_quat
+
+            rotated_traj.quats.append(rotated_quat)
+            rotated_traj.qx.append(rotated_quat.x)
+            rotated_traj.qy.append(rotated_quat.y)
+            rotated_traj.qz.append(rotated_quat.z)
+            rotated_traj.qw.append(rotated_quat.w)
+
+        self.rotated = Camera(filepath=None, traj=rotated_traj)
 
     def _gen_notch_values(self):
         def traj_gen(z0, zT, t, t_prev, T):
