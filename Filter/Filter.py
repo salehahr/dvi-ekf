@@ -308,12 +308,12 @@ class Filter(object):
             return None
 
         # correct virtual SLAM reading to physical SLAM
-        # TODO  multiplicative correction
-        cam_rot_corr = camera.qrot - Quaternion(val=np.array([0, 0, ang_notch]), euler='xyz')
+        notch_quat = Quaternion(val=np.array([0, 0, ang_notch]), euler='xyz')
+        cam_rot_corrected = camera.qrot * notch_quat
 
         # compute error state
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
-        err_q = cam_rot_corr.conjugate * self.states.q_cam
+        err_q = cam_rot_corrected.conjugate * self.states.q_cam
         res_q_cam = err_q.angle * err_q.axis
 
         res = np.hstack((res_p_cam, res_q_cam))
