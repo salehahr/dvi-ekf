@@ -1,6 +1,8 @@
 from . import line_formats as lf
 from .decorators import *
 
+import numpy as np
+
 class Plotter(object):
     def __init__(self):
         self.min_t = None
@@ -59,6 +61,13 @@ class Plotter(object):
                 return '$' + label[0] + '_{' + label[1:-5] + 'c}$'
             else:
                 return '$' + label[0] + '_{' + label[1:] + '}$'
+        elif 'notch' in label:
+            if 'dd' in label:
+                return '$\\theta_{n, dd}$'
+            elif 'd' in label:
+                return '$\\theta_{n, d}$'
+            else:
+                return '$\\theta_{n}$'
         else:
             return '$' + label[0] + '_' + label[1] + '$'
 
@@ -229,6 +238,7 @@ class FilterPlot(Plotter):
                         labels_cam  = labels_cam,
                         labels_imu  = labels_imu,
                         labels_imu_dofs = labels_imu_dofs,
+                        labels_notch = [],
                         config      = config,
                         num_cols    = num_cols,
                         filename    = config.img_filepath_compact,
@@ -245,6 +255,8 @@ class FilterPlot(Plotter):
         self._get_plot_objects(labels = labels,
                         labels_cam  = [],
                         labels_imu  = self.traj.labels_imu,
+                        labels_imu_dofs = self.traj.labels_imu_dofs,
+                        labels_notch = [],
                         config      = config,
                         num_cols = num_cols,
                         filename = config.img_filepath_imu,
@@ -254,12 +266,17 @@ class FilterPlot(Plotter):
                         axes = axes)
 
     def _plot_camera_states(self, config, axes=None):
-        labels = self.traj.labels_camera
+        self.jump_labels = []
+        labels_camera = self.traj.labels_camera[:6]
+        labels_notch = ['notch', 'notch_d', 'notch_dd']
+        labels = labels_camera + labels_notch
         num_cols = 3
 
         self._get_plot_objects(labels = labels,
-                        labels_cam  = labels,
+                        labels_cam  = labels_camera,
                         labels_imu  = [],
+                        labels_imu_dofs = [],
+                        labels_notch = labels_notch,
                         config      = config,
                         num_cols = num_cols,
                         filename = config.img_filepath_cam,
@@ -277,12 +294,19 @@ class FilterPlot(Plotter):
         labels_cam  = kwargs['labels_cam']
         labels_imu  = kwargs['labels_imu']
         labels_imu_dofs  = kwargs['labels_imu_dofs']
+        labels_notch  = kwargs['labels_notch']
 
-        val_filt   = self.traj.__dict__[label]
+        val_filt   = self.traj.__dict__[label] if label not in labels_notch else []
 
-        val_cam    = cam.__dict__[label[:-1]] \
-                            if cam and label in labels_cam \
-                            else []
+        if label in labels_cam:
+            val_cam    = cam.__dict__[label[:-1]] \
+                                if cam else []
+        elif label in labels_notch:
+            val_cam    = np.rad2deg(cam.__dict__[label]) \
+                                if cam else []
+        else:
+            val_cam = []
+
         val_imuref = imu_ref.__dict__[label] if \
                         (imu_ref and label in labels_imu) \
                             else []
