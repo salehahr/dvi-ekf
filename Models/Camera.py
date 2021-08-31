@@ -120,6 +120,8 @@ class Camera(object):
             rotated_traj.qz.append(rotated_quat.z)
             rotated_traj.qw.append(rotated_quat.w)
 
+        rotated_traj.is_rotated = True
+        rotated_traj._gen_euler_angles()
         self.rotated = Camera(filepath=None, traj=rotated_traj)
 
     def _gen_notch_values(self):

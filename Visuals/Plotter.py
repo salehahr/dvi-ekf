@@ -114,6 +114,8 @@ class Plotter(object):
             self._apply_lf_dict(line, lf.imuref)
         elif 'interpl' in label:
             self._apply_lf_dict(line, lf.interpl)
+        elif 'phys' in label:
+            self._apply_lf_dict(line, lf.cam_phys)
         else:
             self._apply_lf_dict(line, lf.default)
 
@@ -200,10 +202,11 @@ class CameraPlot(Plotter):
             return [None], [None]
 
 class FilterPlot(Plotter):
-    def __init__(self, traj, cam_traj, imu_ref):
+    def __init__(self, traj, cam_traj, imu_ref, camera=None):
         self.min_t = None
         self.max_t = None
 
+        self.camera = camera
         self.traj       = traj
         self.cam_traj   = cam_traj
         self.imu_ref    = imu_ref
@@ -243,6 +246,7 @@ class FilterPlot(Plotter):
                         num_cols    = num_cols,
                         filename    = config.img_filepath_compact,
                         cam         = self.cam_traj,
+                        cam_rot     = self.camera.rotated.traj,
                         imu_ref     = self.imu_ref,
                         imu_recon   = None,
                         axes        = None,)
@@ -261,6 +265,7 @@ class FilterPlot(Plotter):
                         num_cols = num_cols,
                         filename = config.img_filepath_imu,
                         cam = None,
+                        cam_rot = None,
                         imu_ref = self.imu_ref,
                         imu_recon = imu_recon,
                         axes = axes)
@@ -281,6 +286,7 @@ class FilterPlot(Plotter):
                         num_cols = num_cols,
                         filename = config.img_filepath_cam,
                         cam = self.cam_traj,
+                        cam_rot = self.camera.rotated.traj,
                         imu_ref = None,
                         imu_recon = None,
                         axes = axes)
@@ -289,6 +295,7 @@ class FilterPlot(Plotter):
     def _get_plot_objects(self, label, **kwargs):
         config      = kwargs['config']
         cam         = kwargs['cam']
+        cam_rot     = kwargs['cam_rot']
         imu_ref     = kwargs['imu_ref']
         imu_recon   = kwargs['imu_recon']
         labels_cam  = kwargs['labels_cam']
@@ -296,11 +303,15 @@ class FilterPlot(Plotter):
         labels_imu_dofs  = kwargs['labels_imu_dofs']
         labels_notch  = kwargs['labels_notch']
 
+        val_cam_rot = []
+
         val_filt   = self.traj.__dict__[label] if label not in labels_notch else []
 
         if label in labels_cam:
             val_cam    = cam.__dict__[label[:-1]] \
                                 if cam else []
+            val_cam_rot = cam_rot.__dict__[label[:-1]] \
+                                if cam_rot else []
         elif label in labels_notch:
             val_cam    = np.rad2deg(cam.__dict__[label]) \
                                 if cam else []
@@ -321,11 +332,12 @@ class FilterPlot(Plotter):
         else:
             dof_ref, val_dof_ref = None, []
 
-        if cam:
-            cam.name = 'ref'
+        if cam_rot:
+            cam.name = 'cam/SLAM'
+            cam_rot.name = 'cam/phys.'
 
-        objs = [self.traj, cam, imu_ref, imu_recon, dof_ref]
-        vals = [val_filt, val_cam, val_imuref, val_recon, val_dof_ref]
+        objs = [self.traj, cam, cam_rot, imu_ref, imu_recon, dof_ref]
+        vals = [val_filt, val_cam, val_cam_rot, val_imuref, val_recon, val_dof_ref]
 
         return objs, vals
 

@@ -157,4 +157,4 @@ class Simulator(object):
     def save_and_plot(self, compact=True):
         print(f'Best run: #{self.best_run_id}; average MSE = {self.dof_mse_avg:.2E}')
         self.kf_best.save()
-        self.kf_best.plot(self.camera.traj, compact=compact)
+        self.kf_best.plot(self.camera.traj, compact=compact, camera=self.camera)

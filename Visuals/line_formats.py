@@ -12,6 +12,10 @@ kf      = { 'linewidth' : 0.75,
             'linestyle' : '-',
             'color'     : 'blue'}
 
+cam_phys  = { 'linewidth' : 0.75,
+            'linestyle' : '--',
+            'color'     : 'tab:red'}
+
 imuref  = { 'linewidth' : 0.75,
             'linestyle' : '--',
             'color'     : 'tab:green'}
