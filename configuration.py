@@ -32,6 +32,8 @@ probe = RigidSimpleProbe(scope_length=scope_length,
 STDEV_PC_DEFAULT = [0.2, 0.2, 0.2]                  # [cm]
 STDEV_Q_DEG = [0.01, 0.01, 0.7]      # [rad]
 STDEV_RC_DEFAULT = np.deg2rad(STDEV_Q_DEG)      # [rad]
+STDEV_NOTCH_deg      = 0.1                               # [deg/s^2]
+STDEV_NOTCH_DEFAULT  = np.deg2rad(STDEV_NOTCH_deg)    # [rad/s^2]
 """ Scale to convert cam pos to cm in mandala trajectory """
 SCALE            = 10
 
@@ -54,26 +56,39 @@ stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 STDEV_DOFS_P_DEFAULT    = 0.25                              # [cm]
 STDEV_DOFS_R_deg        = 1                                 # [deg]
 STDEV_DOFS_R_DEFAULT    = np.deg2rad(STDEV_DOFS_R_deg)      # [rad]
+STDEV_DOFS_Ndd_deg      = 0.1                               # [deg/s^2]
+STDEV_DOFS_Ndd_DEFAULT  = np.deg2rad(STDEV_DOFS_Ndd_deg)    # [rad/s^2]
 
 # Kalman filter parameters
 """ Values for initial covariance matrix """
 """ Uncertainties of the IMU error states """
-stdev_dp            = STDEV_PC_DEFAULT        # [cm]
+stdev_dp            = STDEV_PC_DEFAULT                  # [cm]
 stdev_dv            = [0.1, 0.1, 0.1]                   # [cm/s]
 stdev_dtheta_deg    = [1., 1, 1]                        # [deg]
 stdev_dtheta        = np.deg2rad(stdev_dtheta_deg)      # [rad]
 
 """ High initial uncertainties for the error dofs """
-imu_rots_deg        = [5, 5, 5]                      # [deg]
+imu_rots_deg        = [5, 5, 5]                         # [deg]
 imu_rots_in_rad     = np.deg2rad(imu_rots_deg)          # [rad]
 stdev_ddofs         = [*imu_rots_in_rad, 10, 10, 10]    # [rad, cm]
+
+""" Uncertainties of the notch states """
+stdev_dnotch_deg     = 0.2                              # [deg]
+stdev_dnotchd_deg    = 0.02                             # [deg/s]
+stdev_dnotchdd_deg   = 0.02                             # [deg/s^2]
+
+stdev_dnotch         = np.deg2rad(stdev_dnotch_deg)     # [rad]
+stdev_dnotchd        = np.deg2rad(stdev_dnotchd_deg)    # [rad/s]
+stdev_dnotchdd       = np.deg2rad(stdev_dnotchdd_deg)   # [rad/s]
 
 """ Uncertainties of the camera error states """
 stdev_dp_cam            = STDEV_PC_DEFAULT            # [cm]
 stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]                   # [deg]
 stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg)  # [rad]
 
-stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta, stdev_ddofs, stdev_dp_cam, stdev_dtheta_cam))
+stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta,
+                stdev_ddofs, stdev_dnotch, stdev_dnotchd, stdev_dnotchdd_deg,
+                stdev_dp_cam, stdev_dtheta_cam))
 
 """ For tuning process noise and measurement noise matrices """
 SCALE_PROCESS_NOISE_DEFAULT = 6e-3
@@ -124,14 +139,14 @@ class Config(object):
         self.scale_process_noise    = float(args.kp) if not do_plot_only \
                             else float(SCALE_PROCESS_NOISE_DEFAULT)
 
-        self.stdev_dofs_p   = args.rwp if args.rwp \
-                else STDEV_DOFS_P_DEFAULT / self.num_interframe_vals
-        self.stdev_dofs_r   = args.rwr if args.rwr \
-                else STDEV_DOFS_R_DEFAULT / self.num_interframe_vals
+        self.stdev_dofs_p   = STDEV_DOFS_P_DEFAULT / self.num_interframe_vals
+        self.stdev_dofs_r   = STDEV_DOFS_R_DEFAULT / self.num_interframe_vals
+        self.stdev_ddofs = np.array(stdev_ddofs) / self.num_interframe_vals
+        self.stdev_notch = STDEV_DOFS_Ndd_DEFAULT / self.num_interframe_vals
 
         # # measurement
         self.meas_noise = np.square(np.hstack(
-                        (STDEV_PC_DEFAULT, STDEV_RC_DEFAULT)))
+                        (STDEV_PC_DEFAULT, STDEV_RC_DEFAULT, STDEV_NOTCH_DEFAULT)))
         self.q = [*STDEV_PC_DEFAULT, *STDEV_Q_DEG]
 
         # saving
@@ -225,9 +240,11 @@ class Config(object):
     def get_IC(self, imu, camera):
         """ Perfect initial conditions except for DOFs. """
         W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(camera.vec0)
+        notch0 = [0., 0., 0.]
 
         x0   = States(W_p_BW_0, WW_v_BW_0, R_WB_0,
-                        self.est_imu_dofs_IC, camera.p0, camera.q0)
+                        self.est_imu_dofs_IC, notch0,
+                        camera.p0, camera.q0)
         cov0 = np.square(np.diag(stdevs0))
 
         return x0, cov0
@@ -322,7 +339,10 @@ class Config(object):
                 f'\t std_dp             = {stdev_dp[0]:.1f} \t cm\n',
                 f'\t std_dv             = {stdev_dv[0]:.1f} \t cm/s\n',
                 f'\t std_dtheta         = {stdev_dtheta_deg[0]:.1f} \t deg\n',
-                f'\t std_ddofs_rot      = {imu_rots_deg[0]:.1f} \t deg\n',
+                f'\t std_ddofs_rot = {imu_rots_deg[0]:.1f} \t deg\n',
+                f'\t std_dnotch    = {stdev_dnotch_deg:.1f} \t deg\n',
+                f'\t std_dnotchd   = {stdev_dnotchd_deg:.1f} \t deg/s\n',
+                f'\t std_dnotchdd  = {stdev_dnotchdd_deg:.1f} \t deg/s^2\n',
                 f'\t std_ddofs_trans    = {stdev_ddofs[-1]:.1f} \t cm\n',
                 f'\t std_dp_cam         = {stdev_dp_cam[0]:.1f} \t cm\n',
                 f'\t std_dtheta_cam     = {stdev_dtheta_cam_deg[0]:.1f} \t deg\n\n',

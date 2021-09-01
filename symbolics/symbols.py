@@ -71,12 +71,16 @@ p_B = casadi.SX.sym('p_B', 3)
 v_B = casadi.SX.sym('v_B', 3)
 R_WB = casadi.SX.sym('R_WB', 3, 3)
 dofs, _ = casadi.vertsplit(q_cas, [0, 6, 8])
+notchdofs = casadi.vertcat(dofs_cas_list[6],
+                            dofs_cas_list[14],
+                            dofs_cas_list[22])
+notch, notchd, notchdd = casadi.vertsplit(notchdofs)
 
 p_C = casadi.SX.sym('p_C', 3)
 R_WC_kf = casadi.SX.sym('R_WC', 3, 3)
 
-x = [p_B, v_B, R_WB, dofs, p_C, R_WC_kf]
-x_str = ['p_B', 'v_B', 'R_WB', 'dofs', 'p_C', 'R_WC']
+x = [p_B, v_B, R_WB, dofs, notchdofs, p_C, R_WC_kf]
+x_str = ['p_B', 'v_B', 'R_WB', 'dofs', 'notchdofs', 'p_C', 'R_WC']
 
 # inputs
 u = [B_om_BW, B_acc_BW]
@@ -90,20 +94,22 @@ err_p_B = casadi.SX.sym('err_p_B', 3)
 err_v_B = casadi.SX.sym('err_v_B', 3)
 err_theta = casadi.SX.sym('err_theta', 3)
 err_dofs, _ = casadi.vertsplit(err_q_cas, [0, 6, 8])
+err_notch = casadi.SX.sym('err_notch', 3)
 err_p_C = casadi.SX.sym('err_p_C', 3)
 err_theta_C = casadi.SX.sym('err_theta_C', 3)
 
-err_x = [err_p_B, err_v_B, err_theta, err_dofs, err_p_C, err_theta_C]
-err_x_str = ['err_p_B', 'err_v_B', 'err_theta', 'err_dofs',
+err_x = [err_p_B, err_v_B, err_theta, err_dofs, err_notch, err_p_C, err_theta_C]
+err_x_str = ['err_p_B', 'err_v_B', 'err_theta', 'err_dofs', 'err_notch',
                 'err_p_C', 'err_theta_C']
             
 # noise
 n_a = casadi.SX.sym('n_a', 3)
 n_om = casadi.SX.sym('n_om', 3)
 n_dofs = casadi.SX.sym('n_dofs', 6)
+n_notch_acc = casadi.SX.sym('n_notch_acc')
 
-n = [n_a, n_om, n_dofs]
-n_str = ['n_a', 'n_om', 'n_dofs']
+n = [n_a, n_om, n_dofs, n_notch_acc]
+n_str = ['n_a', 'n_om', 'n_dofs', 'n_notch_acc']
 
 # true values
 # v_B_tr = v_B + err_v_B
