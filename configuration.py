@@ -1,5 +1,5 @@
 from Models import Camera, Imu
-from Models import RigidSimpleProbe, SymProbe
+from Models import SimpleProbe, SymProbe
 
 from Filter import States, Filter
 
@@ -24,7 +24,7 @@ cap_t = None
 scope_length        = 50            # [cm]
 theta_cam_in_rad    = np.pi / 6     # [rad]
 
-probe = RigidSimpleProbe(scope_length=scope_length,
+probe = SimpleProbe(scope_length=scope_length,
             theta_cam=theta_cam_in_rad)
 
 # Camera parameters
@@ -203,7 +203,6 @@ class Config(object):
         """ Generates IMU object from interpolated camera data. """
         cam_reference = camera.rotated if camera.has_rotated else camera
         camera_interp = cam_reference.interpolate(self.num_interframe_vals)
-
         return Imu(probe, camera_interp,
                 stdev_acc, stdev_om, gen_ref=gen_ref)
 
@@ -239,8 +238,8 @@ class Config(object):
 
     def get_IC(self, imu, camera):
         """ Perfect initial conditions except for DOFs. """
-        W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(camera.vec0)
-        notch0 = [0., 0., 0.]
+        notch0 = camera.get_notch_at(0)
+        W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(camera.vec0, notch0)
 
         x0   = States(W_p_BW_0, WW_v_BW_0, R_WB_0,
                         self.est_imu_dofs_IC, notch0,

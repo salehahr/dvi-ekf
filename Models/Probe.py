@@ -289,7 +289,7 @@ class SimpleProbe(Probe):
 
         super().__init__(scope_length, theta_cam)
 
-        # redefine q and qdot (symbolic)
+        # populate dof vectors q, qd, qdd with constraints
         constraints = self.__class__.constraints
         assert(len(constraints) == len(self.q_s))
 
@@ -361,14 +361,14 @@ class SymProbe(object):
             estimated DOFs and error DOFs."""
         return casadi.substitute(expr, syms.q_cas, syms.q_tr_cas)
 
-    def get_est_fwkin(self, dofs_est):
+    def get_est_fwkin(self, dofs_est, notchdofs):
         """ Returns the estimated relative kinematics
             using the estimated dofs. """
         f_est_probe = casadi.Function('f_est_probe',
-                    [syms.dofs],
+                    [syms.dofs, syms.notchdofs],
                     [*self.sym_fwkin],
-                    ['dofs'],
+                    ['dofs', 'notchdofs'],
                     [*syms.probe_fwkin_str],
                     )
         return [casadi.DM(r).full()
-                    for r in f_est_probe(dofs_est)]
+                    for r in f_est_probe(dofs_est, notchdofs)]

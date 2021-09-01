@@ -55,11 +55,11 @@ class Imu(object):
 
         # forward kinematics
         self.fwkin = probe.fwkin
-        p, R, v, om, acc, alp = self.fwkin
+        p, R, v, om, acc, alp = self.fwkin # om and alp depend on qd6, qdd6
 
         self.B_p_CB, self.BB_v_CB, self.B_acc_CB = p, v, acc
         self.R_BC, self.B_om_CB, self.B_alp_CB = R, om, alp
-        self.q, self.qd, self.qdd = probe.q, probe.qd, probe.qdd
+        self.q, self.qd, self.qdd = probe.q_cas, probe.qd_cas, probe.qdd_cas
 
         # symbolic expressions
         self.expr = casadi.Function('f_imu_meas',
@@ -67,6 +67,9 @@ class Imu(object):
                 eqns.f_imu_meas(*self.fwkin),
                     ['q', 'qd', 'qdd', *syms.cam_str],
                     ['B_om_BW', 'B_acc_BW'])
+        self.f_fwkin = casadi.Function('f_fwkin',
+            [syms.notchdofs], self.fwkin,
+            ['notchdofs'], ['p', 'R', 'v', 'om', 'acc', 'alp'])
 
         # for trajectory reconstruction/plotting
         self.traj = None
@@ -154,7 +157,8 @@ class Imu(object):
 
         return res_om, res_acc
 
-    def eval_init(self):
+    def eval_init(self, notch0):
+        self.q[6], self.qd[6], self.qdd[6] = notch0
         self.eval_expr_single(self.cam.t[0], self.q, self.qd, self.qdd,
                                 self.cam.acc[:,0],
                                 self.cam.R[0], self.cam.om[:,0],
@@ -214,14 +218,15 @@ class Imu(object):
         self.traj.reconstruct(R_WB, W_p_BW_0, WW_v_BW_0)
         return self.traj.reconstructed
 
-    def ref_vals(self, current_cam):
+    def ref_vals(self, current_cam, current_notch):
         """ For troubleshooting.
             Obtains the desired IMU position based on current camera values
             the relative kinematics relations C to B.
         """
         # return W_p_BW, R_WB, WW_v_BW
+        current_fwkin = self.f_fwkin(current_notch)
         return [casadi.DM(r).full().squeeze() \
-                    for r in eqns.f_imu(*current_cam, *self.fwkin)]
+                    for r in eqns.f_imu(*current_cam, current_notch, *current_fwkin)]
 
     def write_array_to_file(self, filepath):
         """ Writes IMU trajectory, stored in the _om and _acc arrays,

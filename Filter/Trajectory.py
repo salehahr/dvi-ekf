@@ -215,10 +215,10 @@ class ImuRefTraj(Trajectory):
         super().__init__(name, labels, filepath)
         self.imu = imu
 
-    def append_value(self, t, current_cam):
+    def append_value(self, t, current_cam, current_notch):
         """ Appends new measurement from current state. """
 
-        p, R_WB, v = self.imu.ref_vals(current_cam)
+        p, R_WB, v = self.imu.ref_vals(current_cam, current_notch)
 
         euler_angs = R.from_matrix(R_WB).as_euler('xyz', degrees=True)
         quats = Quaternion(val=R_WB, do_normalise=True)
