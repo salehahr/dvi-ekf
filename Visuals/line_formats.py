@@ -1,4 +1,4 @@
-default = { 'linewidth' : 0.8,
+default = { 'linewidth' : 1.8,
             'linestyle' : '--',
             'color'     : 'darkgrey'}
 

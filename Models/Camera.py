@@ -112,7 +112,7 @@ class Camera(object):
             ang_notch = self.get_notch_at(i)[0]
             notch_quat = Quaternion(val=np.array([0, 0, ang_notch]), euler='xyz')
 
-            rotated_quat = real_quat * notch_quat
+            rotated_quat = notch_quat * real_quat
 
             rotated_traj.quats.append(rotated_quat)
             rotated_traj.qx.append(rotated_quat.x)
