@@ -50,10 +50,10 @@ class Probe(rtb.DHRobot):
         return self._to_casadi(self.q_s)
     @property
     def qd_cas(self):
-        return casadi.SX(self.qd_s)
+        return self._to_casadi(self.qd_s)
     @property
     def qdd_cas(self):
-        return casadi.SX(self.qdd_s)
+        return self._to_casadi(self.qdd_s)
 
     @property
     def qd_s_arr(self):
@@ -278,7 +278,7 @@ class SimpleProbe(Probe):
     """ Simple probe with ROT9 as the only degree of freedom. """
 
     ROT1, ROT2, ROT3 = 0., 0., 0.
-    TRANS4, TRANS5, TRANS6 = 0., 0., 0.2
+    TRANS4, TRANS5, TRANS6 = 0., 0., 20
 
     constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, None, 0.]
 
