@@ -40,11 +40,6 @@ class Filter(object):
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
 
-        R = np.diag(self.config.meas_noise)
-        R[0:3, 0:3] = self.config.scale_meas_noise_p * R[0:3, 0:3]
-        R[3:6, 3:6] = self.config.scale_meas_noise_r * R[3:6, 3:6]
-        self.R = R
-
         Q = np.eye(self.num_noise)
         Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
         Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
@@ -54,6 +49,8 @@ class Filter(object):
         Q[6:12, 6:12] = np.diag(np.hstack((covr, covp)))
         Q = self.config.scale_process_noise * Q
         self.Q = Q
+
+        self.R = np.diag(self.config.meas_noise)
 
         # buffer
         self._om_old = self.imu.om.squeeze()
@@ -353,8 +350,8 @@ class Filter(object):
 
         t_end = self.traj.t[-1]
         if compact:
-            FilterPlot(self.traj, camera_traj, self.imu.ref, camera=camera).plot_compact(
+            FilterPlot(self.config, self.traj, camera_traj, self.imu.ref, camera=camera).plot_compact(
             self.config, t_end)
         else:
-            FilterPlot(self.traj, camera_traj, self.imu.ref, camera=camera).plot(
+            FilterPlot(self.config, self.traj, camera_traj, self.imu.ref, camera=camera).plot(
             self.config, t_end)

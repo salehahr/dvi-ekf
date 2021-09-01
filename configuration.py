@@ -29,8 +29,9 @@ probe = RigidSimpleProbe(scope_length=scope_length,
 
 # Camera parameters
 """ Noise """
-STDEV_PC_DEFAULT = 0.2                  # [cm]
-STDEV_RC_DEFAULT = np.deg2rad(0.7)      # [rad]
+STDEV_PC_DEFAULT = [0.2, 0.2, 0.2]                  # [cm]
+STDEV_Q_DEG = [0.01, 0.01, 0.7]      # [rad]
+STDEV_RC_DEFAULT = np.deg2rad(STDEV_Q_DEG)      # [rad]
 """ Scale to convert cam pos to cm in mandala trajectory """
 SCALE            = 10
 
@@ -57,7 +58,7 @@ STDEV_DOFS_R_DEFAULT    = np.deg2rad(STDEV_DOFS_R_deg)      # [rad]
 # Kalman filter parameters
 """ Values for initial covariance matrix """
 """ Uncertainties of the IMU error states """
-stdev_dp            = [STDEV_PC_DEFAULT * 3] * 3        # [cm]
+stdev_dp            = STDEV_PC_DEFAULT        # [cm]
 stdev_dv            = [0.1, 0.1, 0.1]                   # [cm/s]
 stdev_dtheta_deg    = [1., 1, 1]                        # [deg]
 stdev_dtheta        = np.deg2rad(stdev_dtheta_deg)      # [rad]
@@ -68,7 +69,7 @@ imu_rots_in_rad     = np.deg2rad(imu_rots_deg)          # [rad]
 stdev_ddofs         = [*imu_rots_in_rad, 10, 10, 10]    # [rad, cm]
 
 """ Uncertainties of the camera error states """
-stdev_dp_cam            = [STDEV_PC_DEFAULT] * 3            # [cm]
+stdev_dp_cam            = STDEV_PC_DEFAULT            # [cm]
 stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]                   # [deg]
 stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg)  # [rad]
 
@@ -76,7 +77,6 @@ stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta, stdev_ddofs, stdev_dp_cam
 
 """ For tuning process noise and measurement noise matrices """
 SCALE_PROCESS_NOISE_DEFAULT = 6e-3
-SCALE_MEASUREMENT_NOISE_DEFAULT = 1
 
 def np_string(arr):
     """ For formatting np arrays when printing. """
@@ -130,19 +130,14 @@ class Config(object):
                 else STDEV_DOFS_R_DEFAULT / self.num_interframe_vals
 
         # # measurement
-        self.scale_meas_noise       = float(args.km) if not do_plot_only \
-                            else float(SCALE_MEASUREMENT_NOISE_DEFAULT)
-        self.scale_meas_noise_p     = float(args.kmp)
-        self.scale_meas_noise_r     = float(args.kmr)
-        self.Rpc_val                = STDEV_PC_DEFAULT
-        self.Rqc_val                = STDEV_RC_DEFAULT
-        self.meas_noise             = np.hstack(([self.Rpc_val**2]*3,
-                                        [self.Rqc_val**2]*3))
+        self.meas_noise = np.square(np.hstack(
+                        (STDEV_PC_DEFAULT, STDEV_RC_DEFAULT)))
+        self.q = [*STDEV_PC_DEFAULT, *STDEV_Q_DEG]
 
         # saving
         self.dof_metric = None
         self.saved_configs = ['scale_process_noise',
-                    'scale_meas_noise',
+                    'meas_noise',
                     'max_vals',
                     'num_interframe_vals',
                     'min_t',
@@ -249,7 +244,7 @@ class Config(object):
         if prop_only:
             return self.traj_name + '_prop'
         else:
-            return self.traj_name + f'_upd_Kp{self.scale_process_noise}_Km{self.scale_meas_noise:.3f}'
+            return self.traj_name + f'_upd_Kp{self.scale_process_noise}'
 
     def save(self, filename):
         """ Saves come config parameters to text file. """
@@ -298,15 +293,6 @@ class Config(object):
         parser.add_argument('-kp', default=SCALE_PROCESS_NOISE_DEFAULT,
                         type=float,
                         help=f'scale factor for process noise (default: {SCALE_PROCESS_NOISE_DEFAULT})')
-        parser.add_argument('-km', default=SCALE_MEASUREMENT_NOISE_DEFAULT,
-                        type=float,
-                        help=f'scale factor for measurement noise (default: {SCALE_MEASUREMENT_NOISE_DEFAULT})')
-        parser.add_argument('-kmp', default=SCALE_MEASUREMENT_NOISE_DEFAULT,
-                        type=float,
-                        help=f'scale factor for pos measurement noise (default: {SCALE_MEASUREMENT_NOISE_DEFAULT})')
-        parser.add_argument('-kmr', default=SCALE_MEASUREMENT_NOISE_DEFAULT,
-                        type=float,
-                        help=f'scale factor for rot measurement noise (default: {SCALE_MEASUREMENT_NOISE_DEFAULT})')
 
         parser.add_argument('-rwp', type=float,
                         help=f'random walk noise - imu pos - goes into process noise matrix, is generated every propagation step')
@@ -350,13 +336,11 @@ class Config(object):
                 f'\t std_dofs_r = {np.rad2deg(self.stdev_dofs_r):.4f} deg\n\n',
 
                 f'\t #  R: Camera measurement noise\n',
-                f'\t stdev_pc   = {self.Rpc_val:.3f} cm \n',
-                f'\t stdev_qc   = {np.rad2deg(self.Rqc_val):.1f} deg\n\n',
+                f'\t stdev_pc   = {np_string(self.meas_noise[:3])} cm \n',
+                f'\t stdev_qc   = {np_string(np.rad2deg(self.meas_noise[-3:]))} deg\n\n',
 
                 f'\t ## KF tuning\n',
                 f'\t k_PROC     = {self.scale_process_noise}\n',
-                f'\t k_MEAS_p   = {self.scale_meas_noise_p}\n',
-                f'\t k_MEAS_r   = {self.scale_meas_noise_r}\n',
                 )
         self.print_dofs()
 

@@ -15,7 +15,7 @@ class Simulator(object):
 
         # optimisation variables
         self._kp = config.scale_process_noise
-        self._km = config.scale_meas_noise
+        self._q = config.meas_noise
         self._rwp = config.stdev_dofs_p
         self._rwr = config.stdev_dofs_r
 
@@ -41,12 +41,12 @@ class Simulator(object):
         self.config.scale_process_noise = val
 
     @property
-    def km(self):
-        return self._km
-    @km.setter
-    def km(self, val):
-        self._km = val
-        self.config.scale_meas_noise = val
+    def q(self):
+        return self._q
+    @q.setter
+    def q(self, val):
+        self._q = val
+        self.config.meas_noise = val
 
     @property
     def rwp(self):

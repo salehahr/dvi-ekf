@@ -3,6 +3,14 @@ from .decorators import *
 
 import numpy as np
 
+def np_string(arr):
+    """ For formatting np arrays when printing. """
+    if isinstance(arr, list):
+        arr = np.array(arr)
+
+    return np.array2string(arr,
+                    precision=4,)
+
 class Plotter(object):
     def __init__(self):
         self.min_t = None
@@ -44,32 +52,44 @@ class Plotter(object):
                 ax.plot(v['t'], vals, label=name)
 
     ### Ax postfix
-    def _ax_postfix(self, a, label, *values):
-        latex_label = self._get_latex_label(label)
+    def _ax_postfix(self, a, label, Q, *values):
+        latex_label = self._get_latex_label(label, Q)
         a.set_title(latex_label)
         self._adjust_y_range(a, *values)
 
-    def _get_latex_label(self, label):
+    def _get_latex_label(self, label, Q):
         """ Creates string in LaTeX math format. """
 
         if len(label) == 1:
-            return '$' + label + '$'
+            lbl = '$' + label + '$'
         elif 'dof' in label:
-            return 'dof$_' + label[-1] + '$'
+            lbl = 'dof$_' + label[-1] + '$'
         elif label[-1] == 'c':
             if 'deg' in label:
-                return '$' + label[0] + '_{' + label[1:-5] + 'c}$'
+                lbl = '$' + label[0] + '_{' + label[1:-5] + 'c}$'
             else:
-                return '$' + label[0] + '_{' + label[1:] + '}$'
+                lbl = '$' + label[0] + '_{' + label[1:] + '}$'
         elif 'notch' in label:
             if 'dd' in label:
-                return '$\\theta_{n, dd}$'
+                lbl = '$\\theta_{n, dd}$'
             elif 'd' in label:
-                return '$\\theta_{n, d}$'
+                lbl = '$\\theta_{n, d}$'
             else:
-                return '$\\theta_{n}$'
+                lbl = '$\\theta_{n}$'
         else:
-            return '$' + label[0] + '_' + label[1] + '$'
+            lbl = '$' + label[0] + '_' + label[1] + '$'
+
+        # add weights
+        if label in self.labels_camera_compact:
+            q = self.d_qweight_labels[label]
+            lbl = lbl + f'\n $\sigma_Q$: {q:.1E}'
+
+            if 'deg' in label:
+                lbl = lbl + '$^{\circ}$'
+            else:
+                lbl = lbl + ' cm'
+
+        return lbl
 
     def _adjust_y_range(self, a, *values):
         min_val, max_val = self._adjust_y_range_vals(min(*values),
@@ -130,10 +150,10 @@ class Plotter(object):
     def _set_title(self, config):
         MSE = config.dof_metric
         Kp = config.scale_process_noise
-        Km = config.scale_meas_noise
+        Q = config.meas_noise
 
-        if MSE:
-            st = plt.suptitle(f"DOF_MSE {MSE:.3f}  (Kp {Kp:.2E}, Km {Km:.2E})",
+        if MSE is not None:
+            st = plt.suptitle(f"DOF_MSE {MSE:.3f}  (Kp {Kp:.2E})",
             fontsize=10)
         else:
             st = plt.suptitle('')
@@ -202,9 +222,14 @@ class CameraPlot(Plotter):
             return [None], [None]
 
 class FilterPlot(Plotter):
-    def __init__(self, traj, cam_traj, imu_ref, camera=None):
+    def __init__(self, config, traj, cam_traj, imu_ref, camera=None):
         self.min_t = None
         self.max_t = None
+        self.config = config
+
+        self.labels_camera_compact = traj.labels_camera[:6]
+        self.d_qweight_labels = {lc: self.config.q[i]
+                for i, lc in enumerate(self.labels_camera_compact)}
 
         self.camera = camera
         self.traj       = traj
