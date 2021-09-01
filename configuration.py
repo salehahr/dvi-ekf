@@ -63,7 +63,7 @@ stdev_dtheta_deg    = [1., 1, 1]                        # [deg]
 stdev_dtheta        = np.deg2rad(stdev_dtheta_deg)      # [rad]
 
 """ High initial uncertainties for the error dofs """
-imu_rots_deg        = [30, 30, 30]                      # [deg]
+imu_rots_deg        = [5, 5, 5]                      # [deg]
 imu_rots_in_rad     = np.deg2rad(imu_rots_deg)          # [rad]
 stdev_ddofs         = [*imu_rots_in_rad, 10, 10, 10]    # [rad, cm]
 
