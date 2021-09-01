@@ -56,7 +56,6 @@ class Filter(object):
         self._om_old = self.imu.om.squeeze()
         self._acc_old = self.imu.acc.squeeze()
         self.R_WB_old = self.states.q.rot
-        self._states_old = copy(x0)
 
         # covariance
         self.P = np.copy(cov0)
@@ -134,14 +133,6 @@ class Filter(object):
     @acc_old.setter
     def acc_old(self, val):
         self._acc_old = val.squeeze()
-
-    @property
-    def states_old(self):
-        return self._states_old
-
-    @states_old.setter
-    def states_old(self, val):
-        self._states_old.set(val.vec)
 
     def run(self, camera, k, run_desc_str, verbose=True):
         """ Filter main loop (t>=1) over all camera frames,
