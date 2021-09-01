@@ -20,6 +20,7 @@ class Filter(object):
         self.num_noise = 13
 
         self.states = copy(x0)
+        
         self.states.frozen_dofs = [bool(fr) for fr in frozen_dofs]
         self._x = []
         self._u = []
@@ -35,7 +36,8 @@ class Filter(object):
         self.probe = config.sym_probe
 
         # imu / noise
-        self.imu.eval_init()
+        self.notch0 = x0.ndofs
+        self.imu.eval_init(self.notch0)
 
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
@@ -73,7 +75,7 @@ class Filter(object):
         # metrics
         self.dof_metric = 0
 
-    def reset(self, x0, cov0):
+    def reset(self, x0, cov0, notch0):
         self.states = copy(x0)
         self.P = np.copy(cov0)
         self._x = []
@@ -82,7 +84,7 @@ class Filter(object):
 
         # imu / noise
         self.imu.reset()
-        self.imu.eval_init()
+        self.imu.eval_init(notch0)
 
         self.traj.reset()
         self.traj.append_propagated_states(self.config.min_t, self.states)
@@ -193,7 +195,7 @@ class Filter(object):
                 *real_probe_dofs,
                 interp.acc, interp.R,
                 interp.om, interp.alp, )
-            self.imu.ref.append_value(ti, interp.vec)
+            self.imu.ref.append_value(ti, interp.vec, notch)
 
             self.dt = ti - old_ti
             self.propagate(ti, om, acc)
@@ -214,7 +216,8 @@ class Filter(object):
         self.traj.append_propagated_states(t, self.states)
 
     def _predict_nominal(self, om, acc):
-        est_probe = self.probe.get_est_fwkin(self.states.dofs)
+        est_probe = self.probe.get_est_fwkin(self.states.dofs,
+                        self.states.ndofs)
 
         res = [casadi.DM(r).full() \
                     for r in eqns.f_predict(self.dt,
@@ -222,6 +225,7 @@ class Filter(object):
                         *self.u,
                         *est_probe,
                         om, acc)]
+        
         self.states.set(res)
 
     def _predict_error(self):
@@ -263,10 +267,11 @@ class Filter(object):
             l_in = r_in
 
         fun_jac = casadi.Function('f_jac',
-            [syms.dt, syms.dofs, syms.err_dofs, syms.R_WB, *syms.u,
+            [syms.dt, syms.dofs, syms.notchdofs,
+                syms.err_dofs, syms.R_WB, *syms.u,
                 syms.n_a, syms.n_om, syms.n_dofs, syms.n_notch_acc,
                 syms.err_theta, syms.err_theta_C], [jac],
-            ['dt', 'dofs', 'err_dofs', 'R_WB',
+            ['dt', 'dofs', 'notchdofs', 'err_dofs', 'R_WB',
                 *syms.u_str,
                 'n_a', 'n_om', 'n_dofs', 'n_notch_acc',
                 'err_theta', 'err_theta_C'], ['jac']
@@ -274,7 +279,7 @@ class Filter(object):
         return casadi.DM(
                 fun_jac( dt         = self.dt,
                         dofs        = self.states.dofs,
-                        err_dofs    = casadi.DM.zeros(6,),
+                        notchdofs   = self.states.ndofs,
                         R_WB        = self.R_WB_old,
                         B_om_BW     = self.om_old,
                         B_acc_BW    = self.acc_old,
@@ -282,6 +287,8 @@ class Filter(object):
                         n_om        = self.stdev_nom,
                         n_dofs      = self.config.stdev_ddofs,
                         n_notch_acc = self.config.stdev_notch,
+                        # error states have an expectation of zero
+                        err_dofs    = casadi.DM.zeros(6,),
                         err_theta   = casadi.DM([0., 0., 0.]),
                         err_theta_C = casadi.DM([0., 0., 0.]),
                         )['jac']).full()

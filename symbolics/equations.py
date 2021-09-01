@@ -47,9 +47,9 @@ C_om_CW_exp = sym.R_BC.T @ (sym.B_om_BW + sym.B_om_CB)
 ###### FUNCTIONS
 """ IMU reference trajectory (analytical) """
 f_imu = casadi.Function('f_imu',
-            [*sym.cam, *sym.probe_fwkin],
+            [*sym.cam, sym.notchdofs, *sym.probe_fwkin],
             [W_p_BW_exp, R_WB_exp, WW_v_BW_exp],
-            [*sym.cam_str, *sym.probe_fwkin_str],
+            [*sym.cam_str, 'notchdofs', *sym.probe_fwkin_str],
             ['W_p_BW', 'R_WB', 'WW_v_BW'])
 
 """ IMU measurements u = func(cam, dofs) """
