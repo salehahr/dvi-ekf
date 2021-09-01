@@ -17,7 +17,7 @@ class Filter(object):
         self.num_states = x0.size
         self.num_error_states = x0.size - 2
         self.num_meas = 7
-        self.num_noise = 12
+        self.num_noise = 13
 
         self.states = copy(x0)
         self.states.frozen_dofs = [bool(fr) for fr in frozen_dofs]
@@ -62,9 +62,9 @@ class Filter(object):
         assert(self.P.shape == (self.num_error_states, self.num_error_states))
 
         # static matrices
-        self.Hx = np.zeros([self.num_meas, self.num_states])
-        self.Hx[:3,-6:-3] = np.eye(3)
-        self.Hx[3:7,-4:] = np.eye(4)
+        self.H = np.zeros([self.num_meas, self.num_error_states])
+        self.H[0:6,18:24] = np.eye(6)
+        self.H[6,15] = 1
 
         # plot
         self.traj = FilterTraj("kf")
@@ -232,11 +232,14 @@ class Filter(object):
         Fx[3:6, 6:9] = - self.R_WB_old @ casadi.skew(self.acc_old) * self.dt
         Fx[6:9, 6:9] = self.Om_old.rot.T
         # Fx[9:15, :] # dofs
+        Fx[15:17, 16:18] = Fx[15:17, 16:18] + self.dt * casadi.SX.eye(2)
+
         self.Fx = self._cam_error_jacobian(Fx, syms.err_x)
 
         # motion model noise jacobian
         Fi = casadi.SX.zeros(self.num_error_states, self.num_noise)
-        Fi[3:15, :] = casadi.SX.eye(self.num_noise)
+        Fi[3:15, 0:12] = casadi.SX.eye(12)
+        Fi[17, 12] = 1
         self.Fi = self._cam_error_jacobian(Fi, syms.n)
 
         """ returns zero
@@ -255,14 +258,18 @@ class Filter(object):
         r_in = 0
         for x in vars_wrt:
             r_in += x.shape[0]
-            jac[15:18,l_in:r_in] = casadi.jacobian(err_p_C_next, x)
-            jac[18:,l_in:r_in] = casadi.jacobian(err_theta_C_next, x)
+            jac[18:21,l_in:r_in] = casadi.jacobian(err_p_C_next, x)
+            jac[21:,l_in:r_in] = casadi.jacobian(err_theta_C_next, x)
             l_in = r_in
 
         fun_jac = casadi.Function('f_jac',
-            [syms.dt, syms.dofs, syms.err_dofs, syms.R_WB, *syms.u, syms.n_om, syms.err_theta, syms.err_theta_C], [jac],
+            [syms.dt, syms.dofs, syms.err_dofs, syms.R_WB, *syms.u,
+                syms.n_a, syms.n_om, syms.n_dofs, syms.n_notch_acc,
+                syms.err_theta, syms.err_theta_C], [jac],
             ['dt', 'dofs', 'err_dofs', 'R_WB',
-                *syms.u_str, 'n_om', 'err_theta', 'err_theta_C'], ['jac']
+                *syms.u_str,
+                'n_a', 'n_om', 'n_dofs', 'n_notch_acc',
+                'err_theta', 'err_theta_C'], ['jac']
             )
         return casadi.DM(
                 fun_jac( dt         = self.dt,
@@ -271,7 +278,10 @@ class Filter(object):
                         R_WB        = self.R_WB_old,
                         B_om_BW     = self.om_old,
                         B_acc_BW    = self.acc_old,
-                        n_om        = self.imu.stdev_nom,
+                        n_a         = self.stdev_na,
+                        n_om        = self.stdev_nom,
+                        n_dofs      = self.config.stdev_ddofs,
+                        n_notch_acc = self.config.stdev_notch,
                         err_theta   = casadi.DM([0., 0., 0.]),
                         err_theta_C = casadi.DM([0., 0., 0.]),
                         )['jac']).full()
@@ -285,13 +295,11 @@ class Filter(object):
 
     def update(self, t, camera, ang_notch):
         # compute gain        
-        H = np.zeros((6, self.num_error_states))
-        H[0:3, -6:-3] = np.eye(3)
-        H[3:6, -3:  ] = np.eye(3)
+        H = self.H
 
-        S = H @ self.P @ H.T + self.R # 6x6
+        S = H @ self.P @ H.T + self.R # 7x7
         try:
-            K = self.P @ H.T @ np.linalg.inv(S) # 21x6
+            K = self.P @ H.T @ np.linalg.inv(S) # 24x7
         except np.linalg.LinAlgError as e:
             print(f"ERROR: {e}!")
             print("Stopping simulation.")
@@ -305,8 +313,9 @@ class Filter(object):
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
         err_q = cam_rot_corrected.conjugate * self.states.q_cam
         res_q_cam = err_q.angle * err_q.axis
+        res_notch = ang_notch - self.states.ndofs[0]
 
-        res = np.hstack((res_p_cam, res_q_cam))
+        res = np.hstack((res_p_cam, res_q_cam, res_notch))
         err = ErrorStates(K @ res)
 
         # correct predicted state and covariance
@@ -315,7 +324,7 @@ class Filter(object):
         self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ self.R @ K.T
 
         # reset error states
-        G = np.eye(self.num_error_states)
+        G = np.eye(self.num_error_states) # 24x24
         G[6:9, 6:9] = np.eye(3) - skew(0.5 * err.theta)
         G[-3:, -3:] = np.eye(3) - skew(0.5 * err.theta_c)
         self.P = G @ self.P @ G.T

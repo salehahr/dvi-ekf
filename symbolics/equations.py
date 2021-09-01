@@ -67,6 +67,9 @@ f_predict = casadi.Function('f_nom',
         sym.v_B + sym.dt * R_acc_avg_exp,
         R_WB_curr_exp,
         sym.dofs,
+        sym.notch + sym.dt * sym.notchd,
+        sym.notchd + sym.dt * sym.notchdd,
+        sym.notchdd,
         sym.p_C \
             + sym.dt * sym.v_B \
             + sym.dt * sym.R_WB @ (sym.BB_v_CB + \
@@ -74,4 +77,5 @@ f_predict = casadi.Function('f_nom',
         sym.R_WC_kf + sym.R_WC_kf @ casadi.skew(sym.dt * C_om_CW_exp)],
     ['dt', *sym.x_str, *sym.u_str, *sym.probe_fwkin_str, *sym.u_current_str],
     ['p_B_next', 'v_B_next', 'R_WB_next',
-        'dofs_next', 'p_C_next', 'R_WC_next'])
+        'dofs_next', 'notch_next', 'notchd_next', 'notchdd_next', 
+        'p_C_next', 'R_WC_next'])

@@ -3,17 +3,19 @@ from .Quaternion import Quaternion
 import math
 
 class States(object):
-    def __init__(self, p, v, q, dofs, p_cam, q_cam):
+    def __init__(self, p, v, q, dofs, ndofs, p_cam, q_cam):
         self._p = np.asarray(p).reshape(3,)
         self._v = np.asarray(v).reshape(3,)
         self._q = Quaternion(val=q, do_normalise=True)
         self._dofs = np.array(dofs).reshape(6,)
+        self._ndofs = np.array(ndofs).reshape(3,)
         self._p_cam = p_cam.reshape(3,)
         self._q_cam = Quaternion(val=q_cam, do_normalise=True)
 
         self.size = len(p) + len(v) + len(self.q.xyzw) \
-                    + len(dofs) + len(p_cam) + len(self.q_cam.xyzw)
-        assert(self.size == 23)
+                    + len(dofs) + len(ndofs) \
+                    + len(p_cam) + len(self.q_cam.xyzw)
+        assert(self.size == 26)
 
         self.frozen_dofs = [False] * 6
 
@@ -27,6 +29,7 @@ class States(object):
             if not fr:
                 self._dofs[i] += err.ddofs[i]
 
+        self.ndofs += err.dndofs.reshape(3,)
         self.p_cam += err.dpc.reshape(3,)
         self.q_cam = self.q_cam * err.dqc
         self.q_cam.normalise()
@@ -40,8 +43,9 @@ class States(object):
             if not fr:
                 self._dofs[i] = vec[3].squeeze()[i]
 
-        self.p_cam = vec[4].squeeze()
-        self.q_cam = vec[5].squeeze()
+        self.ndofs = np.array(vec[4:7]).squeeze()
+        self.p_cam = vec[7].squeeze()
+        self.q_cam = vec[8].squeeze()
 
     def __repr__(self):
         return f'State: p_cam ({self._p_cam}), ...'
@@ -49,7 +53,7 @@ class States(object):
     @property
     def vec(self):
         return [self.p, self.v, self.q.rot,
-                    self.dofs,
+                    self.dofs, self.ndofs,
                     self.p_cam, self.q_cam.rot]
 
     @property
@@ -85,6 +89,14 @@ class States(object):
         self._dofs = val
 
     @property
+    def ndofs(self):
+        return self._ndofs.copy()
+
+    @ndofs.setter
+    def ndofs(self, val):
+        self._ndofs = val
+
+    @property
     def p_cam(self):
         return self._p_cam.copy()
 
@@ -102,19 +114,21 @@ class States(object):
 
 class ErrorStates(object):
     def __init__(self, vec):
+        self.size = 24
         self.set(vec)
 
     def set(self, vec):
+        assert(len(vec) == self.size)
         self.vec = vec
         self.size = len(vec)
-        assert(self.size == 21)
 
         p = vec[0:3]
         v = vec[3:6]
         theta = vec[6:9]
         dofs = vec[9:15]
-        p_c = vec[15:18]
-        theta_c = vec[18:]
+        ndofs = vec[15:18]
+        p_c = vec[18:21]
+        theta_c = vec[21:24]
 
         self.dp = np.asarray(p)
         self.dv = np.asarray(v)
@@ -123,6 +137,7 @@ class ErrorStates(object):
         self.dq = Quaternion(val=dq_xyzw, do_normalise=True)
 
         self.ddofs = np.asarray(dofs)
+        self.dndofs = np.asarray(ndofs)
         self.dpc = np.asarray(p_c)
 
         dqc_xyzw = quaternion_about_axis(np.linalg.norm(theta_c), theta)
@@ -132,7 +147,7 @@ class ErrorStates(object):
         self.theta_c = np.asarray(theta_c)
 
     def reset(self):
-        self.set([0] * 21)
+        self.set([0] * self.size)
 
 def quaternion_about_axis(angle, axis):
     """ https://github.com/aipiano/ESEKF_IMU/blob/master/transformations.py """
