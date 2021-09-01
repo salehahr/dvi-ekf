@@ -167,7 +167,10 @@ class Config(object):
     def get_camera(self):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
 
-        notch = True if self.max_vals > 10 else False
+        if self.max_vals:
+            notch = True if self.max_vals > 10 else False
+        else:
+            notch = True
 
         cam = Camera(filepath=filepath_cam,
                 max_vals=self.max_vals, scale=SCALE, notch=notch)
