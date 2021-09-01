@@ -309,7 +309,7 @@ class Filter(object):
 
         # correct virtual SLAM reading to physical SLAM
         notch_quat = Quaternion(val=np.array([0, 0, ang_notch]), euler='xyz')
-        cam_rot_corrected = camera.qrot * notch_quat
+        cam_rot_corrected = notch_quat * camera.qrot
 
         # compute error state
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
