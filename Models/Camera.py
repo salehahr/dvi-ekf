@@ -23,7 +23,7 @@ class Camera(object):
         with_notch=False):
         self.traj = traj    if (traj) else \
                     VisualTraj("camera", filepath, cap=max_vals,
-                        scale=scale)
+                        scale=scale, with_notch=with_notch)
         self.max_vals = len(self.traj.t)
 
         self.t      = self.traj.t
@@ -74,7 +74,8 @@ class Camera(object):
             self.notch_dd = self.traj.notch_dd
 
         if with_notch:
-            self._gen_notch_values()
+            # self._gen_notch_values()
+            self._read_notch_from_traj()
             self.gen_rotated()
 
     @property
@@ -149,6 +150,12 @@ class Camera(object):
         self.rotated.notch_d = self.notch_d
         self.rotated.notch_dd  = self.notch_dd
 
+    def _read_notch_from_traj(self):
+        assert(self.with_notch is True)
+        self.notch = self.traj.notch
+        self.notch_d = self.traj.notch_d
+        self.notch_dd = self.traj.notch_dd
+
     def _gen_notch_values(self):
         def traj_gen(z0, zT, t, t_prev, T):
             t = t - t_prev
@@ -188,6 +195,9 @@ class Camera(object):
         self.traj.notch = np.concatenate(traj).ravel()
         self.traj.notch_d = np.concatenate(traj_d).ravel()
         self.traj.notch_dd = np.concatenate(traj_dd).ravel()
+
+        # self.traj.write_notch()
+        # sys.exit()
 
     def _gen_t_partition(self):
         partitions = np.array([0, 0.1, 0.45, 0.5, 0.9, 1])

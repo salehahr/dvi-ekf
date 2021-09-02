@@ -141,9 +141,13 @@ class Trajectory(object):
 class VisualTraj(Trajectory):
     """ Visual trajectory containing time and pose. """
 
-    def __init__(self, name, filepath=None, cap=None, scale=None):
+    def __init__(self, name, filepath=None, cap=None,
+            scale=None, with_notch=False):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
         super().__init__(name, labels, filepath, cap)
+
+        self.labels_notch = ['notch', 'notch_d', 'notch_dd']
+        self.notch_filepath = './trajs/notch.txt'
 
         if scale:
             self._apply_scale(scale)
@@ -155,6 +159,27 @@ class VisualTraj(Trajectory):
 
         if self.qx:
             self.gen_angle_arrays()
+
+        if with_notch:
+            self.read_notch_from_file(cap)
+
+    def read_notch_from_file(self, cap):
+        self.notch = []
+        self.notch_d = []
+        self.notch_dd = []
+
+        with open(self.notch_filepath, 'r') as f:
+            for i, line in enumerate(f):
+                data = line.split()
+
+                # iterate over data containers
+                for j, label in enumerate(self.labels_notch):
+                    meas = float(data[j])
+                    self.__dict__[label].append(meas)
+
+                if cap is not None:
+                    if i >= cap - 1:
+                        break
 
     def _apply_scale(self, scale):
         for label in ['x', 'y', 'z']:
@@ -203,6 +228,20 @@ class VisualTraj(Trajectory):
         # self.rX_deg = euler[:,0]
         # self.rY_deg = euler[:,1]
         # self.rZ_deg = euler[:,2]
+
+    def write_notch(self):
+        with open(self.notch_filepath, 'w+') as f:
+            data_str = ''
+
+            for n in range(self.nvals):
+                for label in self.labels_notch:
+                    data = self.__dict__[label][n]
+                    if label == 't':
+                        data_str += f'{data:.6f}'
+                    else:
+                        data_str += f' {data:.9f}'
+                data_str += ' \n'
+            f.write(data_str)
 
 class ImuRefTraj(Trajectory):
     """ Desired traj of the IMU. """
