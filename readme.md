@@ -5,11 +5,11 @@ the calibration parameters in a camera-IMU sensor probe setup.
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
 ## Notch
-![](img/kf_mandala0_mono_upd_Kp0.006_Km1.000_compact.png)
+Propagation only  
+![](img/notchest_prop_only.png)
 
-Km 0.01 | Km 1.0
---- | ---
-![](img/kf_mandala0_mono_upd_Kp1.0_Km0.010_compact.png) | ![](img/kf_mandala0_mono_upd_Kp1.0_Km1.000_compact.png)
+Prop + update, not yet tuned  
+![](img/notchest_pu_untuned.png)
 
 ## Freeze + tune Kp
 Kp = 1e-3 * 6 | Kp = 3
