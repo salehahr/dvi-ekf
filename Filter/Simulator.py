@@ -97,7 +97,7 @@ class Simulator(object):
                     self.kf_best = copy.deepcopy(self.kf)
 
             # reset for next run
-            self.kf.reset(self.x0, self.cov0, self.kf.notch0)
+            self.kf.reset(self.x0, self.cov0)
 
         self.dof_mse_avg = sum(self.dof_mses) / len(self.dof_mses)
         if verbose:

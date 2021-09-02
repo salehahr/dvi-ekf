@@ -36,7 +36,8 @@ class Filter(object):
         self.probe = config.sym_probe
 
         # imu / noise
-        self.imu.eval_init(config.real_joint_dofs, x0.ndofs)
+        self.notch0 = x0.ndofs
+        self.imu.eval_init(config.real_joint_dofs, self.notch0)
 
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
@@ -74,7 +75,7 @@ class Filter(object):
         # metrics
         self.dof_metric = 0
 
-    def reset(self, x0, cov0, notch0):
+    def reset(self, x0, cov0):
         self.states = copy(x0)
         self.P = np.copy(cov0)
         self._x = []
@@ -83,7 +84,7 @@ class Filter(object):
 
         # imu / noise
         self.imu.reset()
-        self.imu.eval_init(notch0)
+        self.imu.eval_init(self.config.real_joint_dofs, self.notch0)
 
         self.traj.reset()
         self.traj.append_propagated_states(self.config.min_t, self.states)
