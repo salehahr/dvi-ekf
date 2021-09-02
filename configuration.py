@@ -27,13 +27,15 @@ theta_cam_in_rad    = np.pi / 6     # [rad]
 probe = SimpleProbe(scope_length=scope_length,
             theta_cam=theta_cam_in_rad)
 
-# Camera parameters
+# Camera parameters / R
 """ Noise """
-STDEV_PC_DEFAULT = [0.2, 0.2, 0.2]                  # [cm]
-STDEV_Q_DEG = [0.01, 0.01, 0.7]      # [rad]
-STDEV_RC_DEFAULT = np.deg2rad(STDEV_Q_DEG)      # [rad]
-STDEV_NOTCH_deg      = 0.1                               # [deg/s^2]
-STDEV_NOTCH_DEFAULT  = np.deg2rad(STDEV_NOTCH_deg)    # [rad/s^2]
+STDEV_PC            = [0.2, 0.2, 0.2]                   # [cm]
+STDEV_Q_DEG         = [0.01, 0.01, 0.01]               # [deg]
+STDEV_NOTCH_deg     = 0.1                               # [deg/s^2]
+
+STDEV_RC        = np.deg2rad(STDEV_Q_DEG)               # [rad]
+STDEV_NOTCH     = np.deg2rad(STDEV_NOTCH_deg)           # [rad/s^2]
+
 """ Scale to convert cam pos to cm in mandala trajectory """
 SCALE            = 10
 
@@ -53,16 +55,18 @@ stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 """ How much the DOFs are allowed to move in one update.
     (later on in Config.__init__: gets divided by num_interframe_vals
         if not given as an argument to main.py) """
-STDEV_DOFS_P_DEFAULT    = 0.25                              # [cm]
-STDEV_DOFS_R_deg        = 1                                 # [deg]
-STDEV_DOFS_R_DEFAULT    = np.deg2rad(STDEV_DOFS_R_deg)      # [rad]
-STDEV_DOFS_Ndd_deg      = 0.1                               # [deg/s^2]
-STDEV_DOFS_Ndd_DEFAULT  = np.deg2rad(STDEV_DOFS_Ndd_deg)    # [rad/s^2]
+STDEV_DOFS_P            = [0.25, 0.25, 0.25]            # [cm]
+STDEV_DOFS_R_deg        = [1, 1, 1]                     # [deg]
+STDEV_DOFS_NOTCHdd_deg  = 0.1                           # [deg/s^2]
+
+STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)          # [rad]
+STDEV_DOFS_NOTCHdd  = np.deg2rad(STDEV_DOFS_NOTCHdd_deg)    # [rad/s^2]
+STDEV_DOFS          = [*STDEV_DOFS_R, *STDEV_DOFS_P]
 
 # Kalman filter parameters
 """ Values for initial covariance matrix """
 """ Uncertainties of the IMU error states """
-stdev_dp            = STDEV_PC_DEFAULT                  # [cm]
+stdev_dp            = STDEV_PC                  # [cm]
 stdev_dv            = [0.1, 0.1, 0.1]                   # [cm/s]
 stdev_dtheta_deg    = [1., 1, 1]                        # [deg]
 stdev_dtheta        = np.deg2rad(stdev_dtheta_deg)      # [rad]
@@ -82,7 +86,7 @@ stdev_dnotchd        = np.deg2rad(stdev_dnotchd_deg)    # [rad/s]
 stdev_dnotchdd       = np.deg2rad(stdev_dnotchdd_deg)   # [rad/s]
 
 """ Uncertainties of the camera error states """
-stdev_dp_cam            = STDEV_PC_DEFAULT            # [cm]
+stdev_dp_cam            = STDEV_PC            # [cm]
 stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]                   # [deg]
 stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg)  # [rad]
 
@@ -135,23 +139,20 @@ class Config(object):
         self.est_imu_dofs_IC    = self.get_dof_IC()
 
         # noise
-        # # process
-        self.scale_process_noise    = float(args.kp) if not do_plot_only \
-                            else float(SCALE_PROCESS_NOISE_DEFAULT)
-
-        self.stdev_dofs_p   = STDEV_DOFS_P_DEFAULT / self.num_interframe_vals
-        self.stdev_dofs_r   = STDEV_DOFS_R_DEFAULT / self.num_interframe_vals
-        self.stdev_ddofs = np.array(stdev_ddofs) / self.num_interframe_vals
-        self.stdev_notch = STDEV_DOFS_Ndd_DEFAULT / self.num_interframe_vals
+        # # process (random walk components only)
+        self.process_noise_rw_std = np.hstack(
+                        (STDEV_DOFS_R, STDEV_DOFS_P, STDEV_DOFS_NOTCHdd)
+                            ) / self.num_interframe_vals
+        self.process_noise_rw = np.square(self.process_noise_rw_std)
 
         # # measurement
-        self.meas_noise = np.square(np.hstack(
-                        (STDEV_PC_DEFAULT, STDEV_RC_DEFAULT, STDEV_NOTCH_DEFAULT)))
-        self.q = [*STDEV_PC_DEFAULT, *STDEV_Q_DEG]
+        self.meas_noise_std = np.hstack((STDEV_PC, STDEV_RC, STDEV_NOTCH))
+        self.meas_noise = np.square(self.meas_noise_std)
+        self.q = [*STDEV_PC, *STDEV_Q_DEG]
 
         # saving
         self.dof_metric = None
-        self.saved_configs = ['scale_process_noise',
+        self.saved_configs = [
                     'meas_noise',
                     'max_vals',
                     'num_interframe_vals',
@@ -261,7 +262,7 @@ class Config(object):
         if prop_only:
             return self.traj_name + '_prop'
         else:
-            return self.traj_name + f'_upd_Kp{self.scale_process_noise}'
+            return self.traj_name
 
     def save(self, filename):
         """ Saves come config parameters to text file. """
@@ -307,16 +308,6 @@ class Config(object):
         parser.add_argument('-nb', default=NUM_IMU_DEFAULT, type=int,
                         help=f'num of IMU values b/w frames (default: {NUM_IMU_DEFAULT})')
 
-        parser.add_argument('-kp', default=SCALE_PROCESS_NOISE_DEFAULT,
-                        type=float,
-                        help=f'scale factor for process noise (default: {SCALE_PROCESS_NOISE_DEFAULT})')
-
-        parser.add_argument('-rwp', type=float,
-                        help=f'random walk noise - imu pos - goes into process noise matrix, is generated every propagation step')
-        parser.add_argument('-rwr', 
-                        type=float,
-                        help=f'random walk noise - imu rot - goes into process noise matrix, is generated every propagation step')
-
         parser.add_argument('-runs', default=NUM_KF_RUNS_DEFAULT,
                         type=int,
                         help=f'num of KF runs (default: {NUM_KF_RUNS_DEFAULT})')
@@ -339,28 +330,31 @@ class Config(object):
                 f'\t std_dp             = {stdev_dp[0]:.1f} \t cm\n',
                 f'\t std_dv             = {stdev_dv[0]:.1f} \t cm/s\n',
                 f'\t std_dtheta         = {stdev_dtheta_deg[0]:.1f} \t deg\n',
-                f'\t std_ddofs_rot = {imu_rots_deg[0]:.1f} \t deg\n',
-                f'\t std_dnotch    = {stdev_dnotch_deg:.1f} \t deg\n',
-                f'\t std_dnotchd   = {stdev_dnotchd_deg:.1f} \t deg/s\n',
-                f'\t std_dnotchdd  = {stdev_dnotchdd_deg:.1f} \t deg/s^2\n',
+                f'\t std_ddofs_rot      = {imu_rots_deg[0]:.1f} \t deg\n',
+                f'\t std_dnotch         = {stdev_dnotch_deg:.1f} \t deg\n',
+                f'\t std_dnotchd        = {stdev_dnotchd_deg:.1f} \t deg/s\n',
+                f'\t std_dnotchdd       = {stdev_dnotchdd_deg:.1f} \t deg/s^2\n',
                 f'\t std_ddofs_trans    = {stdev_ddofs[-1]:.1f} \t cm\n',
                 f'\t std_dp_cam         = {stdev_dp_cam[0]:.1f} \t cm\n',
                 f'\t std_dtheta_cam     = {stdev_dtheta_cam_deg[0]:.1f} \t deg\n\n',
 
                 f'\t #  Q: IMU measurement noise\n',
-                f'\t std_acc    = {ACCEL_NOISE:.1E} cm/s^2\n',
-                f'\t std_om     = {GYRO_NOISE:.1E} deg/s\n\n',
+                f'\t std_acc            = {np_string(stdev_acc)} cm/s^2\n',
+                f'\t std_om             = {np_string(np.rad2deg(stdev_om))} deg/s\n\n',
                 
                 f'\t #  Q: IMU dofs random walk noise\n',
-                f'\t std_dofs_p = {self.stdev_dofs_p} cm\n',
-                f'\t std_dofs_r = {np.rad2deg(self.stdev_dofs_r):.4f} deg\n\n',
+                f'\t std_dofs_r  = {np_string(np.rad2deg(self.process_noise_rw_std[0:3]))} deg\n',
+                f'\t std_dofs_p  = {np_string(self.process_noise_rw_std[3:6])} cm\n\n',
 
-                f'\t #  R: Camera measurement noise\n',
-                f'\t stdev_pc   = {np_string(self.meas_noise[:3])} cm \n',
-                f'\t stdev_qc   = {np_string(np.rad2deg(self.meas_noise[-3:]))} deg\n\n',
+                f'\t #  Q: Notch accel random walk noise\n',
+                f'\t std_notchdd = {np.rad2deg(self.process_noise_rw_std[6]):.4f} deg/s^2\n\n',
 
-                f'\t ## KF tuning\n',
-                f'\t k_PROC     = {self.scale_process_noise}\n',
+                f'\t #  R: Measurement noise\n',
+                f'\t std_pc     = {np_string(self.meas_noise_std[0:3])} cm \n',
+                f'\t std_qc     = ' +
+                    f'{np_string(np.rad2deg(self.meas_noise_std[3:6]))} deg\n',
+                f'\t std_notch  = ' +
+                    f'{np_string(np.rad2deg(self.meas_noise_std[6]))} deg\n\n',
                 )
         self.print_dofs()
 

@@ -14,10 +14,7 @@ class Simulator(object):
         self.x0, self.cov0        = config.get_IC(imu, camera)
 
         # optimisation variables
-        self._kp = config.scale_process_noise
         self._q = config.meas_noise
-        self._rwp = config.stdev_dofs_p
-        self._rwr = config.stdev_dofs_r
 
         # simulation run params
         self.num_kf_runs = config.num_kf_runs
@@ -32,13 +29,6 @@ class Simulator(object):
         self.best_x = None
 
     # optimisation variables
-    @property
-    def kp(self):
-        return self._kp
-    @kp.setter
-    def kp(self, val):
-        self._kp = val
-        self.config.scale_process_noise = val
 
     @property
     def q(self):
@@ -47,22 +37,6 @@ class Simulator(object):
     def q(self, val):
         self._q = val
         self.config.meas_noise = val
-
-    @property
-    def rwp(self):
-        return self._rwp
-    @rwp.setter
-    def rwp(self, val):
-        self._rwp = val
-        self.config.stdev_dofs_p = val
-
-    @property
-    def rwr(self):
-        return self._rwr
-    @rwr.setter
-    def rwr(self, val):
-        self._rwr = val
-        self.config.stdev_dofs_r = val
 
     @property
     def best_run_id(self):
