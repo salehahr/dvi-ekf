@@ -61,7 +61,7 @@ class Probe(rtb.DHRobot):
 
     @property
     def fwkin(self):
-        return self.get_sym(self.q)
+        return self.get_sym(self.q_s)
 
     @property
     def T(self):
@@ -330,12 +330,11 @@ class SymProbe(object):
         self.q0 = probe.q.copy()
 
         self.q = syms.q_s.copy() if not const_dofs else self.q0
+        # set non-imu, non-notch dofs to zero
+        self.q[-1] = 0
+
         self.qd = probe.qd_cas
         self.qdd = probe.qdd_cas
-
-        # set non-imu dofs to zero
-        for i in range(6,self.n):
-            self.q[i] = 0
 
         # relative kinematics in terms of q0, q1, ...
         self.sym_fwkin = probe.get_sym(self.q)
