@@ -53,23 +53,21 @@ class Imu(object):
         # cam values
         self.cam = cam
 
-        # forward kinematics
-        self.fwkin = probe.fwkin
-        p, R, v, om, acc, alp = self.fwkin # om and alp depend on qd6, qdd6
+        # real forward kinematics (as a function of notch dof)
+        self.f_fwkin = casadi.Function('f_fwkin',
+            [syms.notchdofs], probe.fwkin,
+            ['notchdofs'], ['p', 'R', 'v', 'om', 'acc', 'alp'])
+        p, R, v, om, acc, alp = probe.fwkin # om and alp depend on qd6, qdd6
 
         self.B_p_CB, self.BB_v_CB, self.B_acc_CB = p, v, acc
         self.R_BC, self.B_om_CB, self.B_alp_CB = R, om, alp
-        self.q, self.qd, self.qdd = probe.q_cas, probe.qd_cas, probe.qdd_cas
 
         # symbolic expressions
         self.expr = casadi.Function('f_imu_meas',
                 [syms.q_cas, syms.qd_cas, syms.qdd_cas, *syms.cam],
-                eqns.f_imu_meas(*self.fwkin),
+                eqns.f_imu_meas(*probe.fwkin),
                     ['q', 'qd', 'qdd', *syms.cam_str],
                     ['B_om_BW', 'B_acc_BW'])
-        self.f_fwkin = casadi.Function('f_fwkin',
-            [syms.notchdofs], self.fwkin,
-            ['notchdofs'], ['p', 'R', 'v', 'om', 'acc', 'alp'])
 
         # for trajectory reconstruction/plotting
         self.traj = None
@@ -157,9 +155,11 @@ class Imu(object):
 
         return res_om, res_acc
 
-    def eval_init(self, notch0):
-        self.q[6], self.qd[6], self.qdd[6] = notch0
-        self.eval_expr_single(self.cam.t[0], self.q, self.qd, self.qdd,
+    def eval_init(self, real_joint_dofs, notch0):
+        q0, qd0, qdd0 = real_joint_dofs
+        q0[6], qd0[6], qdd0[6] = notch0
+
+        self.eval_expr_single(self.cam.t[0], q0, qd0, qdd0,
                                 self.cam.acc[:,0],
                                 self.cam.R[0], self.cam.om[:,0],
                                 self.cam.alp[:,0],
