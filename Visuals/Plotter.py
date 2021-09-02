@@ -149,12 +149,10 @@ class Plotter(object):
 
     def _set_title(self, config):
         MSE = config.dof_metric
-        Kp = config.scale_process_noise
         Q = config.meas_noise
 
         if MSE is not None:
-            st = plt.suptitle(f"DOF_MSE {MSE:.3f}  (Kp {Kp:.2E})",
-            fontsize=10)
+            st = plt.suptitle(f"DOF_MSE {MSE:.3f}", fontsize=10)
         else:
             st = plt.suptitle('')
 

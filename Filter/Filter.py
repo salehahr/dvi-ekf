@@ -45,11 +45,7 @@ class Filter(object):
         Q = np.eye(self.num_noise)
         Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
         Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
-
-        covp = [(self.config.stdev_dofs_p)**2] * 3
-        covr = [(self.config.stdev_dofs_r)**2] *3
-        Q[6:12, 6:12] = np.diag(np.hstack((covr, covp)))
-        Q = self.config.scale_process_noise * Q
+        Q[6:13, 6:13] = np.diag(self.config.process_noise_rw)
         self.Q = Q
 
         self.R = np.diag(self.config.meas_noise)
@@ -287,8 +283,8 @@ class Filter(object):
                         B_acc_BW    = self.acc_old,
                         n_a         = self.stdev_na,
                         n_om        = self.stdev_nom,
-                        n_dofs      = self.config.stdev_ddofs,
-                        n_notch_acc = self.config.stdev_notch,
+                        n_dofs      = self.config.process_noise_rw_std[0:6],
+                        n_notch_acc = self.config.process_noise_rw_std[6],
                         # error states have an expectation of zero
                         err_dofs    = casadi.DM.zeros(6,),
                         err_theta   = casadi.DM([0., 0., 0.]),
