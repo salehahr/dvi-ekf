@@ -36,6 +36,17 @@ class Camera(object):
         self.R      = [q.rot for q in self.traj.quats]
         self.q      = np.array([q.xyzw for q in self.traj.quats]).T
 
+        # derived data
+        self.v = None
+        self.acc = None
+        self.om = None
+        self.alp = None
+
+        if not self.flag_interpolated:
+            self._calc_derived_data()
+        else:
+            self._derived_data_from_traj()
+
         # initial conditions
         self.vec0   = self.vec_at(0)
         self.p0     = self.p[:,0].reshape(3,1)
@@ -48,14 +59,19 @@ class Camera(object):
         self.alp0   = self.alp[:,0].reshape(3,1)
 
         # notch
-        self.has_rotated = notch
-
+        self.is_rotated = not notch
         self.rotated = None
-        self.notch = None
-        self.notch_d = None
-        self.notch_dd = None
 
-        if notch:
+        if not self.flag_interpolated:
+            self.notch = None
+            self.notch_d = None
+            self.notch_dd = None
+        else:
+            self.notch = self.traj.notch
+            self.notch_d = self.traj.notch_d
+            self.notch_dd = self.traj.notch_dd
+
+        if not self.is_rotated:
             self._gen_notch_values()
             self.gen_rotated()
 
@@ -64,39 +80,36 @@ class Camera(object):
         return self.traj.filepath
 
     @property
-    def v(self):
-        self._v = np.asarray( (np.gradient(self.p[0,:], self.dt),
-                            np.gradient(self.p[1,:], self.dt),
-                            np.gradient(self.p[2,:], self.dt)) )
-        return self._v
-
-    @property
-    def acc(self):
-        self._acc = np.asarray( (np.gradient(self.v[0,:], self.dt),
-                            np.gradient(self.v[1,:], self.dt),
-                            np.gradient(self.v[2,:], self.dt)) )
-        return self._acc
-
-    @property
-    def om(self):
-        ang_WC = np.asarray([q.euler_zyx_rad for q in self.traj.quats])
-        rz, ry, rx = ang_WC[:,0], ang_WC[:,1], ang_WC[:,2]
-
-        self._om = np.asarray( (np.gradient(rx, self.dt),
-                            np.gradient(ry, self.dt),
-                            np.gradient(rz, self.dt)) )
-        return self._om
-
-    @property
-    def alp(self):
-        self._alp = np.asarray( (np.gradient(self.om[0,:], self.dt),
-                            np.gradient(self.om[1,:], self.dt),
-                            np.gradient(self.om[2,:], self.dt)) )
-        return self._alp
+    def flag_interpolated(self):
+        return self.traj.is_interpolated
 
     def interpolate(self, interframe_vals):
-        interp_traj = Interpolator(interframe_vals, self.traj).interpolated
+        interp_labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
+        interp_traj = Interpolator(interframe_vals, self).interpolated
         return CameraInterpolated(interp_traj)
+
+    def _calc_derived_data(self):
+        self.v = np.asarray( (np.gradient(self.p[0,:], self.dt),
+                            np.gradient(self.p[1,:], self.dt),
+                            np.gradient(self.p[2,:], self.dt)) )
+        self.acc = np.asarray( (np.gradient(self.v[0,:], self.dt),
+                            np.gradient(self.v[1,:], self.dt),
+                            np.gradient(self.v[2,:], self.dt)) )
+
+        ang_WC = np.asarray([q.euler_zyx_rad for q in self.traj.quats])
+        rz, ry, rx = ang_WC[:,0], ang_WC[:,1], ang_WC[:,2]
+        self.om = np.asarray( (np.gradient(rx, self.dt),
+                            np.gradient(ry, self.dt),
+                            np.gradient(rz, self.dt)) )
+        self.alp = np.asarray( (np.gradient(self.om[0,:], self.dt),
+                            np.gradient(self.om[1,:], self.dt),
+                            np.gradient(self.om[2,:], self.dt)) )
+
+    def _derived_data_from_traj(self):
+        self.v = self.traj.v
+        self.om = self.traj.om
+        self.acc = self.traj.acc
+        self.alp = self.traj.alp
 
     def gen_rotated(self):
         rotated_traj = VisualTraj("camera rot")
@@ -123,6 +136,10 @@ class Camera(object):
         rotated_traj.is_rotated = True
         rotated_traj._gen_euler_angles()
         self.rotated = Camera(filepath=None, traj=rotated_traj)
+
+        self.rotated.notch = self.notch
+        self.rotated.notch_d = self.notch_d
+        self.rotated.notch_dd  = self.notch_dd
 
     def _gen_notch_values(self):
         def traj_gen(z0, zT, t, t_prev, T):
@@ -220,10 +237,6 @@ class CameraInterpolated(Camera):
     def __init__(self, traj):
         assert(traj.is_interpolated)
         super().__init__(filepath=None, traj=traj)
-
-    @property
-    def flag_interpolated(self):
-        return self.traj.is_interpolated
 
     @property
     def interframe_vals(self):
