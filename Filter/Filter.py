@@ -36,8 +36,7 @@ class Filter(object):
         self.probe = config.sym_probe
 
         # imu / noise
-        self.notch0 = x0.ndofs
-        self.imu.eval_init(self.notch0)
+        self.imu.eval_init(config.real_joint_dofs, x0.ndof)
 
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
