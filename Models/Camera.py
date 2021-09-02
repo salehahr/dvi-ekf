@@ -208,6 +208,10 @@ class Camera(object):
         queue.acc   = self.acc[:,old_i+1:new_i+1]
         queue.alp   = self.alp[:,old_i+1:new_i+1]
 
+        queue.notch     = self.notch[old_i+1:new_i+1]
+        queue.notch_d   = self.notch_d[old_i+1:new_i+1]
+        queue.notch_dd  = self.notch_dd[old_i+1:new_i+1]
+
         return queue
 
     def at_index(self, i):
@@ -259,6 +263,13 @@ class CameraQueue(object):
         queue_item.om   = self.om[:,i]
         queue_item.acc  = self.acc[:,i]
         queue_item.alp  = self.alp[:,i]
+
+        queue_item.notch    = self.notch[i]
+        queue_item.notch_d  = self.notch_d[i]
+        queue_item.notch_dd = self.notch_dd[i]
+        queue_item.notch_arr = [queue_item.notch,
+                queue_item.notch_d, queue_item.notch_dd]
+
         return queue_item
 
     @property

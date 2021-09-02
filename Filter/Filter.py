@@ -169,14 +169,14 @@ class Filter(object):
             i_cam must be already adjusted so that the IC is not counted
         """
         # propagate
-        notch_arr = camera.get_notch_at(i_cam)
-        self.propagate_imu(old_t, t, notch_arr)
+        self.propagate_imu(old_t, t)
 
         # update
         current_cam = camera.at_index(i_cam) # not counting IC
-        self.update(t, current_cam, notch_arr[0])
+        ang_notch = camera.get_notch_at(i_cam)[0]
+        self.update(t, current_cam, ang_notch)
 
-    def propagate_imu(self, t0, tn, notch):
+    def propagate_imu(self, t0, tn):
         """ Generates IMU data between old and current camera frame,
             then uses this data to propagate the states as many times
             as there are IMU data between frames.
@@ -184,18 +184,19 @@ class Filter(object):
         cam_queue = self.imu.cam.generate_queue(t0, tn)
 
         real_probe_dofs = self.config.real_joint_dofs
-        real_probe_dofs[0][6] = notch[0]
-        real_probe_dofs[1][6] = notch[1]
-        real_probe_dofs[2][6] = notch[2]
 
         old_ti = t0
         for ii, ti in enumerate(cam_queue.t):
             interp = cam_queue.at_index(ii)
+            real_probe_dofs[0][6] = interp.notch
+            real_probe_dofs[1][6] = interp.notch_d
+            real_probe_dofs[2][6] = interp.notch_dd
+
             om, acc = self.imu.eval_expr_single(ti,
                 *real_probe_dofs,
                 interp.acc, interp.R,
                 interp.om, interp.alp, )
-            self.imu.ref.append_value(ti, interp.vec, notch)
+            self.imu.ref.append_value(ti, interp.vec, interp.notch_arr)
 
             self.dt = ti - old_ti
             self.propagate(ti, om, acc)
