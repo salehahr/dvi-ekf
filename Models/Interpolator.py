@@ -38,9 +38,10 @@ class Interpolator(object):
             self._interpolate_cam_label(label)
 
         # interpolate notch values
-        notch_labels = ['notch', 'notch_d', 'notch_dd']
-        for label in notch_labels:
-            self._interpolate_notch_label(label)
+        if self.uninterp_camera.with_notch:
+            notch_labels = ['notch', 'notch_d', 'notch_dd']
+            for label in notch_labels:
+                self._interpolate_notch_label(label)
 
         self.flag_done = True
         self.interp_traj._gen_quats_array()

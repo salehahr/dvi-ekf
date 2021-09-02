@@ -180,12 +180,13 @@ class Config(object):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
 
         if self.max_vals:
-            notch = True if self.max_vals > 10 else False
+            with_notch = True if self.max_vals > 10 else False
         else:
-            notch = True
+            with_notch = True
+        # with_notch = False
 
         cam = Camera(filepath=filepath_cam,
-                max_vals=self.max_vals, scale=SCALE, notch=notch)
+                max_vals=self.max_vals, scale=SCALE, with_notch=with_notch)
         self._gen_sim_params_from_cam(cam)
 
         return cam
@@ -201,7 +202,7 @@ class Config(object):
 
     def get_imu(self, camera=None, gen_ref=False):
         """ Generates IMU object from interpolated camera data. """
-        cam_reference = camera.rotated
+        cam_reference = camera.rotated if camera.rotated else camera
         camera_interp = cam_reference.interpolate(self.num_interframe_vals)
         return Imu(probe, camera_interp,
                 stdev_acc, stdev_om, gen_ref=gen_ref)

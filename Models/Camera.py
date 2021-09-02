@@ -19,7 +19,8 @@ class Camera(object):
         Also provides the initial conditions.
     """
 
-    def __init__(self, filepath, traj=None, max_vals=None, scale=None, notch=False):
+    def __init__(self, filepath, traj=None, max_vals=None, scale=None,
+        with_notch=False):
         self.traj = traj    if (traj) else \
                     VisualTraj("camera", filepath, cap=max_vals,
                         scale=scale)
@@ -59,19 +60,20 @@ class Camera(object):
         self.alp0   = self.alp[:,0].reshape(3,1)
 
         # notch
-        self.is_rotated = not notch
+        self.with_notch = with_notch
+        self.is_rotated = False
         self.rotated = None
 
-        if not self.flag_interpolated:
-            self.notch = None
-            self.notch_d = None
-            self.notch_dd = None
-        else:
+        self.notch = None
+        self.notch_d = None
+        self.notch_dd = None
+
+        if self.flag_interpolated and self.traj.with_notch:
             self.notch = self.traj.notch
             self.notch_d = self.traj.notch_d
             self.notch_dd = self.traj.notch_dd
 
-        if not self.is_rotated:
+        if with_notch:
             self._gen_notch_values()
             self.gen_rotated()
 
@@ -86,7 +88,11 @@ class Camera(object):
     def interpolate(self, interframe_vals):
         interp_labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
         interp_traj = Interpolator(interframe_vals, self).interpolated
-        return CameraInterpolated(interp_traj)
+        interp_traj.with_notch = self.with_notch
+
+        cam = CameraInterpolated(interp_traj)
+        cam.with_notch = self.with_notch
+        return cam
 
     def _calc_derived_data(self):
         self.v = np.asarray( (np.gradient(self.p[0,:], self.dt),
@@ -136,6 +142,8 @@ class Camera(object):
         rotated_traj.is_rotated = True
         rotated_traj._gen_euler_angles()
         self.rotated = Camera(filepath=None, traj=rotated_traj)
+        self.rotated.is_rotated = True
+        self.rotated.with_notch = self.with_notch
 
         self.rotated.notch = self.notch
         self.rotated.notch_d = self.notch_d
@@ -192,7 +200,10 @@ class Camera(object):
         return t_part
 
     def get_notch_at(self, i):
-        return [self.notch[i], self.notch_d[i], self.notch_dd[i]]
+        if self.with_notch:
+            return [self.notch[i], self.notch_d[i], self.notch_dd[i]]
+        else:
+            return [0, 0, 0]
 
     def generate_queue(self, old_t, new_t):
         """ After old_t, up till new_t. """
@@ -208,9 +219,14 @@ class Camera(object):
         queue.acc   = self.acc[:,old_i+1:new_i+1]
         queue.alp   = self.alp[:,old_i+1:new_i+1]
 
-        queue.notch     = self.notch[old_i+1:new_i+1]
-        queue.notch_d   = self.notch_d[old_i+1:new_i+1]
-        queue.notch_dd  = self.notch_dd[old_i+1:new_i+1]
+        if self.with_notch:
+            queue.notch     = self.notch[old_i+1:new_i+1]
+            queue.notch_d   = self.notch_d[old_i+1:new_i+1]
+            queue.notch_dd  = self.notch_dd[old_i+1:new_i+1]
+        else:
+            queue.notch     = [0] * len(queue.t)
+            queue.notch_d   = [0] * len(queue.t)
+            queue.notch_dd  = [0] * len(queue.t)
 
         return queue
 

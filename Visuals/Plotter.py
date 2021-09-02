@@ -261,6 +261,7 @@ class FilterPlot(Plotter):
         labels = labels_cam + labels_imu + labels_imu_dofs
 
         num_cols = 6
+        cam_rot = self.camera.rotated.traj if self.camera.with_notch else None
 
         self._get_plot_objects(labels = labels,
                         labels_cam  = labels_cam,
@@ -271,7 +272,7 @@ class FilterPlot(Plotter):
                         num_cols    = num_cols,
                         filename    = config.img_filepath_compact,
                         cam         = self.cam_traj,
-                        cam_rot     = self.camera.rotated.traj,
+                        cam_rot     = cam_rot,
                         imu_ref     = self.imu_ref,
                         imu_recon   = None,
                         axes        = None,)
