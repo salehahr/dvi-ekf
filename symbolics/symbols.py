@@ -37,10 +37,18 @@ qd_cas = casadi.SX.sym('qd', num_dofs)
 qdd_cas = casadi.SX.sym('qdd', num_dofs)
 
 err_q_cas = casadi.SX.sym('err_q', num_dofs)
+err_qd_cas = casadi.SX.sym('err_qd', num_dofs)
+err_qdd_cas = casadi.SX.sym('err_qdd', num_dofs)
+
 q_tr_cas = q_cas + err_q_cas
+qd_tr_cas = qd_cas + err_qd_cas
+qdd_tr_cas = qdd_cas + err_qdd_cas
 
 dofs_cas = casadi.vertcat(q_cas, qd_cas, qdd_cas)
 dofs_cas_list = casadi.vertsplit(dofs_cas)
+
+err_dofs_cas = casadi.vertcat(err_q_cas, err_qd_cas, err_qdd_cas)
+err_dofs_cas_list = casadi.vertsplit(err_dofs_cas)
 
 ### IMU
 B_acc_BW = casadi.SX.sym('B_acc_BW', 3)
@@ -94,7 +102,10 @@ err_p_B = casadi.SX.sym('err_p_B', 3)
 err_v_B = casadi.SX.sym('err_v_B', 3)
 err_theta = casadi.SX.sym('err_theta', 3)
 err_dofs, _ = casadi.vertsplit(err_q_cas, [0, 6, 8])
-err_notch = casadi.SX.sym('err_notch', 3)
+err_notchdofs = casadi.vertcat(err_dofs_cas_list[6],
+                            err_dofs_cas_list[14],
+                            err_dofs_cas_list[22])
+err_notch, err_notchd, err_notchdd = casadi.vertsplit(err_notchdofs)
 err_p_C = casadi.SX.sym('err_p_C', 3)
 err_theta_C = casadi.SX.sym('err_theta_C', 3)
 
