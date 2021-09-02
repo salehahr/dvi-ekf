@@ -201,7 +201,7 @@ class Config(object):
 
     def get_imu(self, camera=None, gen_ref=False):
         """ Generates IMU object from interpolated camera data. """
-        cam_reference = camera.rotated if camera.has_rotated else camera
+        cam_reference = camera.rotated
         camera_interp = cam_reference.interpolate(self.num_interframe_vals)
         return Imu(probe, camera_interp,
                 stdev_acc, stdev_om, gen_ref=gen_ref)
