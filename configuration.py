@@ -30,16 +30,16 @@ probe = SimpleProbe(scope_length=scope_length,
 # Camera parameters / R
 """ Noise """
 STDEV_PC            = [0.2, 0.2, 0.2]                   # [cm]
-STDEV_Q_DEG         = [0.01, 0.01, 0.01]               # [deg]
-STDEV_NOTCH_deg     = 0.1                               # [deg/s^2]
+STDEV_Q_DEG         = [0.01, 0.01, 0.001]               # [deg]
+STDEV_NOTCH_deg     = 0.1                               # [deg]
 
 STDEV_RC        = np.deg2rad(STDEV_Q_DEG)               # [rad]
-STDEV_NOTCH     = np.deg2rad(STDEV_NOTCH_deg)           # [rad/s^2]
+STDEV_NOTCH     = np.deg2rad(STDEV_NOTCH_deg)           # [rad]
 
 """ Scale to convert cam pos to cm in mandala trajectory """
 SCALE            = 10
 
-# IMU parameters
+# IMU parameters / Q
 """ From MPU 6050 datasheet """
 NOISE_SAMPLE_RATE   = 10            # Hz (not output data rate)
 GYRO_NOISE          = 0.005 *\
@@ -51,17 +51,18 @@ ACCEL_NOISE         = 400 * 1e-6 * GRAVITY *\
 stdev_om  = [np.deg2rad(GYRO_NOISE)] * 3                # [rad/s]
 stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 
-# DOFs
+# DOFs / Q
 """ How much the DOFs are allowed to move in one update.
     (later on in Config.__init__: gets divided by num_interframe_vals
         if not given as an argument to main.py) """
 STDEV_DOFS_P            = [0.25, 0.25, 0.25]            # [cm]
 STDEV_DOFS_R_deg        = [1, 1, 1]                     # [deg]
-STDEV_DOFS_NOTCHdd_deg  = 0.1                           # [deg/s^2]
+STDEV_DOFS_NOTCHdd_deg  = 0.005                             # [deg/s^2]
 
 STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)          # [rad]
-STDEV_DOFS_NOTCHdd  = np.deg2rad(STDEV_DOFS_NOTCHdd_deg)    # [rad/s^2]
 STDEV_DOFS          = [*STDEV_DOFS_R, *STDEV_DOFS_P]
+
+STDEV_DOFS_NOTCHdd  = np.deg2rad(STDEV_DOFS_NOTCHdd_deg)    # [rad/s^2]
 
 # Kalman filter parameters
 """ Values for initial covariance matrix """
