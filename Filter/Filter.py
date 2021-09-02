@@ -36,7 +36,7 @@ class Filter(object):
         self.probe = config.sym_probe
 
         # imu / noise
-        self.imu.eval_init(config.real_joint_dofs, x0.ndof)
+        self.imu.eval_init(config.real_joint_dofs, x0.ndofs)
 
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
@@ -268,10 +268,11 @@ class Filter(object):
 
         fun_jac = casadi.Function('f_jac',
             [syms.dt, syms.dofs, syms.notchdofs,
-                syms.err_dofs, syms.R_WB, *syms.u,
+                syms.err_dofs, syms.err_notchdofs,
+                syms.R_WB, *syms.u,
                 syms.n_a, syms.n_om, syms.n_dofs, syms.n_notch_acc,
                 syms.err_theta, syms.err_theta_C], [jac],
-            ['dt', 'dofs', 'notchdofs', 'err_dofs', 'R_WB',
+            ['dt', 'dofs', 'notchdofs', 'err_dofs', 'err_notchdofs', 'R_WB',
                 *syms.u_str,
                 'n_a', 'n_om', 'n_dofs', 'n_notch_acc',
                 'err_theta', 'err_theta_C'], ['jac']
@@ -291,6 +292,7 @@ class Filter(object):
                         err_dofs    = casadi.DM.zeros(6,),
                         err_theta   = casadi.DM([0., 0., 0.]),
                         err_theta_C = casadi.DM([0., 0., 0.]),
+                        err_notchdofs = casadi.DM([0., 0., 0.]),
                         )['jac']).full()
 
     def _predict_error_covariance(self):
