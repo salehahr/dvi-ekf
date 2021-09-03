@@ -220,36 +220,36 @@ class CameraPlot(Plotter):
             return [None], [None]
 
 class FilterPlot(Plotter):
-    def __init__(self, config, traj, cam_traj, imu_ref, camera=None):
+    def __init__(self, kf, camera):
         self.min_t = None
         self.max_t = None
-        self.config = config
+        self.config = kf.config
 
-        self.labels_camera_compact = traj.labels_camera[:6]
+        self.labels_camera_compact = kf.traj.labels_camera[:6]
         self.d_qweight_labels = {lc: self.config.q[i]
                 for i, lc in enumerate(self.labels_camera_compact)}
 
-        self.camera = camera
-        self.traj       = traj
-        self.cam_traj   = cam_traj
-        self.imu_ref    = imu_ref
+        self.camera     = camera
+        self.traj       = kf.traj
+        self.cam_traj   = camera.traj
+        self.imu_ref    = kf.imu.ref
 
         """ labels that start at row = 1 """
         self.jump_labels = ['x', 'vx', 'rx', 'dof1', 'dof4', 'xc', 'rx_degc']
 
-    def _set_plot_times(self, config, t_end):
-        self.min_t = config.min_t
-        self.max_t = min(self.traj.t[-1], config.max_t, t_end)
+    def _set_plot_times(self, t_end):
+        self.min_t = self.config.min_t
+        self.max_t = min(self.traj.t[-1], self.config.max_t, t_end)
 
     @show_plot
-    def plot(self, config, t_end):
-        self._set_plot_times(config, t_end)
-        self._plot_imu_states(config)
-        self._plot_camera_states(config)
+    def plot(self, t_end):
+        self._set_plot_times(t_end)
+        self._plot_imu_states()
+        self._plot_camera_states()
 
     @show_plot
-    def plot_compact(self, config, t_end):
-        self._set_plot_times(config, t_end)
+    def plot_compact(self, t_end):
+        self._set_plot_times(t_end)
 
         self.jump_labels = []
         labels_cam = self.traj.labels_camera[:6]
@@ -266,16 +266,15 @@ class FilterPlot(Plotter):
                         labels_imu  = labels_imu,
                         labels_imu_dofs = labels_imu_dofs,
                         labels_notch = [],
-                        config      = config,
                         num_cols    = num_cols,
-                        filename    = config.img_filepath_compact,
+                        filename    = self.config.img_filepath_compact,
                         cam         = self.cam_traj,
                         cam_rot     = cam_rot,
                         imu_ref     = self.imu_ref,
                         imu_recon   = None,
                         axes        = None,)
 
-    def _plot_imu_states(self, config, imu_recon=None,
+    def _plot_imu_states(self, imu_recon=None,
             axes=None):
         labels = self.traj.labels_imu + self.traj.labels_imu_dofs
         num_cols = 6
@@ -285,7 +284,6 @@ class FilterPlot(Plotter):
                         labels_imu  = self.traj.labels_imu,
                         labels_imu_dofs = self.traj.labels_imu_dofs,
                         labels_notch = [],
-                        config      = config,
                         num_cols = num_cols,
                         filename = config.img_filepath_imu,
                         cam = None,
@@ -294,7 +292,7 @@ class FilterPlot(Plotter):
                         imu_recon = imu_recon,
                         axes = axes)
 
-    def _plot_camera_states(self, config, axes=None):
+    def _plot_camera_states(self, axes=None):
         self.jump_labels = []
         labels_camera = self.traj.labels_camera[:6]
         labels_notch = ['notch', 'notch_d', 'notch_dd']
@@ -306,9 +304,8 @@ class FilterPlot(Plotter):
                         labels_imu  = [],
                         labels_imu_dofs = [],
                         labels_notch = labels_notch,
-                        config      = config,
                         num_cols = num_cols,
-                        filename = config.img_filepath_cam,
+                        filename = self.config.img_filepath_cam,
                         cam = self.cam_traj,
                         cam_rot = self.camera.rotated.traj,
                         imu_ref = None,
@@ -317,7 +314,6 @@ class FilterPlot(Plotter):
 
     @plot_loop
     def _get_plot_objects(self, label, **kwargs):
-        config      = kwargs['config']
         cam         = kwargs['cam']
         cam_rot     = kwargs['cam_rot']
         imu_ref     = kwargs['imu_ref']
@@ -351,8 +347,8 @@ class FilterPlot(Plotter):
 
         if label in labels_imu_dofs:
             idx = labels_imu_dofs.index(label)
-            dof_ref = DofRef(config.min_t, config.max_t)
-            val_dof_ref = [config.real_imu_dofs[idx]] * 2
+            dof_ref = DofRef(self.config.min_t, self.config.max_t)
+            val_dof_ref = [self.config.real_imu_dofs[idx]] * 2
         else:
             dof_ref, val_dof_ref = None, []
 

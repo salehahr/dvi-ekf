@@ -27,9 +27,8 @@ def plot_loop(f_plot_objs, **kwargs):
         num_cols    = kwargs['num_cols']
         axes        = kwargs['axes']
         filename    = kwargs['filename']
-        config      = kwargs['config']
         
-        Q = config.meas_noise
+        Q = self.config.meas_noise
 
         num_rows    = math.ceil( len(labels) / num_cols )
         axes        = self._init_axes(axes, num_rows, num_cols)
@@ -57,7 +56,7 @@ def plot_loop(f_plot_objs, **kwargs):
             self._ax_postfix(a, label, Q, *flat_vals)
             ai += 1
 
-        self._fig_postfix(filename, axes, offset, num_rows, config)
+        self._fig_postfix(filename, axes, offset, num_rows, self.config)
         return axes
 
     return wrapper
