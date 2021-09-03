@@ -86,6 +86,15 @@ class Filter(object):
         self.traj.append_propagated_states(self.config.min_t, self.states)
         self.mse = 0
 
+    def update_noise_matrices(self):
+        Q = np.eye(self.num_noise)
+        Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
+        Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
+        Q[6:13, 6:13] = np.diag(self.config.process_noise_rw)
+        self.Q = Q
+
+        self.R = np.diag(self.config.meas_noise)
+
     @property
     def config(self):
         return self._config
