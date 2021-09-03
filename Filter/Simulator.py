@@ -41,6 +41,8 @@ class Simulator(object):
         self.config.process_noise_rw_std = val[0:7]
         self.config.meas_noise_std = val[7:8]
 
+        self.kf.update_noise_matrices()
+
     @property
     def best_run_id(self):
         return self.kf_best.run_id
