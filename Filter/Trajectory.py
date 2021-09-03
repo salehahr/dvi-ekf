@@ -147,7 +147,7 @@ class VisualTraj(Trajectory):
         super().__init__(name, labels, filepath, cap)
 
         self.labels_notch = ['notch', 'notch_d', 'notch_dd']
-        self.notch_filepath = './trajs/notch.txt'
+        self.notch_filepath = './trajs/notch90.txt'
 
         if scale:
             self._apply_scale(scale)
