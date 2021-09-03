@@ -152,7 +152,7 @@ class Config(object):
         self.q = [*STDEV_PC, *STDEV_Q_DEG]
 
         # saving
-        self.dof_metric = None
+        self.mse = None
         self.saved_configs = [
                     'meas_noise',
                     'max_vals',
@@ -161,7 +161,7 @@ class Config(object):
                     'max_t',
                     'total_data_pts',
                     'traj_name',
-                    'dof_metric']
+                    'mse']
 
         # plot variables
         self.do_plot        = not args.np if not do_plot_only \

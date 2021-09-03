@@ -69,7 +69,7 @@ class Filter(object):
         self.traj.append_propagated_states(config.min_t, self.states)
 
         # metrics
-        self.dof_metric = 0
+        self.mse = 0
 
     def reset(self, x0, cov0):
         self.states = copy(x0)
@@ -84,7 +84,7 @@ class Filter(object):
 
         self.traj.reset()
         self.traj.append_propagated_states(self.config.min_t, self.states)
-        self.dof_metric = 0
+        self.mse = 0
 
     @property
     def config(self):
@@ -152,8 +152,7 @@ class Filter(object):
             old_t = t
 
         # normalise dof_metric
-        self.calculate_metric()
-        self.dof_metric = self.dof_metric / 6
+        self.mse = self.calculate_metric(camera)
 
     def run_one_epoch(self, old_t, t, i_cam, camera):
         """
@@ -340,13 +339,44 @@ class Filter(object):
 
         return K
 
-    def calculate_metric(self):
+    def get_upd_values(self, obj, comp, indices):
+        """ returns obj (e.g. self.traj or self.imu.ref) component
+            at update timestamps only. """
+        return np.array([obj.__dict__[comp][i] for i in indices])
+
+    def calculate_metric(self, camera):
+        cam_reference = camera.rotated if camera.rotated else camera
+
+        indices_range = range(0, self.config.total_data_pts, self.config.num_interframe_vals)
+        upd_indices = [x for x in indices_range]
+
+        sum_res_cam = 0
+        for compc in self.traj.labels_camera[0:6]:
+            abs_err = np.array(cam_reference.traj.__dict__[compc[:-1]]) \
+                - self.get_upd_values(self.traj, compc, upd_indices)
+            sum_res_cam += np.sum(np.square(abs_err))
+
+        sum_res_imu = 0
+        for comp in self.traj.labels_imu[3:9]:
+            abs_err = self.get_upd_values(self.traj, comp, upd_indices[:-1]) \
+                - self.get_upd_values(self.imu.ref, comp, upd_indices[:-1]) # no imu ref calculated at end
+            sum_res_imu += np.sum(np.square(abs_err))
+
+        num_states = 12
+        num_frames = len(upd_indices)
+        avg_sum_res = (sum_res_cam + sum_res_imu) / (num_states * num_frames) \
+            + self.calculate_dof_metric()
+
+        return avg_sum_res
+
+    def calculate_dof_metric(self):
+        """ at end of run """
         res = self.states.dofs - self.config.real_imu_dofs
-        self.dof_metric += np.dot(res, res)
+        return np.dot(res, res) / 6
 
     def save(self):
-        self.config.dof_metric = self.dof_metric
-        self.config.save('./configs.txt')
+        self.config.mse = self.mse
+        # self.config.save('./configs.txt')
         self.traj.write_to_file(self.config.traj_kf_filepath)
         self.imu.ref.write_to_file(self.config.traj_imuref_filepath)
 
