@@ -350,14 +350,13 @@ class Filter(object):
         self.traj.write_to_file(self.config.traj_kf_filepath)
         self.imu.ref.write_to_file(self.config.traj_imuref_filepath)
 
-    def plot(self, camera_traj, compact, camera=None):
+    def plot(self, camera, compact):
         if not self.config.do_plot:
             return
 
         t_end = self.traj.t[-1]
+        plotter = FilterPlot(self, camera)
         if compact:
-            FilterPlot(self.config, self.traj, camera_traj, self.imu.ref, camera=camera).plot_compact(
-            self.config, t_end)
+            plotter.plot_compact(t_end)
         else:
-            FilterPlot(self.config, self.traj, camera_traj, self.imu.ref, camera=camera).plot(
-            self.config, t_end)
+            plotter.plot(t_end)
