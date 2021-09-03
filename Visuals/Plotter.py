@@ -148,7 +148,7 @@ class Plotter(object):
             eval(f'line.set_{k}(' + v + ')')
 
     def _set_title(self, config):
-        MSE = config.dof_metric
+        MSE = config.mse
         Q = config.meas_noise
 
         if MSE is not None:
