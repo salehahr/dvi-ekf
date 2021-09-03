@@ -14,7 +14,8 @@ class Simulator(object):
         self.x0, self.cov0        = config.get_IC(imu, camera)
 
         # optimisation variables
-        self._q = config.meas_noise
+        # for now ignoring dofs
+        self._optim_std = [config.process_noise_rw_std[-1], *config.meas_noise_std]
 
         # simulation run params
         self.num_kf_runs = config.num_kf_runs
@@ -29,14 +30,15 @@ class Simulator(object):
         self.best_x = None
 
     # optimisation variables
-
+    # for now ignoring dofs
     @property
-    def q(self):
-        return self._q
-    @q.setter
-    def q(self, val):
-        self._q = val
-        self.config.meas_noise = val
+    def optim_std(self):
+        return self._optim_std
+    @optim_std.setter
+    def optim_std(self, val):
+        self._optim_std = val
+        self.config.process_noise_rw_std[-1] = val[0]
+        self.config.meas_noise_std = val[1:8]
 
     @property
     def best_run_id(self):
@@ -48,7 +50,9 @@ class Simulator(object):
                 averaged from all the KF runs.
         """
         # make sure that KF has the right config
-        self.kf.config = self.config
+        if self.config.mode == 'tune':
+            self.kf.config = self.config
+
         if disp_config: self.config.print_config()
 
         run_bar = trange(self.num_kf_runs,
@@ -75,6 +79,7 @@ class Simulator(object):
 
         self.mse_avg = sum(self.mses) / len(self.mses)
         if verbose:
+            print(f'\tOptimvars: {self.optim_std}')
             print(f'\tDOF MSE: {self.mse_avg:.2E}')
 
     def optimise(self):
@@ -82,19 +87,48 @@ class Simulator(object):
             Currently only for kp (scale factor for process noise).
         """
         def optim_func(x):
-            self.kp, self.km, self.rwp, self.rwr = x
-            self.run(verbose=False)
+            self.optim_std = x
+            self.run(verbose=True)
             return self.mse_avg
 
         def print_fun(x0, convergence):
-            print(f"current param set: {x0}")
+            notchdd = x0[0]
+            pcam = x0[1:4]
+            rcam = x0[4:7]
+            notch = x0[7]
+
+            notchdd_deg = np.rad2deg(notchdd)
+            rcam_deg = np.rad2deg(rcam)
+            notch_deg = np.rad2deg(notch)
+
+            res_str = [f"current param set:",
+                f"{notchdd_deg} deg",
+                f'{pcam} cm',
+                f'{rcam_deg} deg',
+                f'{notch_deg} deg',
+                f'MSE {self.mse_avg}',
+                f'Convergence: {convergence}\n\n']
+
+            self.file.write('\n'.join(res_str))
+            print(res_str)
 
         def optim_func_kp_only(x):
             self.kp = x
             self.run(verbose=False)
             return self.mse_avg
 
-        bounds = ((0, 1), (0, 5), (0, 3), (0, np.deg2rad(10)))
+        file = open('output.txt', 'a+')
+        self.file = file
+
+        bounds = (  (0, np.deg2rad(3)),     # notchdd
+                    (0, 0.5),     # pcam
+                    (0, 0.5),
+                    (0, 0.5),
+                    (0, np.deg2rad(10)),     # rcam
+                    (0, np.deg2rad(10)),
+                    (0, np.deg2rad(10)),
+                    (0, np.deg2rad(1))  # notch
+                    )
         bounds_kp_only = ((1e-4, 1e-2),)
 
         self.show_run_progress = False
@@ -105,14 +139,15 @@ class Simulator(object):
         self.config.print_config()
 
         ret = differential_evolution(
-                            # optim_func, 
-                            optim_func_kp_only, 
-                            # bounds,
-                            bounds_kp_only,
+                            optim_func, 
+                            # optim_func_kp_only, 
+                            bounds,
+                            # bounds_kp_only,
                             strategy = 'best1bin',
                             disp = True,
-                            # x0 = x0,
-                            callback = print_fun)
+                            # x0 = x0, # not available in my python setup
+                            callback = print_fun,
+                            updating = 'immediate')
 
         print("Initial config.")
         self.config.print_config()
@@ -121,6 +156,8 @@ class Simulator(object):
         print(f"\nglobal minimum using params: {ret.x},\nmse = {ret.fun:.3f}")
         self.save_params(ret.x, filename='./opt-tune-params-de.txt')
         self.dof_mse = ret.fun
+
+        file.close()
 
     def save_params(self, x, filename=None):
         # 7.779E-09 1.355 0.544 0.034 average MSE 5.0474 (fast run)
