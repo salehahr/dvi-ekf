@@ -15,7 +15,8 @@ class Simulator(object):
 
         # optimisation variables
         # for now ignoring dofs
-        self._optim_std = [config.process_noise_rw_std[-1], *config.meas_noise_std]
+        self._optim_std = [*config.process_noise_rw_std,
+                *config.meas_noise_std]
 
         # simulation run params
         self.num_kf_runs = config.num_kf_runs
@@ -37,8 +38,8 @@ class Simulator(object):
     @optim_std.setter
     def optim_std(self, val):
         self._optim_std = val
-        self.config.process_noise_rw_std[-1] = val[0]
-        self.config.meas_noise_std = val[1:8]
+        self.config.process_noise_rw_std = val[0:7]
+        self.config.meas_noise_std = val[7:8]
 
     @property
     def best_run_id(self):
@@ -88,48 +89,55 @@ class Simulator(object):
         """
         def optim_func(x):
             self.optim_std = x
-            self.run(verbose=True)
+            self.run(verbose=False)
             return self.mse_avg
 
         def print_fun(x0, convergence):
-            notchdd = x0[0]
-            pcam = x0[1:4]
-            rcam = x0[4:7]
-            notch = x0[7]
+            rwp = x0[0:3]
+            rwr = x0[3:6]
+            notchdd = x0[6]
 
+            pcam = x0[7:10]
+            rcam = x0[10:13]
+            notch = x0[13]
+
+            rwr_deg = np.rad2deg(rwr)
             notchdd_deg = np.rad2deg(notchdd)
             rcam_deg = np.rad2deg(rcam)
             notch_deg = np.rad2deg(notch)
 
-            res_str = [f"current param set:",
+            res_str = [f"Current optim. variables:",
+                f"{rwp} cm",
+                f"{rwr_deg} deg",
                 f"{notchdd_deg} deg",
                 f'{pcam} cm',
                 f'{rcam_deg} deg',
                 f'{notch_deg} deg',
-                f'MSE {self.mse_avg}',
+                f'MSE: {self.mse_avg}',
                 f'Convergence: {convergence}\n\n']
 
             self.file.write('\n'.join(res_str))
             print(res_str)
 
-        def optim_func_kp_only(x):
-            self.kp = x
-            self.run(verbose=False)
-            return self.mse_avg
-
         file = open('output.txt', 'a+')
         self.file = file
 
-        bounds = (  (0, np.deg2rad(3)),     # notchdd
-                    (0, 0.5),     # pcam
-                    (0, 0.5),
-                    (0, 0.5),
+        bounds = (  
+                    (0, 10), # random walk p
+                    (0, 10), 
+                    (0, 10), 
+                    (0, np.deg2rad(5)), # random walk r
+                    (0, np.deg2rad(5)),
+                    (0, np.deg2rad(5)),
+                    (0, np.deg2rad(5)),     # notchdd
+                    (0, 0.2),     # pcam
+                    (0, 0.2),
+                    (0, 0.2),
                     (0, np.deg2rad(10)),     # rcam
                     (0, np.deg2rad(10)),
                     (0, np.deg2rad(10)),
                     (0, np.deg2rad(1))  # notch
                     )
-        bounds_kp_only = ((1e-4, 1e-2),)
 
         self.show_run_progress = False
         self.kf.show_progress = False
@@ -140,17 +148,14 @@ class Simulator(object):
 
         ret = differential_evolution(
                             optim_func, 
-                            # optim_func_kp_only, 
                             bounds,
-                            # bounds_kp_only,
                             strategy = 'best1bin',
+                            maxiter = 1,
+                            popsize = 1,
                             disp = True,
                             # x0 = x0, # not available in my python setup
                             callback = print_fun,
                             updating = 'immediate')
-
-        print("Initial config.")
-        self.config.print_config()
 
         # results
         print(f"\nglobal minimum using params: {ret.x},\nmse = {ret.fun:.3f}")
