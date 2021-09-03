@@ -303,6 +303,16 @@ class FilterTraj(Trajectory):
         for i, label in enumerate(self.labels):
             self.__dict__[label][-1] = data[i]
 
+    @property
+    def rz_degc_unwrapped(self):
+        return np.unwrap(self.rz_degc)
+    @property
+    def ry_degc_unwrapped(self):
+        return np.unwrap(self.ry_degc)
+    @property
+    def rx_degc_unwrapped(self):
+        return np.unwrap(self.rx_degc)
+
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and
     angular velocity measurements. """

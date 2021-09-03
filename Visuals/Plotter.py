@@ -261,6 +261,10 @@ class FilterPlot(Plotter):
         num_cols = 6
         cam_rot = self.camera.rotated.traj if self.camera.with_notch else None
 
+        self.traj.rz_degc = self.traj.rz_degc_unwrapped
+        self.traj.ry_degc = self.traj.ry_degc_unwrapped
+        self.traj.rx_degc = self.traj.rx_degc_unwrapped
+
         self._get_plot_objects(labels = labels,
                         labels_cam  = labels_cam,
                         labels_imu  = labels_imu,
