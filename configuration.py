@@ -144,11 +144,9 @@ class Config(object):
         self.process_noise_rw_std = np.hstack(
                         (STDEV_DOFS_R, STDEV_DOFS_P, STDEV_DOFS_NOTCHdd)
                             ) / self.num_interframe_vals
-        self.process_noise_rw = np.square(self.process_noise_rw_std)
 
         # # measurement
         self.meas_noise_std = np.hstack((STDEV_PC, STDEV_RC, STDEV_NOTCH))
-        self.meas_noise = np.square(self.meas_noise_std)
         self.q = [*STDEV_PC, *STDEV_Q_DEG]
 
         # saving
@@ -173,6 +171,14 @@ class Config(object):
                                         '_compact.png'
         self.traj_kf_filepath = 'trajs/kf_best_' + self.img_filename + '.txt'
         self.traj_imuref_filepath = 'trajs/imu_ref_' + self.img_filename + '.txt'
+
+    # auto square the covariances
+    @property
+    def process_noise_rw(self):
+        return np.square(self.process_noise_rw_std)
+    @property
+    def meas_noise(self):
+        return np.square(self.meas_noise_std)
 
     @property
     def img_filename(self):
