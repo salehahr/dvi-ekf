@@ -12,6 +12,7 @@ np.set_printoptions(suppress=True, precision=3)
 NUM_KF_RUNS_DEFAULT = 1
 
 # Data generation parameters
+CAM_START_FRAME = None
 """ Number of IMU data between prev. frame up to
     and including the next frame """
 NUM_IMU_DEFAULT = 10
@@ -194,7 +195,8 @@ class Config(object):
         # with_notch = False
 
         cam = Camera(filepath=filepath_cam,
-                max_vals=self.max_vals, scale=SCALE, with_notch=with_notch)
+                max_vals=self.max_vals, scale=SCALE, with_notch=with_notch,
+                start_at=CAM_START_FRAME)
 
         if with_notch:
             assert(cam.rotated is not None)
@@ -253,12 +255,13 @@ class Config(object):
 
     def get_IC(self, imu, camera):
         """ Perfect initial conditions except for DOFs. """
-        notch0 = camera.get_notch_at(0)
-        W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(camera.vec0, notch0)
+        cam_reference = camera.rotated if camera.rotated else camera
+        notch0 = cam_reference.get_notch_at(0)
+        W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(cam_reference.vec0, notch0)
 
         x0   = States(W_p_BW_0, WW_v_BW_0, R_WB_0,
                         self.est_imu_dofs_IC, notch0,
-                        camera.p0, camera.q0)
+                        cam_reference.p0, cam_reference.q0)
         cov0 = np.square(np.diag(stdevs0))
 
         return x0, cov0

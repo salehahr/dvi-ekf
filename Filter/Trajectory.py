@@ -142,9 +142,12 @@ class VisualTraj(Trajectory):
     """ Visual trajectory containing time and pose. """
 
     def __init__(self, name, filepath=None, cap=None,
-            scale=None, with_notch=False):
+            scale=None, with_notch=False, start_at=None):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
-        super().__init__(name, labels, filepath, cap)
+        super().__init__(name, labels, filepath)
+
+        start_index = self.t.index(start_at) if start_at else None
+        self._start_at(labels, start_index, cap)
 
         self.labels_notch = ['notch', 'notch_d', 'notch_dd']
         self.notch_filepath = './trajs/notch90.txt'
@@ -161,9 +164,19 @@ class VisualTraj(Trajectory):
             self.gen_angle_arrays()
 
         if with_notch:
-            self.read_notch_from_file(cap)
+            self.read_notch_from_file()
+            self._start_at(self.labels_notch, start_index, cap)
+            assert(len(self.t) == len(self.notch))
 
-    def read_notch_from_file(self, cap):
+    def _start_at(self, labels, index=None, cap=None):
+        if not index:
+            return
+
+        for label in labels:
+            self.__dict__[label] = self.__dict__[label][index:] if not cap \
+                                else self.__dict__[label][index:index+cap]
+
+    def read_notch_from_file(self):
         self.notch = []
         self.notch_d = []
         self.notch_dd = []
@@ -176,10 +189,6 @@ class VisualTraj(Trajectory):
                 for j, label in enumerate(self.labels_notch):
                     meas = float(data[j])
                     self.__dict__[label].append(meas)
-
-                if cap is not None:
-                    if i >= cap - 1:
-                        break
 
     def _apply_scale(self, scale):
         for label in ['x', 'y', 'z']:
