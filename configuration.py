@@ -195,6 +195,12 @@ class Config(object):
 
         cam = Camera(filepath=filepath_cam,
                 max_vals=self.max_vals, scale=SCALE, with_notch=with_notch)
+
+        if with_notch:
+            assert(cam.rotated is not None)
+        else:
+            assert(cam.rotated is None)
+
         self._gen_sim_params_from_cam(cam)
 
         return cam
