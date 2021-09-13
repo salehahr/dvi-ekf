@@ -20,10 +20,11 @@ class Camera(object):
     """
 
     def __init__(self, filepath, traj=None, max_vals=None, scale=None,
-        with_notch=False):
+        with_notch=False, start_at=None):
         self.traj = traj    if (traj) else \
                     VisualTraj("camera", filepath, cap=max_vals,
-                        scale=scale, with_notch=with_notch)
+                        scale=scale, with_notch=with_notch,
+                        start_at=start_at)
         self.max_vals = len(self.traj.t)
 
         self.t      = self.traj.t
