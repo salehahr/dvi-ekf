@@ -261,6 +261,10 @@ class FilterPlot(Plotter):
         num_cols = 6
         cam_rot = self.camera.rotated.traj if self.camera.with_notch else None
 
+        self.traj.rz = self.traj.rz_unwrapped
+        self.traj.ry = self.traj.ry_unwrapped
+        self.traj.rx = self.traj.rx_unwrapped
+
         self.traj.rz_degc = self.traj.rz_degc_unwrapped
         self.traj.ry_degc = self.traj.ry_degc_unwrapped
         self.traj.rx_degc = self.traj.rx_degc_unwrapped

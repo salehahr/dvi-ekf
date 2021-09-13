@@ -304,6 +304,16 @@ class FilterTraj(Trajectory):
             self.__dict__[label][-1] = data[i]
 
     @property
+    def rz_unwrapped(self):
+        return np.unwrap(self.rz)
+    @property
+    def ry_unwrapped(self):
+        return np.unwrap(self.ry)
+    @property
+    def rx_unwrapped(self):
+        return np.unwrap(self.rx)
+
+    @property
     def rz_degc_unwrapped(self):
         return np.unwrap(self.rz_degc)
     @property
