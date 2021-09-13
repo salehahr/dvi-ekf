@@ -16,6 +16,15 @@ Tuning in progress
 30 | ![](img/start_260_nb_30.png)
 60 | ![](img/start_260_nb_60.png)
 
+### Notch vs. without notch
+Update stage: corrected camera measurements vs. uncorrected
+
+`nb` | With notch | Without notch
+-- | -- | --
+10 | ![](img/tuning.png) | ![](img/nb_10_uncorrected.png)
+30 | ![](img/nb_30_corrected.png) | ![](img/nb_30_uncorrected.png)
+60 | ![](img/nb_60_corrected.png) | ![](img/nb_60_uncorrected.png)
+
 ### Propagation only  
 ![](img/notchest_prop_only.png)
 
