@@ -3,6 +3,8 @@ from tqdm import trange
 from scipy.optimize import differential_evolution
 import numpy as np
 
+from Filter import Filter
+
 class Simulator(object):
     def __init__(self, config):
         # simulation objects
@@ -10,6 +12,7 @@ class Simulator(object):
         self.config = config
         self.kf = kf
         self.camera = camera
+        self.imu = imu
 
         self.x0, self.cov0        = config.get_IC(imu, camera)
 
@@ -77,13 +80,17 @@ class Simulator(object):
                 if save_best:
                     self.kf_best = copy.deepcopy(self.kf)
 
-            # reset for next run
-            self.kf.reset(self.x0, self.cov0)
+            # # reset for next run
+            # self.reset_kf()
 
         self.mse_avg = sum(self.mses) / len(self.mses)
         if verbose:
             print(f'\tOptimvars: {self.optim_std}')
             print(f'\tDOF MSE: {self.mse_avg:.2E}')
+
+    def reset_kf(self):
+        self.kf = Filter(self.config, self.imu, self.x0, self.cov0,
+            self.config.frozen_dofs)
 
     def optimise(self):
         """ For tuning the KF parameters.
@@ -173,6 +180,10 @@ class Simulator(object):
             f.write(x)
 
     def save_and_plot(self, compact=True):
-        print(f'Best run: #{self.best_run_id}; average MSE = {self.mse_avg:.2E}')
-        self.kf_best.save()
-        self.kf_best.plot(self.camera, compact=compact)
+        if self.kf_best:
+            self.kf_best.save()
+            self.kf_best.plot(self.camera, compact=compact)
+            print(f'Best run: #{self.best_run_id}; average MSE = {self.mse_avg:.2E}')
+        else:
+            self.kf.save()
+            self.kf.plot(self.camera, compact=compact)
