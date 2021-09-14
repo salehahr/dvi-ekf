@@ -144,7 +144,7 @@ class VisualTraj(Trajectory):
     def __init__(self, name, filepath=None, cap=None,
             scale=None, with_notch=False, start_at=None):
         labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
-        super().__init__(name, labels, filepath)
+        super().__init__(name, labels, filepath, cap)
 
         start_index = self.t.index(start_at) if start_at else None
         self._start_at(labels, start_index, cap)
@@ -170,7 +170,10 @@ class VisualTraj(Trajectory):
 
     def _start_at(self, labels, index=None, cap=None):
         if not index:
-            return
+            if cap:
+                index = 0
+            else:
+                return
 
         for label in labels:
             self.__dict__[label] = self.__dict__[label][index:] if not cap \
