@@ -1,4 +1,4 @@
-from copy import copy
+from copy import copy, deepcopy
 from math import factorial
 import numpy as np
 from tqdm import tqdm
@@ -12,32 +12,32 @@ from .context import syms, eqns
 from Visuals import FilterPlot
 
 class Filter(object):
-    def __init__(self, config, imu, x0, cov0, frozen_dofs):
+    def __init__(self, sim):
+        # simulation
+        self.sim = sim
+        self.show_progress = True
+
         self._run_id = None
-        self.num_states = x0.size
-        self.num_error_states = x0.size - 2
+        self.num_states = sim.x0.size
+        self.num_error_states = self.num_states - 2
         self.num_meas = 7
         self.num_noise = 13
 
-        self.states = copy(x0)
+        self.states = deepcopy(sim.x0)
         
-        self.states.frozen_dofs = [bool(fr) for fr in frozen_dofs]
+        self.states.frozen_dofs = [bool(fr) for fr in self.config.frozen_dofs]
         self._x = []
         self._u = []
 
         self.dt = 0.
 
-        # simulation
-        self._config = config
-        self.show_progress = True
-
         # objects
-        self.imu = imu
-        self.probe = config.sym_probe
+        self.imu = sim.imu
+        self.probe = self.config.sym_probe
 
         # imu / noise
-        self.notch0 = x0.ndofs
-        self.imu.eval_init(config.real_joint_dofs, self.notch0)
+        self.notch0 = deepcopy(sim.x0.ndofs)
+        self.imu.eval_init(self.config.real_joint_dofs, self.notch0)
 
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
@@ -56,7 +56,7 @@ class Filter(object):
         self.R_WB_old = self.states.q.rot
 
         # covariance
-        self.P = np.copy(cov0)
+        self.P = np.copy(sim.cov0)
         assert(self.P.shape == (self.num_error_states, self.num_error_states))
 
         # static matrices
@@ -66,7 +66,7 @@ class Filter(object):
 
         # plot
         self.traj = FilterTraj("kf")
-        self.traj.append_propagated_states(config.min_t, self.states)
+        self.traj.append_propagated_states(self.config.min_t, self.states)
 
         # metrics
         self.mse = 0
@@ -97,10 +97,10 @@ class Filter(object):
 
     @property
     def config(self):
-        return self._config
+        return self.sim.config
     @config.setter
     def config(self, obj):
-        self._config = obj
+        self.sim.config = obj
 
     @property
     def run_id(self):
