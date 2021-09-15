@@ -120,7 +120,7 @@ class Imu(object):
 
     def eval_expr_single(self, t, q, qd, qdd,
         W_acc_C, R_WC, W_om_C, W_alp_C,
-        append_array=False, filepath=''):
+        append_array=False, filepath='', overwrite=False):
         """ Evaluates the symbolic expression using camera values and DOFs of the probe.
 
             Args:
@@ -146,6 +146,11 @@ class Imu(object):
             self._om.append(res_om)
             self._acc.append(res_acc)
 
+        if overwrite:
+            self.t = [t]
+            self._om = [res_om]
+            self._acc = [res_acc]
+
         if filepath:
             with open(filepath, 'a+') as f:
                 g_str = f"{res_om[0]:.9f} {res_om[1]:.9f} {res_om[2]:.9f}"
@@ -155,7 +160,7 @@ class Imu(object):
 
         return res_om, res_acc
 
-    def eval_init(self, real_joint_dofs, notch0):
+    def eval_init(self, real_joint_dofs, notch0, overwrite=False):
         q0, qd0, qdd0 = real_joint_dofs
         q0[6], qd0[6], qdd0[6] = notch0
 
@@ -163,7 +168,7 @@ class Imu(object):
                                 self.cam.acc[:,0],
                                 self.cam.R[0], self.cam.om[:,0],
                                 self.cam.alp[:,0],
-                                append_array=True)
+                                append_array=True, overwrite=overwrite)
         self._init_trajectory()
 
     def _eval_expr(self, append_array=False, filepath=''):
