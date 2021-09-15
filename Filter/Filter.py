@@ -170,7 +170,7 @@ class Filter(object):
             old_t = t
 
         # normalise dof_metric
-        self.mse = self.calculate_metric(camera)
+        self.mse = self.calculate_metric(i_cam, camera)
 
     def run_one_epoch(self, old_t, t, i_cam, camera):
         """
@@ -388,15 +388,17 @@ class Filter(object):
 
         self.update_mse = update_mse
 
-    def calculate_metric(self, camera):
+    def calculate_metric(self, i_cam, camera):
         cam_reference = camera.rotated if camera.rotated else camera
 
-        indices_range = range(0, self.config.total_data_pts, self.config.num_interframe_vals)
+        indices_range = range(0, len(self.traj.t), self.config.num_interframe_vals)
         upd_indices = [x for x in indices_range]
 
         sum_res_cam = 0
         for compc in self.traj.labels_camera[0:6]:
-            abs_err = np.array(cam_reference.traj.__dict__[compc[:-1]]) \
+            # -1: remove 'c' from string';
+            # i_cam + 1: include final value before breaking simulation
+            abs_err = np.array(cam_reference.traj.__dict__[compc[:-1]][:i_cam + 1]) \
                 - self.get_upd_values(self.traj, compc, upd_indices)
             sum_res_cam += np.sum(np.square(abs_err))
 
