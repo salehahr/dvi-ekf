@@ -16,48 +16,50 @@ class Filter(object):
         # simulation
         self.sim = sim
         self.show_progress = True
-
         self._run_id = None
+        self.dt = 0.
+
+        # initial states/covariance
+        self.states = deepcopy(sim.x0)
+        self.notch0 = deepcopy(sim.x0.ndofs)
+        self.P = np.copy(sim.cov0)
+
+        # states
         self.num_states = sim.x0.size
         self.num_error_states = self.num_states - 2
         self.num_meas = 7
         self.num_noise = 13
 
-        self.states = deepcopy(sim.x0)
-        
+        assert(self.P.shape == (self.num_error_states, self.num_error_states))
+
         self.states.frozen_dofs = [bool(fr) for fr in self.config.frozen_dofs]
         self._x = []
         self._u = []
 
-        self.dt = 0.
-
         # objects
-        self.imu = sim.imu
         self.probe = self.config.sym_probe
+        self.camera = sim.camera
+        self.imu = sim.imu
 
-        # imu / noise
-        self.notch0 = deepcopy(sim.x0.ndofs)
+        # imu
         self.imu.eval_init(self.config.real_joint_dofs, self.notch0)
-
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
 
+        # noise: process
         Q = np.eye(self.num_noise)
         Q[0:3, 0:3] = self.dt**2 * self.stdev_na**2 * np.eye(3)
         Q[3:6, 3:6] = self.dt**2 * self.stdev_nom**2 * np.eye(3)
         Q[6:13, 6:13] = np.diag(self.config.process_noise_rw)
         self.Q = Q
 
+        # noise: measurement
         self.R = np.diag(self.config.meas_noise)
 
         # buffer
         self._om_old = self.imu.om.squeeze()
         self._acc_old = self.imu.acc.squeeze()
         self.R_WB_old = self.states.q.rot
-
-        # covariance
-        self.P = np.copy(sim.cov0)
-        assert(self.P.shape == (self.num_error_states, self.num_error_states))
 
         # static matrices
         self.H = np.zeros([self.num_meas, self.num_error_states])
@@ -70,6 +72,7 @@ class Filter(object):
 
         # metrics
         self.mse = 0
+        self.update_mse = 0 # non-cumulative; is overwritten every update stage
 
     def reset(self, x0, cov0):
         self.states = copy(x0)
