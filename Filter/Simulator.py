@@ -50,6 +50,11 @@ class Simulator(object):
     def best_run_id(self):
         return self.kf_best.run_id
 
+    def run_once(self):
+        self.kf.run(self.camera, 0, 'KF run', verbose=True)
+        self.mse_best = self.kf.mse
+        print(f'\t MSE: {self.mse_best:.2E}')
+
     def run(self, disp_config=False, save_best=False, verbose=True):
         """ Runs KF on the camera trajectory several times.
             Calculates the mean squared error of the DOFs,
@@ -80,8 +85,8 @@ class Simulator(object):
                 if save_best:
                     self.kf_best = copy.deepcopy(self.kf)
 
-            # # reset for next run
-            # self.reset_kf()
+            # reset for next run
+            self.reset_kf()
 
         self.mse_avg = sum(self.mses) / len(self.mses)
         if verbose:
