@@ -12,6 +12,7 @@ from .context import syms, eqns
 from Visuals import FilterPlot
 
 UPDATE_MSE_THRESHOLD = 1
+SAVE_STATES_FRAME = 10
 
 class Filter(object):
     def __init__(self, sim):
@@ -165,6 +166,11 @@ class Filter(object):
 
             if self.update_mse >= UPDATE_MSE_THRESHOLD:
                 print(f'update_mse = {self.update_mse:.3E}')
+            else:
+                # only save states every ten frames and only if below threshold
+                if (i_cam % SAVE_STATES_FRAME) == 0:
+                    print(f'Saving states at frame {i_cam}')
+                    self.save_states(i_cam, t)
 
             old_t = t
 
@@ -207,7 +213,8 @@ class Filter(object):
             om, acc = self.imu.eval_expr_single(ti,
                 *real_probe_dofs,
                 interp.acc, interp.R,
-                interp.om, interp.alp, )
+                interp.om, interp.alp, overwrite=True)
+
             self.imu.ref.append_value(ti, interp.vec, interp.notch_arr)
 
             self.dt = ti - old_ti
@@ -238,7 +245,7 @@ class Filter(object):
                         *self.u,
                         *est_probe,
                         om, acc)]
-        
+
         self.states.set(res)
 
     def _predict_error(self):
@@ -424,6 +431,50 @@ class Filter(object):
         # self.config.save('./configs.txt')
         self.traj.write_to_file(self.config.traj_kf_filepath)
         self.imu.ref.write_to_file(self.config.traj_imuref_filepath)
+
+    def save_states(self, i_cam, t):
+        # will be the new initial states
+        self.old_states = deepcopy(self.states)
+        self.old_P = np.copy(self.P)
+
+        self.old_i_cam = i_cam
+        self.old_t = t
+
+        self.old_om_old = np.copy(self.om_old)
+        self.old_acc_old = np.copy(self.acc_old)
+        self.old_R_WB_old = np.copy(self.R_WB_old)
+
+    def reset_warm(self):
+        # set new initial states
+        self.states = deepcopy(self.old_states)
+        self.P = np.copy(self.old_P)
+
+        # reset camera input to old time
+        old_t           = self.old_t
+        new_cam_timestamps  = tqdm(enumerate(camera.t[self.old_i_cam + 1:]), # no IC
+                            total=camera.max_vals, initial=self.old_i_cam + 1,
+                            desc='Warm start',
+                            dynamic_ncols=True,
+                            disable=not self.show_progress)
+
+        # new camera object
+        # new imu object referencing new camera
+
+        # buffer
+        self.om_old = np.copy(self.old_om_old)
+        self.acc_old = np.copy(self.old_acc_old)
+        self.R_WB_old = np.copy(self.old_R_WB_old)
+
+        # initial value for imu
+        self.imu.eval_init(self.config.real_joint_dofs, self.states.ndofs,
+            overwrite=True)
+
+        # reset imu input to old time
+
+        # delete trajectory up till old time
+        # append initial values
+
+        return new_cam_timestamps
 
     def plot(self, camera, compact):
         if not self.config.do_plot:
