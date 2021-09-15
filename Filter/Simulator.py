@@ -8,22 +8,21 @@ from Filter import Filter
 class Simulator(object):
     def __init__(self, config):
         # simulation objects
-        kf, camera, imu = config.init_filter_objects()
-        self.config = config
-        self.kf = kf
-        self.camera = camera
-        self.imu = imu
+        self._config = config
+        self.camera = config.get_camera()
+        self.imu = config.get_imu(self.camera, gen_ref=True)
 
-        self.x0, self.cov0        = config.get_IC(imu, camera)
+        self.x0, self.cov0 = config.get_IC(self.camera, self.imu)
+        self.kf = Filter(self)
 
         # optimisation variables
         # for now ignoring dofs
-        self._optim_std = [*config.process_noise_rw_std,
-                *config.meas_noise_std]
+        self._optim_std = [*self.config.process_noise_rw_std,
+                *self.config.meas_noise_std]
 
         # simulation run params
-        self.num_kf_runs = config.num_kf_runs
-        self.cap_t      = config.cap_t
+        self.num_kf_runs = self.config.num_kf_runs
+        self.cap_t      = self.config.cap_t
         self.show_run_progress = True
 
         # results
@@ -45,6 +44,17 @@ class Simulator(object):
         self.config.meas_noise_std = val[7:8]
 
         self.kf.update_noise_matrices()
+
+    @property
+    def config(self):
+        return self._config
+    @config.setter
+    def config(self, new_config):
+        self._config = new_config
+        self.camera = config.get_camera()
+        self.imu = config.get_imu(self.camera, gen_ref=True)
+
+        self.x0, self.cov0 = config.get_IC(self.camera, self.imu)
 
     @property
     def best_run_id(self):

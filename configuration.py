@@ -253,7 +253,7 @@ class Config(object):
         # TO CHANGE temporarily set to perfect IC
         return self.real_imu_dofs
 
-    def get_IC(self, imu, camera):
+    def get_IC(self, camera, imu):
         """ Perfect initial conditions except for DOFs. """
         cam_reference = camera.rotated if camera.rotated else camera
         notch0 = cam_reference.get_notch_at(0)
@@ -269,7 +269,7 @@ class Config(object):
     def init_filter_objects(self):
         camera      = self.get_camera()
         imu         = self.get_imu(camera, gen_ref=True)
-        x0, cov0    = self.get_IC(imu, camera)
+        x0, cov0    = self.get_IC(camera, imu)
         kf          = Filter(self, imu, x0, cov0, self.frozen_dofs)
 
         return kf, camera, imu
