@@ -11,6 +11,8 @@ import casadi
 from .context import syms, eqns
 from Visuals import FilterPlot
 
+UPDATE_MSE_THRESHOLD = 1
+
 class Filter(object):
     def __init__(self, sim):
         # simulation
@@ -160,6 +162,10 @@ class Filter(object):
         for i, t in cam_timestamps:
             i_cam = i + 1 # not counting IC
             self.run_one_epoch(old_t, t, i_cam, camera)
+            self.calculate_update_mse(i_cam, camera)
+
+            if self.update_mse >= UPDATE_MSE_THRESHOLD:
+                print(f'update_mse = {self.update_mse:.3E}')
 
             old_t = t
 
@@ -356,7 +362,31 @@ class Filter(object):
     def get_upd_values(self, obj, comp, indices):
         """ returns obj (e.g. self.traj or self.imu.ref) component
             at update timestamps only. """
-        return np.array([obj.__dict__[comp][i] for i in indices])
+        if indices == -1:
+            return obj.__dict__[comp][-1]
+        else:
+            return np.array([obj.__dict__[comp][i] for i in indices])
+
+    def calculate_update_mse(self, i_cam, camera):
+        cam_reference = camera.rotated if camera.rotated else camera
+        current_cam = cam_reference.at_index(i_cam)
+
+        sum_res_cam = 0
+        for compc in self.traj.labels_camera[0:6]:
+            abs_err = np.array(cam_reference.traj.__dict__[compc[:-1]][i_cam]) \
+                - self.get_upd_values(self.traj, compc, -1)
+            sum_res_cam += np.square(abs_err)
+
+        sum_res_imu = 0
+        for comp in self.traj.labels_imu[3:9]:
+            abs_err = self.get_upd_values(self.traj, comp, -1) \
+                - self.get_upd_values(self.imu.ref, comp, -1)
+            sum_res_imu += np.square(abs_err)
+
+        num_states = 12
+        update_mse = (sum_res_cam + sum_res_imu) / num_states
+
+        self.update_mse = update_mse
 
     def calculate_metric(self, camera):
         cam_reference = camera.rotated if camera.rotated else camera
