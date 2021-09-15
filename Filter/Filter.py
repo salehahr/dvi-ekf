@@ -23,7 +23,6 @@ class Filter(object):
 
         # initial states/covariance
         self.states = deepcopy(sim.x0)
-        self.notch0 = deepcopy(sim.x0.ndofs)
         self.P = np.copy(sim.cov0)
 
         # states
@@ -44,7 +43,7 @@ class Filter(object):
         self.imu = sim.imu
 
         # imu
-        self.imu.eval_init(self.config.real_joint_dofs, self.notch0)
+        self.imu.eval_init(self.config.real_joint_dofs, sim.x0.ndofs)
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
 
@@ -76,7 +75,7 @@ class Filter(object):
         self.mse = 0
         self.update_mse = 0 # non-cumulative; is overwritten every update stage
 
-    def reset(self, x0, cov0):
+    def reset(self, x0, cov0, notch0):
         self.states = copy(x0)
         self.P = np.copy(cov0)
         self._x = []
@@ -85,7 +84,7 @@ class Filter(object):
 
         # imu / noise
         self.imu.reset()
-        self.imu.eval_init(self.config.real_joint_dofs, self.notch0)
+        self.imu.eval_init(self.config.real_joint_dofs, notch0)
 
         self.traj.reset()
         self.traj.append_propagated_states(self.config.min_t, self.states)
