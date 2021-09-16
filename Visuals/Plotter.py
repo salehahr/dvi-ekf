@@ -56,6 +56,9 @@ class Plotter(object):
         latex_label = self._get_latex_label(label, Q)
         a.set_title(latex_label)
         self._adjust_y_range(a, *values)
+        
+        a.set_xlim(left=self.min_t, right=300)
+        a.set_xlabel('Frame')
 
     def _get_latex_label(self, label, Q):
         """ Creates string in LaTeX math format. """
@@ -80,14 +83,14 @@ class Plotter(object):
             lbl = '$' + label[0] + '_' + label[1] + '$'
 
         # add weights
-        if label in self.labels_camera_compact:
-            q = self.d_qweight_labels[label]
-            lbl = lbl + f'\n $\sigma_Q$: {q:.1E}'
+        # if label in self.labels_camera_compact:
+            # q = self.d_qweight_labels[label]
+            # lbl = lbl + f'\n $\sigma_Q$: {q:.1E}'
 
-            if 'deg' in label:
-                lbl = lbl + '$^{\circ}$'
-            else:
-                lbl = lbl + ' cm'
+            # if 'deg' in label:
+                # lbl = lbl + '$^{\circ}$'
+            # else:
+                # lbl = lbl + ' cm'
 
         return lbl
 
@@ -112,6 +115,17 @@ class Plotter(object):
     ### Fig postfix
     def _fig_postfix(self, filename, axes, offset, num_rows, config):
         """ Late setting of line styles, save figure. """
+        
+        # p_cam
+        for r in [0, 1, 2]:
+            ax_pcam = axes[r][0]
+            ax_qcam = axes[r][1]
+            ax_pcam.set_ylim(bottom=-2, top=8)
+            title_pcam = ax_pcam.get_title() + ' in cm'
+            title_qcam = ax_qcam.get_title() + ' in degr.'
+            ax_pcam.set_title(title_pcam)
+            ax_qcam.set_title(title_qcam)
+        
         self._set_line_styles(axes)
         self._put_legend_near_first_plot(axes, offset, num_rows)
         self._set_title(config)

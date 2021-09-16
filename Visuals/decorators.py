@@ -4,6 +4,7 @@ import math
 def show_plot(plot_func, *args):
     def wrapper(*args):
         plot_func(*args)
+        plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.7)
         plt.show()
     return wrapper
 
