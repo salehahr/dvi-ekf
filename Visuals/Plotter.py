@@ -116,15 +116,22 @@ class Plotter(object):
     def _fig_postfix(self, filename, axes, offset, num_rows, config):
         """ Late setting of line styles, save figure. """
         
-        # p_cam
+        # p_cam, q_cam
         for r in [0, 1, 2]:
             ax_pcam = axes[r][0]
             ax_qcam = axes[r][1]
-            ax_pcam.set_ylim(bottom=-2, top=8)
+            
+            ax_pcam.set_ylim(bottom=-10, top=10)
+            
             title_pcam = ax_pcam.get_title() + ' in cm'
             title_qcam = ax_qcam.get_title() + ' in degr.'
             ax_pcam.set_title(title_pcam)
             ax_qcam.set_title(title_qcam)
+
+        # q_cam
+        axes[0][1].set_ylim(bottom=-30, top=20)
+        axes[1][1].set_ylim(bottom=-30, top=20)
+        axes[2][1].set_ylim(bottom=-30, top=90)
         
         self._set_line_styles(axes)
         self._put_legend_near_first_plot(axes, offset, num_rows)
