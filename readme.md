@@ -4,6 +4,9 @@ the calibration parameters in a camera-IMU sensor probe setup.
 
 [Program outline](https://www.evernote.com/l/AeQSiL2U6txCWbgNAi1G9mUtWune-gjHNlU/)
 
+## Noisy cam
+![](img/cam_gt_noisy.png)
+
 ## Notch
 ### Prop + Update
 Tuning in progress
