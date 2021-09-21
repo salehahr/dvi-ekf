@@ -30,9 +30,9 @@ probe = SimpleProbe(scope_length=scope_length,
 
 # Camera parameters / R
 """ Noise """
-STDEV_PC            = [0.02, 0.002, 0.02]                   # [cm]
-STDEV_Q_DEG         = [0.00001, 0.0001, 0.00001]               # [deg]
-STDEV_NOTCH_deg     = 0.01                               # [deg]
+STDEV_PC            = [0.2, 0.2, 0.2]                   # [cm]
+STDEV_Q_DEG         = [0.01, 0.01, 0.01]        # [deg]
+STDEV_NOTCH_deg     = 0.01                              # [deg]
 
 STDEV_RC        = np.deg2rad(STDEV_Q_DEG)               # [rad]
 STDEV_NOTCH     = np.deg2rad(STDEV_NOTCH_deg)           # [rad]
@@ -49,7 +49,7 @@ GRAVITY             = 9.81 * 100                        # [cm/s^2]
 ACCEL_NOISE         = 400 * 1e-6 * GRAVITY *\
                         math.sqrt(NOISE_SAMPLE_RATE)    # [cm/s^2]
 
-stdev_om  = [np.deg2rad(GYRO_NOISE)] * 3                # [rad/s]
+stdev_om  = [np.deg2rad(GYRO_NOISE)] *3                 # [rad/s]
 stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 
 # DOFs / Q
@@ -95,9 +95,6 @@ stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg)  # [rad]
 stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta,
                 stdev_ddofs, stdev_dnotch, stdev_dnotchd, stdev_dnotchdd,
                 stdev_dp_cam, stdev_dtheta_cam))
-
-""" For tuning process noise and measurement noise matrices """
-SCALE_PROCESS_NOISE_DEFAULT = 6e-3
 
 def np_string(arr):
     """ For formatting np arrays when printing. """
@@ -193,7 +190,7 @@ class Config(object):
             with_notch = True if self.max_vals > 10 else False
         else:
             with_notch = True
-        # with_notch = False
+        with_notch = False
 
         cam = Camera(filepath=filepath_cam,
                 max_vals=self.max_vals, scale=SCALE, with_notch=with_notch,
