@@ -305,7 +305,7 @@ class FilterPlot(Plotter):
                         filename    = self.config.img_filepath_compact,
                         cam_gt      = self.cam_gt_traj,
                         cam_noisy   = self.cam_noisy_traj,
-                        cam_rot     = self.camera_gt.rotated.traj, # None, # cam_rot,
+                        cam_rot     = None, #self.camera_gt.rotated.traj, # None, # cam_rot,
                         imu_ref     = self.imu_ref,
                         imu_recon   = None,
                         axes        = None,)
