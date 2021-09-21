@@ -9,10 +9,10 @@ class Simulator(object):
     def __init__(self, config):
         # simulation objects
         self._config = config
-        self.camera = config.get_camera()
-        self.imu = config.get_imu(self.camera, gen_ref=True)
+        self.camera_gt, self.camera_noisy = config.get_camera()
+        self.imu = config.get_imu(self.camera_gt, gen_ref=True)
 
-        self.x0, self.cov0 = config.get_IC(self.camera, self.imu)
+        self.x0, self.cov0 = config.get_IC(self.camera_gt, self.imu)
         self.kf = Filter(self)
 
         # optimisation variables
@@ -51,17 +51,17 @@ class Simulator(object):
     @config.setter
     def config(self, new_config):
         self._config = new_config
-        self.camera = config.get_camera()
-        self.imu = config.get_imu(self.camera, gen_ref=True)
+        self.camera_gt, self.camera_noisy = config.get_camera()
+        self.imu = config.get_imu(self.camera_gt, gen_ref=True)
 
-        self.x0, self.cov0 = config.get_IC(self.camera, self.imu)
+        self.x0, self.cov0 = config.get_IC(self.camera_gt, self.imu)
 
     @property
     def best_run_id(self):
         return self.kf_best.run_id
 
     def run_once(self):
-        self.kf.run(self.camera, 0, 'KF run', verbose=True)
+        self.kf.run(self.camera_noisy, 0, 'KF run', verbose=True)
         self.mse_best = self.kf.mse
         print(f'\t MSE: {self.mse_best:.2E}')
 
@@ -85,7 +85,7 @@ class Simulator(object):
             run_id = k + 1
             run_desc_str = f'KF run {run_id}/{self.num_kf_runs}'
 
-            self.kf.run(self.camera, run_id, run_desc_str, verbose)
+            self.kf.run(self.camera_noisy, run_id, run_desc_str, verbose)
 
             # save run and mse
             self.mses.append(self.kf.mse)
@@ -197,8 +197,8 @@ class Simulator(object):
     def save_and_plot(self, compact=True):
         if self.kf_best:
             self.kf_best.save()
-            self.kf_best.plot(self.camera, compact=compact)
+            self.kf_best.plot(self.camera_gt, compact=compact)
             print(f'Best run: #{self.best_run_id}; average MSE = {self.mse_avg:.2E}')
         else:
             self.kf.save()
-            self.kf.plot(self.camera, compact=compact)
+            self.kf.plot(self.camera_gt, compact=compact)

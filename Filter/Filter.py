@@ -38,7 +38,7 @@ class Filter(object):
 
         # objects
         self.probe = self.config.sym_probe
-        self.camera = sim.camera
+        self.camera = sim.camera_noisy
         self.imu = sim.imu
 
         # imu

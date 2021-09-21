@@ -187,6 +187,7 @@ class Config(object):
 
     def get_camera(self):
         filepath_cam = f'./trajs/{self.traj_name}.txt'
+        filepath_cam_noisy = f'./trajs/{self.traj_name}_noisy.txt'
 
         if self.max_vals:
             with_notch = True if self.max_vals > 10 else False
@@ -198,6 +199,10 @@ class Config(object):
                 max_vals=self.max_vals, scale=SCALE, with_notch=with_notch,
                 start_at=CAM_START_FRAME)
 
+        cam_noisy = Camera(filepath=filepath_cam_noisy,
+                max_vals=self.max_vals, scale=SCALE, with_notch=with_notch,
+                start_at=CAM_START_FRAME)
+
         if with_notch:
             assert(cam.rotated is not None)
         else:
@@ -205,7 +210,7 @@ class Config(object):
 
         self._gen_sim_params_from_cam(cam)
 
-        return cam
+        return cam, cam_noisy
 
     def _gen_sim_params_from_cam(self, camera):
         """ Updates time-related info from camera data. """
