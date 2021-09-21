@@ -57,7 +57,7 @@ class Plotter(object):
         a.set_title(latex_label)
         self._adjust_y_range(a, *values)
         
-        a.set_xlim(left=self.min_t, right=300)
+        a.set_xlim(left=self.min_t, right=self.max_t)#300)
         a.set_xlabel('Frame')
 
     def _get_latex_label(self, label, Q):
@@ -121,7 +121,7 @@ class Plotter(object):
             ax_pcam = axes[r][0]
             ax_qcam = axes[r][1]
             
-            ax_pcam.set_ylim(bottom=-10, top=10)
+            # ax_pcam.set_ylim(bottom=-10, top=10)
             
             title_pcam = ax_pcam.get_title() + ' in cm'
             title_qcam = ax_qcam.get_title() + ' in degr.'
@@ -129,9 +129,9 @@ class Plotter(object):
             ax_qcam.set_title(title_qcam)
 
         # q_cam
-        axes[0][1].set_ylim(bottom=-30, top=20)
-        axes[1][1].set_ylim(bottom=-30, top=20)
-        axes[2][1].set_ylim(bottom=-30, top=90)
+        # axes[0][1].set_ylim(bottom=-30, top=20)
+        # axes[1][1].set_ylim(bottom=-30, top=20)
+        # axes[2][1].set_ylim(bottom=-30, top=90)
         
         self._set_line_styles(axes)
         self._put_legend_near_first_plot(axes, offset, num_rows)
@@ -155,8 +155,12 @@ class Plotter(object):
             self._apply_lf_dict(line, lf.imuref)
         elif 'interpl' in label:
             self._apply_lf_dict(line, lf.interpl)
-        elif 'phys' in label:
+        elif 'gt rot' in label:
             self._apply_lf_dict(line, lf.cam_phys)
+        elif label == 'camera gt':
+            self._apply_lf_dict(line, lf.cam_gt)
+        elif label == 'camera noisy':
+            self._apply_lf_dict(line, lf.cam_noisy)
         else:
             self._apply_lf_dict(line, lf.default)
 
@@ -241,7 +245,7 @@ class CameraPlot(Plotter):
             return [None], [None]
 
 class FilterPlot(Plotter):
-    def __init__(self, kf, camera):
+    def __init__(self, kf, camera_gt, camera_noisy):
         self.min_t = None
         self.max_t = None
         self.config = kf.config
@@ -250,9 +254,11 @@ class FilterPlot(Plotter):
         self.d_qweight_labels = {lc: self.config.q[i]
                 for i, lc in enumerate(self.labels_camera_compact)}
 
-        self.camera     = camera
-        self.traj       = kf.traj
-        self.cam_traj   = camera.traj
+        self.camera_gt      = camera_gt
+        self.camera_noisy   = camera_noisy
+        self.traj           = kf.traj
+        self.cam_gt_traj    = camera_gt.traj
+        self.cam_noisy_traj = camera_noisy.traj
         self.imu_ref    = kf.imu.ref
 
         """ labels that start at row = 1 """
@@ -280,7 +286,7 @@ class FilterPlot(Plotter):
         labels = labels_cam + labels_imu + labels_imu_dofs
 
         num_cols = 6
-        cam_rot = self.camera.rotated.traj if self.camera.with_notch else None
+        # cam_rot = self.camera.rotated.traj if self.camera.with_notch else None
 
         self.traj.rz = self.traj.rz_unwrapped
         self.traj.ry = self.traj.ry_unwrapped
@@ -297,8 +303,9 @@ class FilterPlot(Plotter):
                         labels_notch = [],
                         num_cols    = num_cols,
                         filename    = self.config.img_filepath_compact,
-                        cam         = self.cam_traj,
-                        cam_rot     = cam_rot,
+                        cam_gt      = self.cam_gt_traj,
+                        cam_noisy   = self.cam_noisy_traj,
+                        cam_rot     = self.camera_gt.rotated.traj, # None, # cam_rot,
                         imu_ref     = self.imu_ref,
                         imu_recon   = None,
                         axes        = None,)
@@ -335,15 +342,17 @@ class FilterPlot(Plotter):
                         labels_notch = labels_notch,
                         num_cols = num_cols,
                         filename = self.config.img_filepath_cam,
-                        cam = self.cam_traj,
-                        cam_rot = self.camera.rotated.traj,
+                        cam_gt = self.cam_gt_traj,
+                        cam_noisy = self.cam_noisy_traj,
+                        cam_rot = None, # self.camera.rotated.traj,
                         imu_ref = None,
                         imu_recon = None,
                         axes = axes)
 
     @plot_loop
     def _get_plot_objects(self, label, **kwargs):
-        cam         = kwargs['cam']
+        cam_gt      = kwargs['cam_gt']
+        cam_noisy   = kwargs['cam_noisy']
         cam_rot     = kwargs['cam_rot']
         imu_ref     = kwargs['imu_ref']
         imu_recon   = kwargs['imu_recon']
@@ -357,15 +366,20 @@ class FilterPlot(Plotter):
         val_filt   = self.traj.__dict__[label] if label not in labels_notch else []
 
         if label in labels_cam:
-            val_cam    = cam.__dict__[label[:-1]] \
-                                if cam else []
+            val_cam_gt    = cam_gt.__dict__[label[:-1]] \
+                                if cam_gt else []
+            val_cam_noisy    = cam_noisy.__dict__[label[:-1]] \
+                                if cam_noisy else []
             val_cam_rot = cam_rot.__dict__[label[:-1]] \
                                 if cam_rot else []
         elif label in labels_notch:
-            val_cam    = np.rad2deg(cam.__dict__[label]) \
-                                if cam else []
+            val_cam_gt    = np.rad2deg(cam_gt.__dict__[label]) \
+                                if cam_gt else []
+            val_cam_noisy    = np.rad2deg(cam_noisy.__dict__[label]) \
+                                if cam_noisy else []
         else:
-            val_cam = []
+            val_cam_gt = []
+            val_cam_noisy = []
 
         val_imuref = imu_ref.__dict__[label] if \
                         (imu_ref and label in labels_imu) \
@@ -382,11 +396,11 @@ class FilterPlot(Plotter):
             dof_ref, val_dof_ref = None, []
 
         if cam_rot:
-            cam.name = 'cam/SLAM'
-            cam_rot.name = 'cam/phys.'
+            # cam.name = 'cam/SLAM'
+            cam_rot.name = 'cam gt rot'
 
-        objs = [self.traj, cam, cam_rot, imu_ref, imu_recon, dof_ref]
-        vals = [val_filt, val_cam, val_cam_rot, val_imuref, val_recon, val_dof_ref]
+        objs = [self.traj, cam_gt, cam_noisy, cam_rot, imu_ref, imu_recon, dof_ref]
+        vals = [val_filt, val_cam_gt, val_cam_noisy, val_cam_rot, val_imuref, val_recon, val_dof_ref]
 
         return objs, vals
 

@@ -201,4 +201,4 @@ class Simulator(object):
             print(f'Best run: #{self.best_run_id}; average MSE = {self.mse_avg:.2E}')
         else:
             self.kf.save()
-            self.kf.plot(self.camera_gt, compact=compact)
+            self.kf.plot(self.camera_gt, self.camera_noisy, compact=compact)
