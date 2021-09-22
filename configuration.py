@@ -32,7 +32,7 @@ probe = SimpleProbe(scope_length=scope_length,
 """ Noise """
 STDEV_PC            = [0.2, 0.2, 0.2]                   # [cm]
 STDEV_Q_DEG         = [0.01, 0.01, 0.01]        # [deg]
-STDEV_NOTCH_deg     = 0.01                              # [deg]
+STDEV_NOTCH_deg     = 0.001                              # [deg]
 
 STDEV_RC        = np.deg2rad(STDEV_Q_DEG)               # [rad]
 STDEV_NOTCH     = np.deg2rad(STDEV_NOTCH_deg)           # [rad]
@@ -58,7 +58,7 @@ stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
         if not given as an argument to main.py) """
 STDEV_DOFS_P            = [0.25, 0.25, 0.25]            # [cm]
 STDEV_DOFS_R_deg        = [1, 1, 10]                     # [deg]
-STDEV_DOFS_NOTCHdd_deg  = 0.05                             # [deg/s^2]
+STDEV_DOFS_NOTCHdd_deg  = 0.5                             # [deg/s^2]
 
 STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)          # [rad]
 STDEV_DOFS          = [*STDEV_DOFS_R, *STDEV_DOFS_P]
