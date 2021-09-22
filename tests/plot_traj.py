@@ -22,13 +22,13 @@ def generate_noisy_data():
     ## generate noisy cam positions
     traj_noisy.t = np.copy(traj.t)
 
-    pos_n = np.random.normal(loc=0., scale=0.02, size=(3, len(ts)))
+    pos_n = np.random.normal(loc=0., scale=0.005, size=(3, len(ts)))
     pos_drift = sp.integrate.cumtrapz(pos_n, ts, initial=0)
     for i, label in enumerate(pos_labels):
         traj_noisy.__dict__[label] = np.copy(traj.__dict__[label]) + pos_drift[i,:]
 
     ## generate noisy cam rotations
-    rot_n = np.random.normal(loc=0., scale=0.005, size=(3, len(ts)))
+    rot_n = np.random.normal(loc=0., scale=0.003, size=(3, len(ts)))
     rot_drift = sp.integrate.cumtrapz(rot_n, ts, initial=0,)
 
     # init. quat attributes
