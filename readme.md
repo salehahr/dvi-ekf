@@ -6,14 +6,15 @@ the calibration parameters in a camera-IMU sensor probe setup.
 
 ## Noisy cam
 ![](img/cam_gt_noisy.png)
+
+### IMU -> GT convergence
 ![](img/pc0.5.png)
 
+### With notch
 ~ | ~
 --- | ---
 ![](img/rc0.5.png) | ![](img/rc0.5_t1.png)
 
-
-![](img/nonotch_tune_0.png)
 
 ## Notch
 ### Prop + Update
