@@ -30,7 +30,7 @@ probe = SimpleProbe(scope_length=scope_length,
 
 # Camera parameters / R
 """ Noise """
-STDEV_PC            = [0.2, 0.2, 0.2]                   # [cm]
+STDEV_PC            = [0.5, 0.5, 0.5]                   # [cm]
 STDEV_Q_DEG         = [0.01, 0.01, 0.01]        # [deg]
 STDEV_NOTCH_deg     = 0.001                              # [deg]
 
@@ -57,7 +57,7 @@ stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
     (later on in Config.__init__: gets divided by num_interframe_vals
         if not given as an argument to main.py) """
 STDEV_DOFS_P            = [0.25, 0.25, 0.25]            # [cm]
-STDEV_DOFS_R_deg        = [1, 1, 10]                     # [deg]
+STDEV_DOFS_R_deg        = [1, 1, 1]                     # [deg]
 STDEV_DOFS_NOTCHdd_deg  = 0.5                             # [deg/s^2]
 
 STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)          # [rad]
