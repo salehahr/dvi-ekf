@@ -93,7 +93,7 @@ stdev_dtheta_cam_deg    = [0.2, 0.2, 0.2]                   # [deg]
 stdev_dtheta_cam        = np.deg2rad(stdev_dtheta_cam_deg)  # [rad]
 
 stdevs0 = np.hstack((stdev_dp, stdev_dv, stdev_dtheta,
-                stdev_ddofs, stdev_dnotch, stdev_dnotchd, stdev_dnotchdd_deg,
+                stdev_ddofs, stdev_dnotch, stdev_dnotchd, stdev_dnotchdd,
                 stdev_dp_cam, stdev_dtheta_cam))
 
 """ For tuning process noise and measurement noise matrices """
