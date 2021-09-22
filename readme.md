@@ -7,6 +7,7 @@ the calibration parameters in a camera-IMU sensor probe setup.
 ## Noisy cam
 ![](img/cam_gt_noisy.png)
 ![](img/pc0.5.png)
+![](img/rc0.5.png)
 ![](img/nonotch_tune_0.png)
 
 ## Notch

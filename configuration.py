@@ -31,7 +31,7 @@ probe = SimpleProbe(scope_length=scope_length,
 # Camera parameters / R
 """ Noise """
 STDEV_PC            = [0.5, 0.5, 0.5]                   # [cm]
-STDEV_Q_DEG         = [0.01, 0.01, 0.01]        # [deg]
+STDEV_Q_DEG         = [0.5, 0.5, 0.5]        # [deg]
 STDEV_NOTCH_deg     = 0.001                              # [deg]
 
 STDEV_RC        = np.deg2rad(STDEV_Q_DEG)               # [rad]
@@ -190,7 +190,7 @@ class Config(object):
             with_notch = True if self.max_vals > 10 else False
         else:
             with_notch = True
-        with_notch = False
+        # with_notch = False
 
         cam = Camera(filepath=filepath_cam,
                 max_vals=self.max_vals, scale=SCALE, with_notch=with_notch,
