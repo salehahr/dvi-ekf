@@ -128,10 +128,36 @@ class Plotter(object):
             ax_pcam.set_title(title_pcam)
             ax_qcam.set_title(title_qcam)
 
+        indices_range = range(0, self.config.total_data_pts, self.config.num_interframe_vals)
+        upd_indices = [x for x in indices_range]
+
+        def plot_error_states():
+            def get_upd_values(obj, comp):
+                """ returns obj (e.g. self.traj or self.imu.ref) component
+                    at update timestamps only. """
+                return np.array([obj.__dict__[comp][i] for i in upd_indices])
+
+            for i, comp in enumerate(['x', 'y', 'z']):
+                ax = axes[i][1]
+                for l in ax.lines:
+                    l.remove()
+
+                kf_traj_upd = get_upd_values(self.traj, comp + 'c')
+
+                gt_traj = np.array(self.camera_gt.traj.__dict__[comp]).squeeze()
+                noisy_traj = np.array(self.camera_noisy.traj.__dict__[comp]).squeeze()
+
+                ax.plot(self.camera_gt.t, np.abs(kf_traj_upd - gt_traj), label='err kf' )
+                ax.plot(self.camera_gt.t, np.abs(gt_traj - noisy_traj), label='err noisy' )
+
+                ax.set_title('Error ' + comp + ' in cm')
+
+            axes[0][1].set_ylim(bottom=-0.2, top=0.8)
+            axes[1][1].set_ylim(bottom=-0.2, top=0.4)
+            axes[2][1].set_ylim(bottom=-0.2, top=0.6)
+        plot_error_states()
+
         # q_cam
-        axes[0][1].set_ylim(bottom=-5, top=25)
-        axes[1][1].set_ylim(bottom=-15, top=10)
-        axes[2][1].set_ylim(bottom=-5, top=90)
         
         self._set_line_styles(axes)
         self._put_legend_near_first_plot(axes, offset, num_rows)
@@ -161,6 +187,10 @@ class Plotter(object):
             self._apply_lf_dict(line, lf.cam_gt)
         elif label == 'camera noisy':
             self._apply_lf_dict(line, lf.cam_noisy)
+        elif label == 'err kf':
+            self._apply_lf_dict(line, lf.err_kf)
+        elif label == 'err noisy':
+            self._apply_lf_dict(line, lf.err_noisy)
         else:
             self._apply_lf_dict(line, lf.default)
 
@@ -303,8 +333,8 @@ class FilterPlot(Plotter):
                         labels_notch = [],
                         num_cols    = num_cols,
                         filename    = self.config.img_filepath_compact,
-                        cam_gt      = self.cam_gt_traj,
-                        cam_noisy   = self.cam_noisy_traj,
+                        cam_gt      = None, #self.cam_gt_traj,
+                        cam_noisy   = None, #self.cam_noisy_traj,
                         cam_rot     = None, #self.camera_gt.rotated.traj, # None, # cam_rot,
                         imu_ref     = self.imu_ref,
                         imu_recon   = None,

@@ -8,7 +8,9 @@ the calibration parameters in a camera-IMU sensor probe setup.
 ![](img/cam_gt_noisy.png)
 
 ### IMU -> GT convergence
-![](img/pc0.5.png)
+~ | Error plots
+--- | ---
+![](img/pc0.5.png) | ![](img/error_plots.png)
 
 ### With notch
 ~ | ~ | ~

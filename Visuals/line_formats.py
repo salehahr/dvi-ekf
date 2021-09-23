@@ -24,6 +24,14 @@ cam_noisy  = { 'linewidth' : 1.5,
             'linestyle' : '--',
             'color'     : 'darkgrey'}
 
+err_kf  = { 'linewidth' : 1.5,
+            'linestyle' : '-',
+            'color'     : 'blue'}
+
+err_noisy  = { 'linewidth' : 1.5,
+            'linestyle' : '-',
+            'color'     : 'darkgrey'}
+
 imuref  = { 'linewidth' : 0.75,
             'linestyle' : '--',
             'color'     : 'tab:green'}
