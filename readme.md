@@ -13,8 +13,8 @@ the calibration parameters in a camera-IMU sensor probe setup.
 ### With notch
 ~ | ~ | ~
 --- | --- | ---
-on | ![](img/rc0.5.png) | ![](img/rc0.5_t1.png)
-off | ![](img/rc0.5_off.png) | ![](img/rc0.5_t1_off.png)
+on | ![](img/withnotch_plots.png) | ![](img/rc0.5_t1.png)
+off | ![](img/withnotch_plots_2.png) | ![](img/rc0.5_t1_off.png)
 
 
 ## Notch

@@ -30,8 +30,8 @@ probe = SimpleProbe(scope_length=scope_length,
 
 # Camera parameters / R
 """ Noise """
-STDEV_PC            = [0.1, 0.1, 0.05]                   # [cm]
-STDEV_Q_DEG         = [0.5, 0.5, 0.5]        # [deg]
+STDEV_PC            = [0.5, 0.5, 0.5]                   # [cm]
+STDEV_Q_DEG         = [0.1, 0.5, 0.5]        # [deg]
 STDEV_NOTCH_deg     = 0.001                              # [deg]
 
 STDEV_RC        = np.deg2rad(STDEV_Q_DEG)               # [rad]
