@@ -57,7 +57,7 @@ class Plotter(object):
         a.set_title(latex_label)
         self._adjust_y_range(a, *values)
         
-        a.set_xlim(left=self.min_t, right=self.max_t)#300)
+        a.set_xlim(left=self.min_t, right=260)
         a.set_xlabel('Frame')
 
     def _get_latex_label(self, label, Q):
@@ -129,9 +129,9 @@ class Plotter(object):
             ax_qcam.set_title(title_qcam)
 
         # q_cam
-        # axes[0][1].set_ylim(bottom=-30, top=20)
-        # axes[1][1].set_ylim(bottom=-30, top=20)
-        # axes[2][1].set_ylim(bottom=-30, top=90)
+        axes[0][1].set_ylim(bottom=-5, top=25)
+        axes[1][1].set_ylim(bottom=-15, top=10)
+        axes[2][1].set_ylim(bottom=-5, top=90)
         
         self._set_line_styles(axes)
         self._put_legend_near_first_plot(axes, offset, num_rows)
