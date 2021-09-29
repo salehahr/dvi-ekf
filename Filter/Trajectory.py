@@ -168,6 +168,21 @@ class VisualTraj(Trajectory):
             self._start_at(self.labels_notch, start_index, cap)
             assert(len(self.t) == len(self.notch))
 
+    def write_extended(self, filename=None):
+        with open(filename, 'w+') as f:
+            labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw', 'rx_deg', 'ry_deg', 'rz_deg']
+
+            data_str = ','.join(labels) + '\n'
+            for n in range(self.nvals):
+                for label in labels:
+                    data = self.__dict__[label][n]
+                    if label == 't':
+                        data_str += f'{data:.2f}'
+                    else:
+                        data_str += f',{data:.3f}'
+                data_str += ' \n'
+            f.write(data_str)
+
     def _start_at(self, labels, index=None, cap=None):
         if not index:
             if cap:
@@ -278,6 +293,25 @@ class ImuRefTraj(Trajectory):
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
 
+    def write_to_csv(self, filename=None):
+        labels = ['t', 'vx', 'vy', 'vz',
+                    'rx', 'ry', 'rz']
+        header = ','.join(labels) + '\n'
+
+        with open(filename, 'w+') as f:
+            data_str = header
+
+            # don't write too much data -- bad for pgfplots
+            for n in range(self.nvals):
+                for label in labels:
+                    data = self.__dict__[label][n]
+                    if label == 't':
+                        data_str += f'{data:.2f}'
+                    else:
+                        data_str += f',{data:.2f}'
+                data_str += '\n'
+            f.write(data_str)
+
 class FilterTraj(Trajectory):
     def __init__(self, name, filepath=None):
         self.labels = []
@@ -334,6 +368,45 @@ class FilterTraj(Trajectory):
     @property
     def rx_degc_unwrapped(self):
         return np.unwrap(self.rx_degc)
+
+    def write_to_csv(self, filename=None):
+        labels = ['t', 'xc', 'yc', 'zc', 'rx_degc', 'ry_degc', 'rz_degc']
+        header = ','.join(labels) + '\n'
+
+        with open(filename, 'w+') as f:
+            data_str = header
+
+            # don't write too much data -- bad for pgfplots
+            for n in range(0, self.nvals, math.ceil(self.num_interframe_vals/3)):
+                for label in labels:
+                    data = self.__dict__[label][n]
+                    if label == 't':
+                        data_str += f'{data:.2f}'
+                    else:
+                        data_str += f',{data:.2f}'
+                data_str += '\n'
+            f.write(data_str)
+
+    def write_all_to_csv(self, filename=None):
+        labels = ['t', 'xc', 'yc', 'zc',
+                    'rx_degc', 'ry_degc', 'rz_degc',
+                    'vx', 'vy', 'vz',
+                    'rx', 'ry', 'rz',]
+        header = ','.join(labels) + '\n'
+
+        with open(filename, 'w+') as f:
+            data_str = header
+
+            # don't write too much data -- bad for pgfplots
+            for n in range(0, self.nvals, math.ceil(self.num_interframe_vals/3)):
+                for label in labels:
+                    data = self.__dict__[label][n]
+                    if label == 't':
+                        data_str += f'{data:.2f}'
+                    else:
+                        data_str += f',{data:.2f}'
+                data_str += '\n'
+            f.write(data_str)
 
 class ImuTraj(Trajectory):
     """ IMU trajectory containing the acceleration and

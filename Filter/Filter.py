@@ -68,6 +68,7 @@ class Filter(object):
 
         # plot
         self.traj = FilterTraj("kf")
+        self.traj.num_interframe_vals = self.config.num_interframe_vals
         self.traj.append_propagated_states(self.config.min_t, self.states)
 
         # metrics
@@ -391,7 +392,8 @@ class Filter(object):
     def save(self):
         self.config.mse = self.mse
         # self.config.save('./configs.txt')
-        self.traj.write_to_file(self.config.traj_kf_filepath)
+        # self.traj.write_to_csv('trajs/kf.csv')
+        self.traj.write_all_to_csv('trajs/kf_all.csv')
         self.imu.ref.write_to_file(self.config.traj_imuref_filepath)
 
     def plot(self, camera_gt, camera_noisy, compact):
@@ -400,6 +402,9 @@ class Filter(object):
 
         camera_gt.traj.name = 'camera gt'
         camera_noisy.traj.name = 'camera noisy'
+
+        camera_gt.traj.write_extended('trajs/camera_gt.txt')
+        camera_noisy.traj.write_extended('trajs/camera_noisy.txt')
 
         t_end = self.traj.t[-1]
         plotter = FilterPlot(self, camera_gt, camera_noisy)
