@@ -57,7 +57,7 @@ class Plotter(object):
         a.set_title(latex_label)
         self._adjust_y_range(a, *values)
         
-        a.set_xlim(left=self.min_t, right=260)
+        a.set_xlim(left=self.min_t, right=self.max_t)
         a.set_xlabel('Frame')
 
     def _get_latex_label(self, label, Q):
@@ -139,8 +139,8 @@ class Plotter(object):
 
             for i, comp in enumerate(['x', 'y', 'z']):
                 ax = axes[i][1]
-                for l in ax.lines:
-                    l.remove()
+                # for l in ax.lines:
+                    # l.remove()
 
                 kf_traj_upd = get_upd_values(self.traj, comp + 'c')
 
@@ -155,7 +155,7 @@ class Plotter(object):
             axes[0][1].set_ylim(bottom=-0.2, top=0.8)
             axes[1][1].set_ylim(bottom=-0.2, top=0.4)
             axes[2][1].set_ylim(bottom=-0.2, top=0.6)
-        plot_error_states()
+        # plot_error_states()
 
         # q_cam
         
@@ -333,9 +333,9 @@ class FilterPlot(Plotter):
                         labels_notch = [],
                         num_cols    = num_cols,
                         filename    = self.config.img_filepath_compact,
-                        cam_gt      = None, #self.cam_gt_traj,
-                        cam_noisy   = None, #self.cam_noisy_traj,
-                        cam_rot     = None, #self.camera_gt.rotated.traj, # None, # cam_rot,
+                        cam_gt      = self.cam_gt_traj,
+                        cam_noisy   = self.cam_noisy_traj,
+                        cam_rot     = self.camera_gt.rotated.traj if self.camera_gt.rotated else None, # cam_rot,
                         imu_ref     = self.imu_ref,
                         imu_recon   = None,
                         axes        = None,)
