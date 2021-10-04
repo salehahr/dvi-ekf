@@ -30,8 +30,8 @@ probe = SimpleProbe(scope_length=scope_length,
 
 # Camera parameters / R
 """ Noise """
-STDEV_PC            = [0.5, 0.5, 0.5]                   # [cm]
-STDEV_Q_DEG         = [0.1, 0.5, 0.5]        # [deg]
+STDEV_PC            = [1.5, 0.5, 1.0]                   # [cm]
+STDEV_Q_DEG         = [0.1, 0.01, 0.1]        # [deg]
 STDEV_NOTCH_deg     = 0.001                              # [deg]
 
 STDEV_RC        = np.deg2rad(STDEV_Q_DEG)               # [rad]
@@ -56,9 +56,9 @@ stdev_acc = [ACCEL_NOISE] * 3                           # [cm/s^2]
 """ How much the DOFs are allowed to move in one update.
     (later on in Config.__init__: gets divided by num_interframe_vals
         if not given as an argument to main.py) """
-STDEV_DOFS_P            = [0.25, 0.25, 0.25]            # [cm]
-STDEV_DOFS_R_deg        = [1, 1, 1]                     # [deg]
-STDEV_DOFS_NOTCHdd_deg  = 0.5                             # [deg/s^2]
+STDEV_DOFS_P            = [1.25, 1.25, 1.25]            # [cm]
+STDEV_DOFS_R_deg        = [1.5, 1.5, 1.5]                     # [deg]
+STDEV_DOFS_NOTCHdd_deg  = 1.                            # [deg/s^2]
 
 STDEV_DOFS_R        = np.deg2rad(STDEV_DOFS_R_deg)          # [rad]
 STDEV_DOFS          = [*STDEV_DOFS_R, *STDEV_DOFS_P]
