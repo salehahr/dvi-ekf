@@ -66,6 +66,9 @@ class Filter(object):
         self.H[0:6,18:24] = np.eye(6)
         self.H[6,15] = 1
 
+        self.H_no_notch = np.zeros([self.num_meas - 1, self.num_error_states])
+        self.H_no_notch[0:6,18:24] = np.eye(6)
+
         # plot
         self.traj = FilterTraj("kf")
         self.traj.num_interframe_vals = self.config.num_interframe_vals
@@ -234,7 +237,7 @@ class Filter(object):
                         *self.u,
                         *est_probe,
                         om, acc)]
-        
+
         self.states.set(res)
 
     def _predict_error(self):
@@ -312,10 +315,17 @@ class Filter(object):
         self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ self.Q @ self.Fi.T
 
     def update(self, t, camera, ang_notch):
-        # compute gain        
-        H = self.H
+        use_ang_notch = True
 
-        S = H @ self.P @ H.T + self.R # 7x7
+        if use_ang_notch:
+            H = self.H
+            R = self.R
+        else:
+            H = self.H_no_notch
+            R = np.copy(self.R[:-1,:-1])
+
+        # compute gain
+        S = H @ self.P @ H.T + R # 7x7
         try:
             K = self.P @ H.T @ np.linalg.inv(S) # 24x7
         except np.linalg.LinAlgError as e:
@@ -325,23 +335,29 @@ class Filter(object):
 
         # correct virtual SLAM reading to physical SLAM
         notch_quat = Quaternion(val=np.array([0, 0, ang_notch]), euler='xyz')
-        cam_rot_corrected = notch_quat * camera.qrot
-        # cam_rot_corrected = camera.qrot
+
+        if use_ang_notch:
+            cam_rot_corrected = notch_quat * camera.qrot
+        else:
+            cam_rot_corrected = camera.qrot
 
         # compute error state
         res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
         err_q = cam_rot_corrected.conjugate * self.states.q_cam
         res_q_cam = err_q.angle * err_q.axis
-        res_notch = ang_notch - self.states.ndofs[0]
-        # res_notch = 0 - self.states.ndofs[0]
 
-        res = np.hstack((res_p_cam, res_q_cam, res_notch))
+        if use_ang_notch:
+            res_notch = ang_notch - self.states.ndofs[0]
+            res = np.hstack((res_p_cam, res_q_cam, res_notch))
+        else:
+            res = np.hstack((res_p_cam, res_q_cam))
+
         err = ErrorStates(K @ res)
 
         # correct predicted state and covariance
         self.states.apply_correction(err)
         I = np.eye(self.num_error_states)
-        self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ self.R @ K.T
+        self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ R @ K.T
 
         # reset error states
         G = np.eye(self.num_error_states) # 24x24
