@@ -379,7 +379,11 @@ class FilterTraj(Trajectory):
             # don't write too much data -- bad for pgfplots
             for n in range(0, self.nvals, math.ceil(self.num_interframe_vals/3)):
                 for label in labels:
-                    data = self.__dict__[label][n]
+                    if label.startswith('r'):
+                        data = eval(f'self.{label}_unwrapped')[n]
+                    else:
+                        data = self.__dict__[label][n]
+
                     if label == 't':
                         data_str += f'{data:.2f}'
                     else:
@@ -400,7 +404,11 @@ class FilterTraj(Trajectory):
             # don't write too much data -- bad for pgfplots
             for n in range(0, self.nvals, math.ceil(self.num_interframe_vals/3)):
                 for label in labels:
-                    data = self.__dict__[label][n]
+                    if label.startswith('r'):
+                        data = eval(f'self.{label}_unwrapped')[n]
+                    else:
+                        data = self.__dict__[label][n]
+
                     if label == 't':
                         data_str += f'{data:.2f}'
                     else:
