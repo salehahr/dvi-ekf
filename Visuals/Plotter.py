@@ -228,7 +228,8 @@ class FilterPlot(Plotter):
 
         self.labels_camera_compact = kf.traj.labels_camera[:6]
         self.d_qweight_labels = {
-            lc: self.config.q[i] for i, lc in enumerate(self.labels_camera_compact)
+            lc: self.config.meas_noise_std[i]
+            for i, lc in enumerate(self.labels_camera_compact)
         }
 
         self.camera = camera
@@ -362,7 +363,7 @@ class FilterPlot(Plotter):
         if label in labels_imu_dofs:
             idx = labels_imu_dofs.index(label)
             dof_ref = DofRef(self.config.min_t, self.config.max_t)
-            val_dof_ref = [self.config.real_imu_dofs[idx]] * 2
+            val_dof_ref = [self.config.gt_imudof[idx]] * 2
         else:
             dof_ref, val_dof_ref = None, []
 
