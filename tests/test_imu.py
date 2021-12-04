@@ -3,14 +3,14 @@ import unittest
 
 from context import Imu
 from data import camera
-
 from test_rigidsimpleprobe import TestRigidSimpleProbe
+
 
 class TestImu(TestRigidSimpleProbe):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.filepath = './trajs/imu_test.txt'
+        cls.filepath = "./trajs/imu_test.txt"
 
         if os.path.exists(cls.filepath):
             os.remove(cls.filepath)
@@ -27,15 +27,22 @@ class TestImu(TestRigidSimpleProbe):
             return 0
 
     def test_append_array(self):
-        assert(self.imu._om == [])
+        assert self.imu._om == []
 
         for i in range(2):
-            self.imu.eval_expr_single(camera.t[i], self.probe.q_cas,
-                self.probe.qd_cas, self.probe.qdd_cas,
-                camera.acc[:,i], camera.R[i],
-                camera.om[:,i], camera.alp[:,i], append_array=True)
+            self.imu.eval_expr_single(
+                camera.t[i],
+                self.probe.q_cas,
+                self.probe.qd_cas,
+                self.probe.qdd_cas,
+                camera.acc[:, i],
+                camera.R[i],
+                camera.om[:, i],
+                camera.alp[:, i],
+                append_array=True,
+            )
 
-        assert(self.imu.om.shape == (3, 2))
+        assert self.imu.om.shape == (3, 2)
 
     def test_write_array_to_file(self):
         self.test_append_array()
@@ -49,10 +56,18 @@ class TestImu(TestRigidSimpleProbe):
 
         num_data = 3
         for i in range(num_data):
-            self.imu.eval_expr_single(camera.t[i], self.probe.q_cas,
-                self.probe.qd_cas, self.probe.qdd_cas,
-                camera.acc[:,i], camera.R[i], camera.om[:,i],
-                camera.alp[:,i], append_array=False, filepath=self.filepath)
+            self.imu.eval_expr_single(
+                camera.t[i],
+                self.probe.q_cas,
+                self.probe.qd_cas,
+                self.probe.qdd_cas,
+                camera.acc[:, i],
+                camera.R[i],
+                camera.om[:, i],
+                camera.alp[:, i],
+                append_array=False,
+                filepath=self.filepath,
+            )
 
         new_num_lines = self._get_numlines(self.filepath)
         self.assertEqual(new_num_lines, num_lines + num_data)
@@ -63,6 +78,8 @@ class TestImu(TestRigidSimpleProbe):
             os.remove(cls.filepath)
         super().tearDownClass()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from functions import run_only
+
     run_only(TestImu)

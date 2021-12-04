@@ -1,9 +1,13 @@
-import numpy as np
-from .Quaternion import Quaternion
 import math
+
+import numpy as np
+
+from .Quaternion import Quaternion
+
 
 class States(object):
     def __init__(self, p, v, q, dofs, ndofs, p_cam, q_cam):
+        # fmt: off
         self._p = np.asarray(p).reshape(3,)
         self._v = np.asarray(v).reshape(3,)
         self._q = Quaternion(val=q, do_normalise=True)
@@ -11,15 +15,23 @@ class States(object):
         self._ndofs = np.array(ndofs).reshape(3,)
         self._p_cam = p_cam.reshape(3,)
         self._q_cam = Quaternion(val=q_cam, do_normalise=True)
+        # fmt: on
 
-        self.size = len(p) + len(v) + len(self.q.xyzw) \
-                    + len(dofs) + len(ndofs) \
-                    + len(p_cam) + len(self.q_cam.xyzw)
-        assert(self.size == 26)
+        self.size = (
+            len(p)
+            + len(v)
+            + len(self.q.xyzw)
+            + len(dofs)
+            + len(ndofs)
+            + len(p_cam)
+            + len(self.q_cam.xyzw)
+        )
+        assert self.size == 26
 
         self.frozen_dofs = [False] * 6
 
     def apply_correction(self, err):
+        # fmt: off
         self.p += err.dp.reshape(3,)
         self.v += err.dv.reshape(3,)
         self.q = self.q * err.dq
@@ -33,6 +45,7 @@ class States(object):
         self.p_cam += err.dpc.reshape(3,)
         self.q_cam = self.q_cam * err.dqc
         self.q_cam.normalise()
+        # fmt: on
 
     def set(self, vec):
         self.p = vec[0].squeeze()
@@ -48,13 +61,19 @@ class States(object):
         self.q_cam = vec[8].squeeze()
 
     def __repr__(self):
-        return f'State: p_cam ({self._p_cam}), ...'
+        return f"State: p_cam ({self._p_cam}), ..."
 
     @property
     def vec(self):
-        return [self.p, self.v, self.q.rot,
-                    self.dofs, self.ndofs,
-                    self.p_cam, self.q_cam.rot]
+        return [
+            self.p,
+            self.v,
+            self.q.rot,
+            self.dofs,
+            self.ndofs,
+            self.p_cam,
+            self.q_cam.rot,
+        ]
 
     @property
     def p(self):
@@ -112,13 +131,14 @@ class States(object):
     def q_cam(self, val):
         self._q_cam = Quaternion(val=val, do_normalise=True)
 
+
 class ErrorStates(object):
     def __init__(self, vec):
         self.size = 24
         self.set(vec)
 
     def set(self, vec):
-        assert(len(vec) == self.size)
+        assert len(vec) == self.size
         self.vec = vec
         self.size = len(vec)
 
@@ -149,14 +169,15 @@ class ErrorStates(object):
     def reset(self):
         self.set([0] * self.size)
 
+
 def quaternion_about_axis(angle, axis):
-    """ https://github.com/aipiano/ESEKF_IMU/blob/master/transformations.py """
+    """https://github.com/aipiano/ESEKF_IMU/blob/master/transformations.py"""
     q = np.array([0.0, axis[0], axis[1], axis[2]])
     qlen = np.linalg.norm(q)
 
     _EPS = np.finfo(float).eps * 4.0
     if qlen > _EPS:
-        q *= math.sin(angle/2.0) / qlen
-    q[0] = math.cos(angle/2.0)
+        q *= math.sin(angle / 2.0) / qlen
+    q[0] = math.cos(angle / 2.0)
 
     return np.array([*q[1:4], q[0]])

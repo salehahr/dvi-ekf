@@ -1,9 +1,8 @@
 import context
-
 import matplotlib.pyplot as plt
-
 # load data
-from generate_data import stereoGT_traj, mono_traj, imu_gt_traj, imu_mono_traj, min_t, max_t
+from generate_data import (imu_gt_traj, imu_mono_traj, max_t, min_t, mono_traj,
+                           stereoGT_traj)
 
 # # sanity check -- plot interpolated data
 # stereoGT_traj.interpolate(num_imu_between_frames)

@@ -1,23 +1,24 @@
-import os, sys
 import math
-import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import os
+import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
 from scipy.integrate import cumtrapz
 from scipy.spatial.transform import Rotation as R
 
-from .Measurement import VisualMeasurement, ImuMeasurement
+from .Measurement import ImuMeasurement, VisualMeasurement
 from .Quaternion import Quaternion
 
+
 class Trajectory(object):
-    """ Base trajectory class which requires a
-        trajectory name, trajectory labels, and
-        a filepath.
+    """Base trajectory class which requires a
+    trajectory name, trajectory labels, and
+    a filepath.
     """
 
-    def __init__(self, name: str, labels: list,
-                        filepath: str = None, cap: int = None):
+    def __init__(self, name: str, labels: list, filepath: str = None, cap: int = None):
         self.name = name
         self.labels = labels
         self.filepath = filepath
@@ -59,7 +60,7 @@ class Trajectory(object):
             yield attr, value
 
     def clear(self):
-        """ Reinitialises data containers. """
+        """Reinitialises data containers."""
         for label in self.labels:
             self.__dict__[label] = []
 
@@ -67,17 +68,17 @@ class Trajectory(object):
         if os.path.exists(self.filepath):
             self._parse(cap)
         else:
-            ans = input(f"File \'{filepath}\' not found. Create? (Y/N)")
+            ans = input(f"File '{filepath}' not found. Create? (Y/N)")
 
-            if ans.lower() == 'y':
-                file = open(filepath, 'w+')
+            if ans.lower() == "y":
+                file = open(filepath, "w+")
                 file.close()
             else:
                 sys.exit()
 
     def _parse(self, cap):
-        """ Extract data from file."""
-        with open(self.filepath, 'r') as f:
+        """Extract data from file."""
+        with open(self.filepath, "r") as f:
             for i, line in enumerate(f):
                 data = line.split()
 
@@ -91,8 +92,8 @@ class Trajectory(object):
                         break
 
     def append_data(self, t, data_labels, data):
-        """ Appends new data not already belonging to the existing
-            labels. """
+        """Appends new data not already belonging to the existing
+        labels."""
 
         for i, label in enumerate(data_labels):
             if label not in self.__dict__:
@@ -104,13 +105,13 @@ class Trajectory(object):
         if ax is None:
             fig = plt.figure()
             fig.tight_layout()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
         ax.plot(self.x, self.y, self.z, label=self.name)
 
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_zlabel('z')
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
 
         # late setting of line styles
         for line in ax.get_lines():
@@ -121,43 +122,45 @@ class Trajectory(object):
         return ax
 
     def _get_index_at(self, T):
-        """ Get index for which timestamp matches the argument T. """
+        """Get index for which timestamp matches the argument T."""
         return max([i for i, t in enumerate(self.t) if t <= T])
 
     def write_to_file(self, filename=None, discard_interframe_vals=False):
-        with open(filename, 'w+') as f:
-            data_str = ''
+        with open(filename, "w+") as f:
+            data_str = ""
 
             for n in range(self.nvals):
                 for label in self.labels:
                     data = self.__dict__[label][n]
-                    if label == 't':
-                        data_str += f'{data:.6f}'
+                    if label == "t":
+                        data_str += f"{data:.6f}"
                     else:
-                        data_str += f' {data:.9f}'
-                data_str += ' \n'
+                        data_str += f" {data:.9f}"
+                data_str += " \n"
             f.write(data_str)
 
-class VisualTraj(Trajectory):
-    """ Visual trajectory containing time and pose. """
 
-    def __init__(self, name, filepath=None, cap=None,
-            scale=None, with_notch=False, start_at=None):
-        labels = ['t', 'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw']
+class VisualTraj(Trajectory):
+    """Visual trajectory containing time and pose."""
+
+    def __init__(
+        self, name, filepath=None, cap=None, scale=None, with_notch=False, start_at=None
+    ):
+        labels = ["t", "x", "y", "z", "qx", "qy", "qz", "qw"]
         super().__init__(name, labels, filepath, cap)
 
         start_index = self.t.index(start_at) if start_at else None
         self._start_at(labels, start_index, cap)
 
-        self.labels_notch = ['notch', 'notch_d', 'notch_dd']
-        self.notch_filepath = './trajs/notch90.txt'
+        self.labels_notch = ["notch", "notch_d", "notch_dd"]
+        self.notch_filepath = "./trajs/notch90.txt"
 
         if scale:
             self._apply_scale(scale)
 
-        self.quats  = None
+        self.quats = None
         self.rx_deg = None
-        self.ry_deg  = None
+        self.ry_deg = None
         self.rz_deg = None
 
         if self.qx:
@@ -166,7 +169,7 @@ class VisualTraj(Trajectory):
         if with_notch:
             self.read_notch_from_file()
             self._start_at(self.labels_notch, start_index, cap)
-            assert(len(self.t) == len(self.notch))
+            assert len(self.t) == len(self.notch)
 
     def _start_at(self, labels, index=None, cap=None):
         if not index:
@@ -176,15 +179,18 @@ class VisualTraj(Trajectory):
                 return
 
         for label in labels:
-            self.__dict__[label] = self.__dict__[label][index:] if not cap \
-                                else self.__dict__[label][index:index+cap]
+            self.__dict__[label] = (
+                self.__dict__[label][index:]
+                if not cap
+                else self.__dict__[label][index : index + cap]
+            )
 
     def read_notch_from_file(self):
         self.notch = []
         self.notch_d = []
         self.notch_dd = []
 
-        with open(self.notch_filepath, 'r') as f:
+        with open(self.notch_filepath, "r") as f:
             for i, line in enumerate(f):
                 data = line.split()
 
@@ -194,18 +200,17 @@ class VisualTraj(Trajectory):
                     self.__dict__[label].append(meas)
 
     def _apply_scale(self, scale):
-        for label in ['x', 'y', 'z']:
-            self.__dict__[label] = [val * scale
-                    for val in self.__dict__[label]]
+        for label in ["x", "y", "z"]:
+            self.__dict__[label] = [val * scale for val in self.__dict__[label]]
 
     def at_index(self, index):
-        """ Returns single visual measurement at the given index. """
+        """Returns single visual measurement at the given index."""
 
         t = self.t[index]
 
         x = self.x[index]
         y = self.y[index]
-        z = self.z[index]        
+        z = self.z[index]
         pos = np.array([x, y, z])
 
         qx = self.qx[index]
@@ -221,20 +226,21 @@ class VisualTraj(Trajectory):
         self._gen_euler_angles()
 
     def _gen_quats_array(self):
-        self.quats = [Quaternion(x=self.qx[i],
-                        y=self.qy[i],
-                        z=self.qz[i],
-                        w=w, do_normalise=True)
-                        for i, w in enumerate(self.qw)]
+        self.quats = [
+            Quaternion(x=self.qx[i], y=self.qy[i], z=self.qz[i], w=w, do_normalise=True)
+            for i, w in enumerate(self.qw)
+        ]
 
     def _gen_euler_angles(self):
-        """ extrinsic: xyz: rotations about fixed CS
-            intrinsic: XYZ: rotations about moving CS """
+        """extrinsic: xyz: rotations about fixed CS
+        intrinsic: XYZ: rotations about moving CS"""
 
-        euler = np.array([R.from_quat(q.xyzw).as_euler('xyz', degrees=True) for q in self.quats])
-        self.rx_deg = euler[:,0]
-        self.ry_deg = euler[:,1]
-        self.rz_deg = euler[:,2]
+        euler = np.array(
+            [R.from_quat(q.xyzw).as_euler("xyz", degrees=True) for q in self.quats]
+        )
+        self.rx_deg = euler[:, 0]
+        self.ry_deg = euler[:, 1]
+        self.rz_deg = euler[:, 2]
 
         # euler = np.array([R.from_quat(q.xyzw).as_euler('XYZ', degrees=True) for q in self.quats])
         # self.rX_deg = euler[:,0]
@@ -242,68 +248,106 @@ class VisualTraj(Trajectory):
         # self.rZ_deg = euler[:,2]
 
     def write_notch(self):
-        with open(self.notch_filepath, 'w+') as f:
-            data_str = ''
+        with open(self.notch_filepath, "w+") as f:
+            data_str = ""
 
             for n in range(self.nvals):
                 for label in self.labels_notch:
                     data = self.__dict__[label][n]
-                    if label == 't':
-                        data_str += f'{data:.6f}'
+                    if label == "t":
+                        data_str += f"{data:.6f}"
                     else:
-                        data_str += f' {data:.9f}'
-                data_str += ' \n'
+                        data_str += f" {data:.9f}"
+                data_str += " \n"
             f.write(data_str)
 
+
 class ImuRefTraj(Trajectory):
-    """ Desired traj of the IMU. """
+    """Desired traj of the IMU."""
 
     def __init__(self, name, imu, filepath=None):
-        labels = ['t', 'x', 'y', 'z',
-                    'vx', 'vy', 'vz',
-                    'rx', 'ry', 'rz',
-                    'qw', 'qx', 'qy', 'qz']
+        labels = [
+            "t",
+            "x",
+            "y",
+            "z",
+            "vx",
+            "vy",
+            "vz",
+            "rx",
+            "ry",
+            "rz",
+            "qw",
+            "qx",
+            "qy",
+            "qz",
+        ]
         super().__init__(name, labels, filepath)
         self.imu = imu
 
     def append_value(self, t, current_cam, current_notch):
-        """ Appends new measurement from current state. """
+        """Appends new measurement from current state."""
 
         p, R_WB, v = self.imu.ref_vals(current_cam, current_notch)
 
-        euler_angs = R.from_matrix(R_WB).as_euler('xyz', degrees=True)
+        euler_angs = R.from_matrix(R_WB).as_euler("xyz", degrees=True)
         quats = Quaternion(val=R_WB, do_normalise=True)
         data = [t, *p, *v, *euler_angs, *quats.wxyz]
 
         for i, label in enumerate(self.labels):
             self.__dict__[label].append(data[i])
 
+
 class FilterTraj(Trajectory):
     def __init__(self, name, filepath=None):
         self.labels = []
-        self.labels_imu = ['x', 'y', 'z',
-                    'vx', 'vy', 'vz',
-                    'rx', 'ry', 'rz',
-                    'qw', 'qx', 'qy', 'qz']
-        self.labels_imu_dofs = [ 'dof1', 'dof2', 'dof3',
-                    'dof4', 'dof5', 'dof6']
-        self.labels_camera = ['xc', 'yc', 'zc',
-                    'rx_degc', 'ry_degc', 'rz_degc',
-                    'qwc', 'qxc', 'qyc', 'qzc']
-        labels = ['t', *self.labels_imu,
-                    *self.labels_imu_dofs, *self.labels_camera]
+        self.labels_imu = [
+            "x",
+            "y",
+            "z",
+            "vx",
+            "vy",
+            "vz",
+            "rx",
+            "ry",
+            "rz",
+            "qw",
+            "qx",
+            "qy",
+            "qz",
+        ]
+        self.labels_imu_dofs = ["dof1", "dof2", "dof3", "dof4", "dof5", "dof6"]
+        self.labels_camera = [
+            "xc",
+            "yc",
+            "zc",
+            "rx_degc",
+            "ry_degc",
+            "rz_degc",
+            "qwc",
+            "qxc",
+            "qyc",
+            "qzc",
+        ]
+        labels = ["t", *self.labels_imu, *self.labels_imu_dofs, *self.labels_camera]
         super().__init__(name, labels, filepath)
 
     def _process_data(self, t, state):
-        """ Appends new measurement from current state. """
+        """Appends new measurement from current state."""
         dof_rots_deg = np.rad2deg(state.dofs[:3])
-        dof_trans    = state.dofs[3:]
-        return [t, *state.p, *state.v,
-                    *state.q.euler_xyz_deg, *state.q.wxyz,
-                    *dof_rots_deg,
-                    *dof_trans,
-                    *state.p_cam,
-                    *state.q_cam.euler_xyz_deg, *state.q_cam.wxyz]
+        dof_trans = state.dofs[3:]
+        return [
+            t,
+            *state.p,
+            *state.v,
+            *state.q.euler_xyz_deg,
+            *state.q.wxyz,
+            *dof_rots_deg,
+            *dof_trans,
+            *state.p_cam,
+            *state.q_cam.euler_xyz_deg,
+            *state.q_cam.wxyz,
+        ]
 
     def append_propagated_states(self, t, state):
         data = self._process_data(t, state)
@@ -318,9 +362,11 @@ class FilterTraj(Trajectory):
     @property
     def rz_unwrapped(self):
         return np.unwrap(self.rz)
+
     @property
     def ry_unwrapped(self):
         return np.unwrap(self.ry)
+
     @property
     def rx_unwrapped(self):
         return np.unwrap(self.rx)
@@ -328,25 +374,33 @@ class FilterTraj(Trajectory):
     @property
     def rz_degc_unwrapped(self):
         return np.unwrap(self.rz_degc)
+
     @property
     def ry_degc_unwrapped(self):
         return np.unwrap(self.ry_degc)
+
     @property
     def rx_degc_unwrapped(self):
         return np.unwrap(self.rx_degc)
 
-class ImuTraj(Trajectory):
-    """ IMU trajectory containing the acceleration and
-    angular velocity measurements. """
 
-    def __init__(self, name="imu", filepath=None, vis_data=None,
+class ImuTraj(Trajectory):
+    """IMU trajectory containing the acceleration and
+    angular velocity measurements."""
+
+    def __init__(
+        self,
+        name="imu",
+        filepath=None,
+        vis_data=None,
         cap=None,
         interframe_vals=0,
-        covariance = [0.] * 6,
-        unnoised = False):
+        covariance=[0.0] * 6,
+        unnoised=False,
+    ):
 
         # base properties
-        labels = ['t', 'ax', 'ay', 'az', 'gx', 'gy', 'gz']
+        labels = ["t", "ax", "ay", "az", "gx", "gy", "gz"]
         super().__init__(name, labels, filepath, cap)
         self.vis_data = vis_data
 
@@ -369,9 +423,9 @@ class ImuTraj(Trajectory):
         self.queue_first_ts = 0
 
     def _gen_unnoisy_imu(self):
-        """ Generates IMU data from visual trajectory, without noise.
-            Involves transformation from SLAM world coordinates
-            to IMU coordinates."""
+        """Generates IMU data from visual trajectory, without noise.
+        Involves transformation from SLAM world coordinates
+        to IMU coordinates."""
 
         interpolated = Interpolator(self.interframe_vals, self.vis_data).interpolated
         dt = interpolated.t[1] - interpolated.t[0]
@@ -380,34 +434,43 @@ class ImuTraj(Trajectory):
         R_BW_arr = [q.rot.T for q in interpolated.quats]
 
         # velocities
-        v_W = np.asarray((np.gradient(interpolated.x, dt),
-                        np.gradient(interpolated.y, dt),
-                        np.gradient(interpolated.z, dt) )).T
-        self.vis_data.vx = v_W[:,0] # VisTraj is in world coordinates
-        self.vis_data.vy = v_W[:,1]
-        self.vis_data.vz = v_W[:,2]
+        v_W = np.asarray(
+            (
+                np.gradient(interpolated.x, dt),
+                np.gradient(interpolated.y, dt),
+                np.gradient(interpolated.z, dt),
+            )
+        ).T
+        self.vis_data.vx = v_W[:, 0]  # VisTraj is in world coordinates
+        self.vis_data.vy = v_W[:, 1]
+        self.vis_data.vz = v_W[:, 2]
 
-        v_B = np.asarray([R_BW @ v_W[i,:]
-                for i, R_BW in enumerate(R_BW_arr)]) ## possibly wrong transformation?
-        self.vx, self.vy, self.vz = v_B[:,0], v_B[:,1], v_B[:,2]
+        v_B = np.asarray(
+            [R_BW @ v_W[i, :] for i, R_BW in enumerate(R_BW_arr)]
+        )  ## possibly wrong transformation?
+        self.vx, self.vy, self.vz = v_B[:, 0], v_B[:, 1], v_B[:, 2]
 
         # accelerations
-        a_W = np.array((np.gradient(v_W[:,0], dt),
-                        np.gradient(v_W[:,1], dt),
-                        np.gradient(v_W[:,2], dt))).T
+        a_W = np.array(
+            (
+                np.gradient(v_W[:, 0], dt),
+                np.gradient(v_W[:, 1], dt),
+                np.gradient(v_W[:, 2], dt),
+            )
+        ).T
 
-        a_B = np.asarray([R_BW @ a_W[i,:] for i, R_BW in enumerate(R_BW_arr)])
-        self.ax, self.ay, self.az = a_B[:,0], a_B[:,1], a_B[:,2]
+        a_B = np.asarray([R_BW @ a_W[i, :] for i, R_BW in enumerate(R_BW_arr)])
+        self.ax, self.ay, self.az = a_B[:, 0], a_B[:, 1], a_B[:, 2]
 
         # angular velocity
         euler = np.asarray([q.euler_zyx for q in interpolated.quats])
-        rz, ry, rx = euler[:,0], euler[:,1], euler[:,2]
+        rz, ry, rx = euler[:, 0], euler[:, 1], euler[:, 2]
 
-        om_W = np.asarray( (np.gradient(rx, dt),
-                            np.gradient(ry, dt),
-                            np.gradient(rz, dt)) )
-        om_B = np.asarray([R_BW @ om_W[:,i] for i, R_BW in enumerate(R_BW_arr)]).T
-        self.gx, self.gy, self.gz = om_B[0,:], om_B[1,:], om_B[2,:]
+        om_W = np.asarray(
+            (np.gradient(rx, dt), np.gradient(ry, dt), np.gradient(rz, dt))
+        )
+        om_B = np.asarray([R_BW @ om_W[:, i] for i, R_BW in enumerate(R_BW_arr)]).T
+        self.gx, self.gy, self.gz = om_B[0, :], om_B[1, :], om_B[2, :]
 
         self.t = interpolated.t
 
@@ -417,30 +480,32 @@ class ImuTraj(Trajectory):
         self._flag_gen_unnoisy_imu = True
 
     def _gen_noisy_imu(self, covariance):
-        """ Generates IMU data from visual trajectory, with noise. """
+        """Generates IMU data from visual trajectory, with noise."""
 
-        assert(self._flag_gen_unnoisy_imu == True)
+        assert self._flag_gen_unnoisy_imu == True
 
         if self.filepath:
             filename, ext = os.path.splitext(self.filepath)
-            filename_noisy = filename + '_noisy' + ext
+            filename_noisy = filename + "_noisy" + ext
         else:
             filename_noisy = None
 
-        noisy = ImuTraj(name="noisy imu",
+        noisy = ImuTraj(
+            name="noisy imu",
             filepath=filename_noisy,
             interframe_vals=self.interframe_vals,
-            covariance=covariance)
+            covariance=covariance,
+        )
         noisy.clear()
 
         for i, label in enumerate(self.labels):
-            if label == 't':
+            if label == "t":
                 noisy.t = self.t
                 continue
 
-            noisy.__dict__[label] = self.__dict__[label] \
-                + np.random.normal(loc=0., scale=covariance[i-1],
-                    size=len(self.t))
+            noisy.__dict__[label] = self.__dict__[label] + np.random.normal(
+                loc=0.0, scale=covariance[i - 1], size=len(self.t)
+            )
 
         self.noisy = noisy
 
@@ -448,20 +513,20 @@ class ImuTraj(Trajectory):
             self._write_to_file(filename_noisy)
 
     def _write_to_file(self, filename=None):
-        """ Writes IMU trajectory to file. """
+        """Writes IMU trajectory to file."""
 
         if filename == None:
             filename = self.filepath
 
-        with open(filename, 'w+') as f:
+        with open(filename, "w+") as f:
             for i, t in enumerate(self.t):
                 a_str = f"{self.ax[i]:.9f} {self.ay[i]:.9f} {self.az[i]:.9f} "
                 g_str = f"{self.gx[i]:.9f} {self.gy[i]:.9f} {self.gz[i]:.9f}"
                 data_str = f"{t:.6f} " + a_str + g_str
-                f.write(data_str + '\n')
+                f.write(data_str + "\n")
 
     def at_index(self, index):
-        """ Returns single IMU measurement at the given index. """
+        """Returns single IMU measurement at the given index."""
 
         t = self.t[index]
 
@@ -478,29 +543,28 @@ class ImuTraj(Trajectory):
         return ImuMeasurement(t, acc, om)
 
     def get_queue(self, old_t, current_cam_t):
-        """ Get IMU queue after old_t and up to current_cam_t. """
+        """Get IMU queue after old_t and up to current_cam_t."""
 
         start_index = self.next_frame_index
 
-        prev_index = self._get_index_at(old_t) # end of old imu queue
+        prev_index = self._get_index_at(old_t)  # end of old imu queue
         next_index = self._get_index_at(current_cam_t)
-        assert(prev_index <= next_index)
+        assert prev_index <= next_index
 
         # update start index, if outdated (less than prev_index)
-        if (start_index <= prev_index) and \
-            not (start_index == next_index):
+        if (start_index <= prev_index) and not (start_index == next_index):
             start_index = prev_index + 1
 
-        t = self.t[start_index:next_index+1]
+        t = self.t[start_index : next_index + 1]
 
-        ax = self.ax[start_index:next_index+1]
-        ay = self.ay[start_index:next_index+1]
-        az = self.az[start_index:next_index+1]
+        ax = self.ax[start_index : next_index + 1]
+        ay = self.ay[start_index : next_index + 1]
+        az = self.az[start_index : next_index + 1]
         acc = np.vstack((ax, ay, az))
 
-        gx = self.gx[start_index:next_index+1]
-        gy = self.gy[start_index:next_index+1]
-        gz = self.gz[start_index:next_index+1]
+        gx = self.gx[start_index : next_index + 1]
+        gy = self.gy[start_index : next_index + 1]
+        gz = self.gz[start_index : next_index + 1]
         om = np.vstack((gx, gy, gz))
 
         self.next_frame_index = next_index + 1
@@ -508,12 +572,12 @@ class ImuTraj(Trajectory):
         return ImuMeasurement(t, acc, om)
 
     def reconstruct(self, R_WB, W_p_BW_0, WW_v_BW_0):
-        """ For validation.
-            Generates trajectory from IMU data.
-            The IMU trajectory is obtained via numerical integration
-            using the available initial conditions. """
+        """For validation.
+        Generates trajectory from IMU data.
+        The IMU trajectory is obtained via numerical integration
+        using the available initial conditions."""
 
-        reconstructed = VisualTraj('recon')
+        reconstructed = VisualTraj("recon")
 
         t = self.t
         dt = t[1] - t[0]
@@ -525,15 +589,12 @@ class ImuTraj(Trajectory):
         rz0, ry0, rx0 = Quaternion(val=R_WB[0], do_normalise=True).euler_zyx
 
         # velocity in world coordinates
-        assert(len(R_WB) == len(self.ax))
-        W_acc = self._to_world_coords(R_WB,
-                    np.asarray((self.ax,
-                                self.ay,
-                                self.az)).T )
+        assert len(R_WB) == len(self.ax)
+        W_acc = self._to_world_coords(R_WB, np.asarray((self.ax, self.ay, self.az)).T)
 
-        W_vx = cumtrapz(W_acc[:,0], t, initial=0) + vx0
-        W_vy = cumtrapz(W_acc[:,1], t, initial=0) + vy0
-        W_vz = cumtrapz(W_acc[:,2], t, initial=0) + vz0
+        W_vx = cumtrapz(W_acc[:, 0], t, initial=0) + vx0
+        W_vy = cumtrapz(W_acc[:, 1], t, initial=0) + vy0
+        W_vz = cumtrapz(W_acc[:, 2], t, initial=0) + vz0
 
         # position in world coordinates
         reconstructed.x = cumtrapz(W_vx, t, initial=0) + x0
@@ -541,18 +602,14 @@ class ImuTraj(Trajectory):
         reconstructed.z = cumtrapz(W_vz, t, initial=0) + z0
 
         # orientation in world
-        W_om_B = self._to_world_coords(R_WB,
-                    np.asarray((self.gx,
-                                self.gy,
-                                self.gz)).T )
+        W_om_B = self._to_world_coords(R_WB, np.asarray((self.gx, self.gy, self.gz)).T)
 
-        rx = cumtrapz(W_om_B[:,0], t, initial=0) + rx0
-        ry = cumtrapz(W_om_B[:,1], t, initial=0) + ry0
-        rz = cumtrapz(W_om_B[:,2], t, initial=0) + rz0
+        rx = cumtrapz(W_om_B[:, 0], t, initial=0) + rx0
+        ry = cumtrapz(W_om_B[:, 1], t, initial=0) + ry0
+        rz = cumtrapz(W_om_B[:, 2], t, initial=0) + rz0
 
         euler_ang = np.asarray([rz, ry, rx]).T
-        rots = [R.from_euler('zyx', e).as_matrix()
-            for e in euler_ang]
+        rots = [R.from_euler("zyx", e).as_matrix() for e in euler_ang]
         quats = [Quaternion(val=R_i, do_normalise=True) for R_i in rots]
 
         reconstructed.qx = [q.x for q in quats]
@@ -564,10 +621,10 @@ class ImuTraj(Trajectory):
         self.reconstructed = reconstructed
 
     def reconstruct_vis_traj(self):
-        """ Generates trajectory from IMU data using
-        the available initial conditions. """
+        """Generates trajectory from IMU data using
+        the available initial conditions."""
 
-        reconstructed = VisualTraj('recon')
+        reconstructed = VisualTraj("recon")
 
         t = self.t
         dt = t[1] - t[0]
@@ -579,18 +636,16 @@ class ImuTraj(Trajectory):
         # initial conditions in world coordinates
         R_WB0 = R_WB_arr[0]
         x0, y0, z0 = self.vis_data.x[0], self.vis_data.y[0], self.vis_data.z[0]
-        v0 = self._to_world_coords(R_WB0, np.asarray((self.vx[0],
-                                            self.vy[0],
-                                            self.vz[0])))
+        v0 = self._to_world_coords(
+            R_WB0, np.asarray((self.vx[0], self.vy[0], self.vz[0]))
+        )
         q0 = self.vis_data.quats[0]
 
         # integrating for pos
-        a_W = self._to_world_coords(R_WB_arr, np.asarray((self.ax,
-                                            self.ay,
-                                            self.az)).T )
-        vx_W = cumtrapz(a_W[:,0], t, initial=0) + v0[0]
-        vy_W = cumtrapz(a_W[:,1], t, initial=0) + v0[1]
-        vz_W = cumtrapz(a_W[:,2], t, initial=0) + v0[2]
+        a_W = self._to_world_coords(R_WB_arr, np.asarray((self.ax, self.ay, self.az)).T)
+        vx_W = cumtrapz(a_W[:, 0], t, initial=0) + v0[0]
+        vy_W = cumtrapz(a_W[:, 1], t, initial=0) + v0[1]
+        vz_W = cumtrapz(a_W[:, 2], t, initial=0) + v0[2]
 
         reconstructed.x = cumtrapz(vx_W, t, initial=0) + x0
         reconstructed.y = cumtrapz(vy_W, t, initial=0) + y0
@@ -600,45 +655,44 @@ class ImuTraj(Trajectory):
         rz0, ry0, rx0 = q0.euler_zyx
 
         om_B = np.array((self.gx, self.gy, self.gz))
-        om_W = np.asarray([R_WB @ om_B[:,i] for i, R_WB in enumerate(R_WB_arr)]).T
+        om_W = np.asarray([R_WB @ om_B[:, i] for i, R_WB in enumerate(R_WB_arr)]).T
 
-        rx = cumtrapz(om_W[0,:], t, initial=0) + rx0
-        ry = cumtrapz(om_W[1,:], t, initial=0) + ry0
-        rz = cumtrapz(om_W[2,:], t, initial=0) + rz0
+        rx = cumtrapz(om_W[0, :], t, initial=0) + rx0
+        ry = cumtrapz(om_W[1, :], t, initial=0) + ry0
+        rz = cumtrapz(om_W[2, :], t, initial=0) + rz0
 
         euler_ang = np.asarray([rz, ry, rx]).T
-        quats = np.asarray([R.from_euler('zyx', e).as_quat()
-            for e in euler_ang])
-        reconstructed.qx = quats[:,0]
-        reconstructed.qy = quats[:,1]
-        reconstructed.qz = quats[:,2]
-        reconstructed.qw = quats[:,3]
+        quats = np.asarray([R.from_euler("zyx", e).as_quat() for e in euler_ang])
+        reconstructed.qx = quats[:, 0]
+        reconstructed.qy = quats[:, 1]
+        reconstructed.qz = quats[:, 2]
+        reconstructed.qw = quats[:, 3]
 
         self.reconstructed = reconstructed
 
         return reconstructed
 
     def _set_plot_line_style(self, line):
-        """ Defines line styles for IMU plot. """
+        """Defines line styles for IMU plot."""
 
-        line.set_linestyle('')
-        line.set_marker('o')
+        line.set_linestyle("")
+        line.set_marker("o")
         line.set_markersize(0.4)
 
         label = line.get_label()
-        if 'noisy' in label:
-            line.set_linestyle('-')
-            line.set_color('darkgrey')
+        if "noisy" in label:
+            line.set_linestyle("-")
+            line.set_color("darkgrey")
             line.set_linewidth(1)
-        elif 'gt' in label:
-            line.set_color('black')
-        elif 'mono' in label:
-            line.set_color('saddlebrown')
+        elif "gt" in label:
+            line.set_color("black")
+        elif "mono" in label:
+            line.set_color("saddlebrown")
 
     def _to_world_coords(self, R_WB, vec):
         if isinstance(R_WB, list):
-            assert(vec.shape[1] == 3)
-            return np.asarray([Rot @ vec[i,:] for i, Rot in enumerate(R_WB)])
+            assert vec.shape[1] == 3
+            return np.asarray([Rot @ vec[i, :] for i, Rot in enumerate(R_WB)])
         else:
             return R_WB @ vec
 

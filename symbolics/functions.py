@@ -1,6 +1,7 @@
 import sympy as sp
 from casadi import *
 
+
 def sympy2casadi(sympy_expr, sympy_var, casadi_var):
     # run checks on sympy_var
     assert isinstance(sympy_var, list)
@@ -11,16 +12,18 @@ def sympy2casadi(sympy_expr, sympy_var, casadi_var):
 
     assert casadi_var.is_vector()
     # convert to list
-    if casadi_var.shape[1]>1:
+    if casadi_var.shape[1] > 1:
         casadi_var = casadi_var.T
     casadi_var = casadi.vertsplit(casadi_var)
 
-    mapping = {'ImmutableDenseMatrix': casadi.blockcat,
-             'MutableDenseMatrix': casadi.blockcat,
-             'Abs':casadi.fabs,
-            }
+    mapping = {
+        "ImmutableDenseMatrix": casadi.blockcat,
+        "MutableDenseMatrix": casadi.blockcat,
+        "Abs": casadi.fabs,
+    }
     f = sp.lambdify(sympy_var, sympy_expr, modules=[mapping, casadi])
     return f(*casadi_var)
+
 
 def dummify_undefined_functions(expr):
     mapping = {}
@@ -29,19 +32,21 @@ def dummify_undefined_functions(expr):
     for der in expr.atoms(sp.Derivative):
         f_name = der.expr.func.__name__
         der_count = der.derivative_count
-        ds = 'd' * der_count
+        ds = "d" * der_count
         # var_names = [var.name for var in der.variables]
         # name = "d%s_d%s" % (f_name, 'd'.join(var_names))
-        name = f"{f_name}_{ds}ot"# % (f_name, 'd'.join(var_names))
+        name = f"{f_name}_{ds}ot"  # % (f_name, 'd'.join(var_names))
         mapping[der] = sp.Symbol(name)
 
     # replace undefined functions
     from sympy.core.function import AppliedUndef
+
     for f in expr.atoms(AppliedUndef):
         f_name = f.func.__name__
         mapping[f] = sp.Symbol(f_name)
 
     return expr.subs(mapping)
+
 
 def dummify_array(expr):
     is_array = isinstance(expr, (list, np.ndarray))

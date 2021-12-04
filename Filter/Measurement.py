@@ -1,8 +1,10 @@
 import numpy as np
+
 from .Quaternion import Quaternion
 
+
 class Measurement(object):
-    """ Base measurement class.
+    """Base measurement class.
 
     Attributes:
         t       time
@@ -13,9 +15,10 @@ class Measurement(object):
         self.t = t
         self.vec = np.hstack((v1, v2))
 
+
 class VisualMeasurement(Measurement):
-    """ Visual measurements from SLAM
-    containing position and orientation. """
+    """Visual measurements from SLAM
+    containing position and orientation."""
 
     def __init__(self, t, pos, q_xyzw):
         super().__init__(t, pos, q_xyzw)
@@ -32,8 +35,9 @@ class VisualMeasurement(Measurement):
         self.qw = q_xyzw[3]
         self.qrot = Quaternion(val=q_xyzw, do_normalise=True)
 
+
 class ImuMeasurement(Measurement):
-    """ IMU measurements containing acceleration and angular velocity.
+    """IMU measurements containing acceleration and angular velocity.
     Can either be a measurement at a single time instance
     or a queue of measurements
     """
@@ -57,7 +61,7 @@ class ImuMeasurement(Measurement):
             self._is_queue = True
 
     def at_index(self, index):
-        """ Returns single IMU measurement at the given index. """
+        """Returns single IMU measurement at the given index."""
 
         if not self._is_queue:
             return self
@@ -66,7 +70,7 @@ class ImuMeasurement(Measurement):
 
         ax = self.ax[index]
         ay = self.ay[index]
-        az = self.az[index]        
+        az = self.az[index]
         acc = np.array([ax, ay, az])
 
         gx = self.gx[index]

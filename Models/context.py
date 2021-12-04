@@ -1,8 +1,9 @@
-import os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import os
+import sys
 
-from symbolics import symbols as syms
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from Filter import Quaternion, VisualTraj
 from symbolics import equations as eqns
 from symbolics import functions as symfcns
-
-from Filter import VisualTraj, Quaternion
+from symbolics import symbols as syms
