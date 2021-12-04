@@ -1,1 +1,1 @@
-from .utils import generate_imudof_ic
+from .config import Config

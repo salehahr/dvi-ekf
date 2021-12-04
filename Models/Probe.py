@@ -6,7 +6,8 @@ from spatialmath import SE3
 from spatialmath.base.symbolic import issymbol
 from sympy.tensor.array import tensorcontraction, tensorproduct
 
-from .context import symfcns, syms
+from symbolics import functions as symfcns
+from symbolics import symbols as syms
 
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Ry(-180, "deg")

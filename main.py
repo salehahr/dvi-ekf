@@ -1,7 +1,7 @@
-from configuration import Config
-from Filter import Simulator
+from Filter.Simulator import Simulator
+from tools import Config
 
-config = Config()
+config = Config("config.yaml")
 sim = Simulator(config)
 
 if config.sim.mode == "tune":
@@ -9,4 +9,4 @@ if config.sim.mode == "tune":
 else:
     sim.show_run_progress = False
     sim.run_once()
-    sim.save_and_plot(compact=True)
+    sim.plot(compact=True)

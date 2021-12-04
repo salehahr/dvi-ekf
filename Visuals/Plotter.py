@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from . import line_formats as lf
@@ -152,7 +154,7 @@ class Plotter(object):
 
     def _set_title(self, config):
         MSE = config.mse
-        Q = config.meas_noise
+        Q = config.meas_noise_var
 
         if MSE is not None:
             st = plt.suptitle(f"DOF_MSE {MSE:.3f}", fontsize=10)
@@ -237,6 +239,11 @@ class FilterPlot(Plotter):
         self.cam_traj = camera.traj
         self.imu_ref = kf.imu.ref
 
+        img_path = self.config.img_path
+        traj_name = self.config.traj_name
+        self.img_filepath_imu = os.path.join(img_path, f"kf_{traj_name}_imu.png")
+        self.img_filepath_cam = os.path.join(img_path, f"kf_{traj_name}_cam.png")
+
         """ labels that start at row = 1 """
         self.jump_labels = ["x", "vx", "rx", "dof1", "dof4", "xc", "rx_degc"]
 
@@ -272,6 +279,8 @@ class FilterPlot(Plotter):
         self.traj.ry_degc = self.traj.ry_degc_unwrapped
         self.traj.rx_degc = self.traj.rx_degc_unwrapped
 
+        img_filepath_compact = self.img_filepath_cam.replace("cam", "compact")
+
         self._get_plot_objects(
             labels=labels,
             labels_cam=labels_cam,
@@ -279,7 +288,7 @@ class FilterPlot(Plotter):
             labels_imu_dofs=labels_imu_dofs,
             labels_notch=[],
             num_cols=num_cols,
-            filename=self.config.img_filepath_compact,
+            filename=img_filepath_compact,
             cam=self.cam_traj,
             cam_rot=cam_rot,
             imu_ref=self.imu_ref,
@@ -298,7 +307,7 @@ class FilterPlot(Plotter):
             labels_imu_dofs=self.traj.labels_imu_dofs,
             labels_notch=[],
             num_cols=num_cols,
-            filename=config.img_filepath_imu,
+            filename=self.img_filepath_imu,
             cam=None,
             cam_rot=None,
             imu_ref=self.imu_ref,
@@ -320,7 +329,7 @@ class FilterPlot(Plotter):
             labels_imu_dofs=[],
             labels_notch=labels_notch,
             num_cols=num_cols,
-            filename=self.config.img_filepath_cam,
+            filename=self.img_filepath_cam,
             cam=self.cam_traj,
             cam_rot=self.camera.rotated.traj,
             imu_ref=None,
@@ -363,7 +372,7 @@ class FilterPlot(Plotter):
         if label in labels_imu_dofs:
             idx = labels_imu_dofs.index(label)
             dof_ref = DofRef(self.config.min_t, self.config.max_t)
-            val_dof_ref = [self.config.gt_imudof[idx]] * 2
+            val_dof_ref = [self.config.gt_imu_dofs[idx]] * 2
         else:
             dof_ref, val_dof_ref = None, []
 

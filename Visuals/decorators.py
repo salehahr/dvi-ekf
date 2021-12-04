@@ -38,7 +38,7 @@ def plot_loop(f_plot_objs, **kwargs):
         axes = kwargs["axes"]
         filename = kwargs["filename"]
 
-        Q = self.config.meas_noise
+        Q = self.config.meas_noise_var
 
         num_rows = math.ceil(len(labels) / num_cols)
         axes = self._init_axes(axes, num_rows, num_cols)
