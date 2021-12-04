@@ -1,9 +1,10 @@
-# generated manually
-casadi >= 3.5.5
-matplotlib >= 3.4.2
-numpy >= 1.20.3
-Pillow
-roboticstoolbox-python > 0.10.1
-spatialmath-python >= 0.9.7
-sympy
-tqdm
+casadi==3.5.5.post2
+matplotlib==3.5.0
+numpy==1.21.4
+pydantic==1.8.2
+PyYAML==6.0
+roboticstoolbox_python==0.11.0
+scipy==1.7.3
+spatialmath_python==0.11
+sympy==1.9
+tqdm==4.62.3
