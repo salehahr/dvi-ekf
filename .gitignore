@@ -1,5 +1,9 @@
 *pycache*
+.idea/
+
 trajs/archive/*.txt
-diff.py
-*.swp
 configs.txt
+
+diff.py
+
+*.swp
