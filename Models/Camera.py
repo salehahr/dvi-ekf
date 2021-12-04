@@ -1,11 +1,14 @@
+from __future__ import annotations
+
+import os
 from copy import copy
 
 import numpy as np
 
-from Filter import VisualTraj
+from Filter.Quaternion import Quaternion
+from Filter.Trajectory import VisualTraj
 from Visuals import CameraPlot
 
-from .context import Quaternion
 from .Interpolator import Interpolator
 
 
@@ -95,6 +98,33 @@ class Camera(object):
             self._read_notch_from_traj()
             self.gen_rotated()
 
+    @staticmethod
+    def create(config) -> Camera:
+        filepath_cam = os.path.join(config.traj_path, f"{config.traj_name}.txt")
+
+        if config.max_vals:
+            with_notch = True if config.max_vals > 10 else False
+        else:
+            with_notch = True
+        # with_notch = False
+
+        cam = Camera(
+            filepath=filepath_cam,
+            max_vals=config.max_vals,
+            scale=config.camera.scale,
+            with_notch=with_notch,
+            start_at=config.camera.start_frame,
+        )
+
+        if with_notch:
+            assert cam.rotated is not None
+        else:
+            assert cam.rotated is None
+
+        cam.update_sim_params(config)
+
+        return cam
+
     @property
     def filepath(self):
         return self.traj.filepath
@@ -102,6 +132,13 @@ class Camera(object):
     @property
     def flag_interpolated(self):
         return self.traj.is_interpolated
+
+    def update_sim_params(self, config):
+        """Updates time-related info from camera data."""
+        config.max_vals = self.max_vals
+        config.min_t = self.min_t
+        config.max_t = self.max_t
+        config.total_data_pts = (self.max_vals - 1) * config.interframe_vals + 1
 
     def interpolate(self, interframe_vals):
         interp_labels = ["t", "x", "y", "z", "qx", "qy", "qz", "qw"]

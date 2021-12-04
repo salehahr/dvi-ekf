@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 import casadi
 import numpy as np
-import sympy as sp
 
-from Filter import ImuRefTraj, ImuTraj
-
-from . import context
-from .context import eqns, syms
+from Filter.Trajectory import ImuRefTraj, ImuTraj
+from symbolics import equations as eqns
+from symbolics import symbols as syms
 
 """ Notation:
         W_acc_CD    : acceleration of C rel. to D.
@@ -80,6 +80,19 @@ class Imu(object):
         self._num_imu_between_frames = None
 
         self._flag_interpolated = False
+
+    @staticmethod
+    def create(config, camera, probe, gen_ref=False) -> Imu:
+        """Creates synthetic IMU data from interpolated camera data."""
+        cam_reference = camera.rotated if camera.rotated else camera
+        camera_interp = cam_reference.interpolate(config.interframe_vals)
+        return Imu(
+            probe,
+            camera_interp,
+            config.stdev_accel,
+            config.stdev_omega,
+            gen_ref=gen_ref,
+        )
 
     def __iter__(self):
         for attr, value in self.__dict__.items():

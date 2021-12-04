@@ -1,5 +1,5 @@
+import os
 from copy import copy, deepcopy
-from math import factorial
 
 import casadi
 import numpy as np
@@ -41,12 +41,12 @@ class Filter(object):
         self._u = []
 
         # objects
-        self.probe = self.config.sym_probe
+        self.probe = self.sim.sym_probe
         self.camera = sim.camera
         self.imu = sim.imu
 
         # imu
-        self.imu.eval_init(self.config.real_joint_dofs, sim.x0.ndofs)
+        self.imu.eval_init(self.config.gt_joint_dofs, sim.x0.ndofs)
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
 
@@ -54,11 +54,11 @@ class Filter(object):
         Q = np.eye(self.num_noise)
         Q[0:3, 0:3] = self.dt ** 2 * self.stdev_na ** 2 * np.eye(3)
         Q[3:6, 3:6] = self.dt ** 2 * self.stdev_nom ** 2 * np.eye(3)
-        Q[6:13, 6:13] = np.diag(self.config.process_noise_rw)
+        Q[6:13, 6:13] = np.diag(self.config.process_noise_rw_var)
         self.Q = Q
 
         # noise: measurement
-        self.R = np.diag(self.config.meas_noise)
+        self.R = np.diag(self.config.meas_noise_var)
 
         # buffer
         self._om_old = self.imu.om.squeeze()
@@ -87,7 +87,7 @@ class Filter(object):
 
         # imu / noise
         self.imu.reset()
-        self.imu.eval_init(self.config.real_joint_dofs, notch0)
+        self.imu.eval_init(self.config.gt_joint_dofs, notch0)
 
         self.traj.reset()
         self.traj.append_propagated_states(self.config.min_t, self.states)
@@ -97,10 +97,10 @@ class Filter(object):
         Q = np.eye(self.num_noise)
         Q[0:3, 0:3] = self.dt ** 2 * self.stdev_na ** 2 * np.eye(3)
         Q[3:6, 3:6] = self.dt ** 2 * self.stdev_nom ** 2 * np.eye(3)
-        Q[6:13, 6:13] = np.diag(self.config.process_noise_rw)
+        Q[6:13, 6:13] = np.diag(self.config.process_noise_rw_var)
         self.Q = Q
 
-        self.R = np.diag(self.config.meas_noise)
+        self.R = np.diag(self.config.meas_noise_var)
 
     @property
     def config(self):
@@ -180,7 +180,7 @@ class Filter(object):
             old_t = t
 
         # normalise dof_metric
-        self.mse = self.calculate_metric(i_cam, camera)
+        # self.mse = self.calculate_metric(i_cam, camera)
 
     def run_one_epoch(self, old_t, t, i_cam, camera):
         """
@@ -206,7 +206,7 @@ class Filter(object):
         """
         cam_queue = self.imu.cam.generate_queue(t0, tn)
 
-        real_probe_dofs = self.config.real_joint_dofs
+        real_probe_dofs = self.config.gt_joint_dofs
 
         old_ti = t0
         for ii, ti in enumerate(cam_queue.t):
@@ -434,7 +434,7 @@ class Filter(object):
     def calculate_metric(self, i_cam, camera):
         cam_reference = camera.rotated if camera.rotated else camera
 
-        indices_range = range(0, len(self.traj.t), self.config.num_interframe_vals)
+        indices_range = range(0, len(self.traj.t), self.config.interframe_vals)
         upd_indices = [x for x in indices_range]
 
         sum_res_cam = 0
@@ -465,14 +465,17 @@ class Filter(object):
 
     def calculate_dof_metric(self):
         """at end of run"""
-        res = self.states.dofs - self.config.gt_imudof
+        res = self.states.dofs - self.config.gt_imu_dofs
         return np.dot(res, res) / 6
 
     def save(self):
         self.config.mse = self.mse
-        # self.config.save('./configs.txt')
-        self.traj.write_to_file(self.config.traj_kf_filepath)
-        self.imu.ref.write_to_file(self.config.traj_imuref_filepath)
+        traj_path = self.config.traj_path
+        kf_filepath = os.path.join(traj_path, f"kf_best_{self.config.traj_name}.txt")
+        imuref_filepath = kf_filepath.replace("kf_best", "imu_ref")
+
+        self.traj.write_to_file(kf_filepath)
+        self.imu.ref.write_to_file(imuref_filepath)
 
     def save_states(self, i_cam, t):
         # will be the new initial states
@@ -485,42 +488,6 @@ class Filter(object):
         self.old_om_old = np.copy(self.om_old)
         self.old_acc_old = np.copy(self.acc_old)
         self.old_R_WB_old = np.copy(self.R_WB_old)
-
-    def reset_warm(self):
-        # set new initial states
-        self.states = deepcopy(self.old_states)
-        self.P = np.copy(self.old_P)
-
-        # reset camera input to old time
-        old_t = self.old_t
-        new_cam_timestamps = tqdm(
-            enumerate(camera.t[self.old_i_cam + 1 :]),  # no IC
-            total=camera.max_vals,
-            initial=self.old_i_cam + 1,
-            desc="Warm start",
-            dynamic_ncols=True,
-            disable=not self.show_progress,
-        )
-
-        # new camera object
-        # new imu object referencing new camera
-
-        # buffer
-        self.om_old = np.copy(self.old_om_old)
-        self.acc_old = np.copy(self.old_acc_old)
-        self.R_WB_old = np.copy(self.old_R_WB_old)
-
-        # initial value for imu
-        self.imu.eval_init(
-            self.config.real_joint_dofs, self.states.ndofs, overwrite=True
-        )
-
-        # reset imu input to old time
-
-        # delete trajectory up till old time
-        # append initial values
-
-        return new_cam_timestamps
 
     def plot(self, camera, compact):
         if not self.config.do_plot:

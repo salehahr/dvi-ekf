@@ -1,9 +1,10 @@
 simulation:
-  data_base_path: data
+  mode: run # or tune
+  data_folder: data
   traj_name: mandala0_mono # e.g. trans_x, rot_x, ...
   num_kf_runs: 1
-  mode: run # or tune
-  do_plot: false
+  frozen_dofs: [1, 1, 1, 1, 1, 1]
+  do_plot: true
   do_fast_sim: true
 
 camera:

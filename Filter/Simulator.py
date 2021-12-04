@@ -1,20 +1,37 @@
 import copy
+from typing import Optional
 
 import numpy as np
 from scipy.optimize import differential_evolution
 from tqdm import trange
 
-from Filter import Filter
+from Filter.Filter import Filter
+from Filter.States import States
+from Models.Camera import Camera
+from Models.Imu import Imu
+from Models.Probe import SimpleProbe, SymProbe
 
 
 class Simulator(object):
     def __init__(self, config):
         # simulation objects
-        self._config = config
-        self.camera = config.get_camera()
-        self.imu = config.get_imu(self.camera, gen_ref=True)
+        self._config = None
+        self.camera: Optional[Camera] = None
+        self.imu: Optional[Imu] = None
 
-        self.x0, self.cov0 = config.get_ic(self.camera, self.imu)
+        self.x0: Optional[States] = None
+        self.cov0: Optional[np.ndarray] = None
+
+        probe = SimpleProbe(
+            scope_length=config.model.length, theta_cam=config.model.angle
+        )
+        self.probe = probe
+        self.sym_probe = SymProbe(probe)
+
+        # update config
+        config.update_dofs(probe)
+        self.config = config
+
         self.kf = Filter(self)
 
         # optimisation variables
@@ -57,10 +74,11 @@ class Simulator(object):
     @config.setter
     def config(self, new_config):
         self._config = new_config
-        self.camera = config.get_camera()
-        self.imu = config.get_imu(self.camera, gen_ref=True)
+        self.camera = Camera.create(new_config)
+        self.imu = Imu.create(new_config.imu, self.camera, self.probe, gen_ref=True)
 
-        self.x0, self.cov0 = config.get_ic(self.camera, self.imu)
+        self.x0 = States.get_ic(self.camera, self.imu, new_config.ic_imu_dofs)
+        self.cov0 = new_config.cov0_matrix
 
     @property
     def best_run_id(self):
@@ -206,11 +224,9 @@ class Simulator(object):
         with open(filename, "w+") as f:
             f.write(x)
 
-    def save_and_plot(self, compact=True):
+    def plot(self, compact=True):
         if self.kf_best:
-            self.kf_best.save()
             self.kf_best.plot(self.camera, compact=compact)
             print(f"Best run: #{self.best_run_id}; average MSE = {self.mse_avg:.2E}")
         else:
-            self.kf.save()
             self.kf.plot(self.camera, compact=compact)

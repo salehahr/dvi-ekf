@@ -1,6 +1,8 @@
 import unittest
 
-from context import Camera, Config
+from context import Camera
+
+from tools import Config
 
 config = Config()
 

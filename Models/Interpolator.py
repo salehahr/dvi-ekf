@@ -1,6 +1,6 @@
 import numpy as np
 
-from .context import VisualTraj
+from Filter.Trajectory import VisualTraj
 
 
 class Interpolator(object):
