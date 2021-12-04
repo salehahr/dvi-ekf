@@ -1,4 +1,3 @@
-from .Probe import Probe, SimpleProbe, RigidSimpleProbe, SymProbe
-
 from .Camera import Camera
 from .Imu import Imu
+from .Probe import Probe, RigidSimpleProbe, SimpleProbe, SymProbe

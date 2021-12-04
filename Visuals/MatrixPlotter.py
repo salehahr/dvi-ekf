@@ -1,11 +1,8 @@
 import matplotlib.pyplot as plt
 
+
 class MatrixPlotter(object):
-    def __init__(self, name,
-            min_row = 0,
-            min_col = 0,
-            max_row = None,
-            max_col = None):
+    def __init__(self, name, min_row=0, min_col=0, max_row=None, max_col=None):
         self.name = name
         self.t = []
 
@@ -18,7 +15,7 @@ class MatrixPlotter(object):
         self._init_matrix()
 
     def __iter__(self):
-        """ Make object iterable. """
+        """Make object iterable."""
         for attr, value in self.__dict__.items():
             yield attr, value
 
@@ -35,11 +32,11 @@ class MatrixPlotter(object):
                 self.__dict__[f"a_{i}_{j}"].append(mat[i][j])
 
     def plot(self, axes=None, min_t=None, max_t=None, index_from_zero=False):
-        """ Creates a plot of them matrix entries.
+        """Creates a plot of them matrix entries.
 
-            Param:
-            * index_from_zero - whether to label matrix entries starting from
-                    0 or starting from 1
+        Param:
+        * index_from_zero - whether to label matrix entries starting from
+                0 or starting from 1
         """
 
         plot_rows = self.max_row - self.min_row
@@ -61,8 +58,11 @@ class MatrixPlotter(object):
                 plt_col = col - self.min_col
 
                 label = f"a_{row}_{col}"
-                latex_label = f"$a_{{{row}\_{col}}}$" if index_from_zero \
-                            else f"$a_{{{row+1}\_{col+1}}}$"
+                latex_label = (
+                    f"$a_{{{row}\_{col}}}$"
+                    if index_from_zero
+                    else f"$a_{{{row+1}\_{col+1}}}$"
+                )
 
                 val = self.__dict__[label]
                 min_val, max_val = min(val), max(val)

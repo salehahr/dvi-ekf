@@ -1,5 +1,4 @@
-from .Quaternion import Quaternion
-
 from .Filter import Filter, States
+from .Quaternion import Quaternion
 from .Simulator import Simulator
-from .Trajectory import VisualTraj, FilterTraj, ImuTraj, ImuRefTraj
+from .Trajectory import FilterTraj, ImuRefTraj, ImuTraj, VisualTraj

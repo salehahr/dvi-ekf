@@ -1,11 +1,10 @@
 from configuration import Config
 from Filter import Simulator
 
-## initialise objects
-config  = Config()
-sim     = Simulator(config)
+config = Config()
+sim = Simulator(config)
 
-if config.mode == 'tune':
+if config.mode == "tune":
     sim.optimise()
 else:
     sim.show_run_progress = False

@@ -1,20 +1,30 @@
-import matplotlib.pyplot as plt
 import math
+
+import matplotlib.pyplot as plt
+
 
 def show_plot(plot_func, *args):
     def wrapper(*args):
         plot_func(*args)
         plt.show()
+
     return wrapper
+
 
 def plot_loop(f_plot_objs, **kwargs):
     def make_vals_dict(objs, vals):
         def make_val_dict(obj, val):
             if obj and (val is not []):
-                return {'t' : obj.t, 'vals' : val,}
+                return {
+                    "t": obj.t,
+                    "vals": val,
+                }
 
-        return {o.name: make_val_dict(o, vals[i])
-                for i, o in enumerate(objs) if o is not None}
+        return {
+            o.name: make_val_dict(o, vals[i])
+            for i, o in enumerate(objs)
+            if o is not None
+        }
 
     def get_flat_vals(vals_dict, vals):
         if len(vals_dict.keys()) == 1:
@@ -23,15 +33,15 @@ def plot_loop(f_plot_objs, **kwargs):
             return [v for sv in vals for v in sv]
 
     def wrapper(self, **kwargs):
-        labels      = kwargs['labels']
-        num_cols    = kwargs['num_cols']
-        axes        = kwargs['axes']
-        filename    = kwargs['filename']
-        
+        labels = kwargs["labels"]
+        num_cols = kwargs["num_cols"]
+        axes = kwargs["axes"]
+        filename = kwargs["filename"]
+
         Q = self.config.meas_noise
 
-        num_rows    = math.ceil( len(labels) / num_cols )
-        axes        = self._init_axes(axes, num_rows, num_cols)
+        num_rows = math.ceil(len(labels) / num_cols)
+        axes = self._init_axes(axes, num_rows, num_cols)
 
         ai = 0
         for i, label in enumerate(labels):

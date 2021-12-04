@@ -1,23 +1,25 @@
-import numpy as np
 import math
+
+import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+
 def skew(x):
-    return np.array([[0,    -x[2], x[1]],
-                     [x[2],    0, -x[0]],
-                     [-x[1], x[0],    0]])
+    return np.array([[0, -x[2], x[1]], [x[2], 0, -x[0]], [-x[1], x[0], 0]])
+
 
 def raise_wrong_input(val):
     print(f"Wrong input type to Quaternion! Is: {type(val)}")
     raise TypeError
 
+
 def euler_error_checking(e1, e2, verbosity=False):
     def ensure_close_deg(v1, v2, verbosity=False):
         try:
-            assert(math.isclose(v1, v2, rel_tol=0.1, abs_tol=0.05))
+            assert math.isclose(v1, v2, rel_tol=0.1, abs_tol=0.05)
         except AssertionError as e:
             if verbosity:
-                print(f'Error in Euler angle: {v1:+0.3f} vs {v2:+0.3f}')
+                print(f"Error in Euler angle: {v1:+0.3f} vs {v2:+0.3f}")
 
     x1, y1, z1 = e1
     z2, y2, x2 = e2
@@ -25,11 +27,22 @@ def euler_error_checking(e1, e2, verbosity=False):
     ensure_close_deg(y1, y2, verbosity)
     ensure_close_deg(z1, z2, verbosity)
 
-class Quaternion(object):
-    """ Quaternion convenience class.
-        Euler rotations are extrinsic: rotations about the fixed CS. """
 
-    def __init__(self, val=None, x=None, y=None, z=None, w=None, v=None, do_normalise=False, euler=''):
+class Quaternion(object):
+    """Quaternion convenience class.
+    Euler rotations are extrinsic: rotations about the fixed CS."""
+
+    def __init__(
+        self,
+        val=None,
+        x=None,
+        y=None,
+        z=None,
+        w=None,
+        v=None,
+        do_normalise=False,
+        euler="",
+    ):
         self.x = x
         self.y = y
         self.z = z
@@ -38,12 +51,12 @@ class Quaternion(object):
         # parsing
         if val is not None:
             if isinstance(val, np.ndarray):
-                if val.shape == (3,3):
+                if val.shape == (3, 3):
                     self.x, self.y, self.z, self.w = R.from_matrix(val).as_quat()
-                elif val.shape == (4,1) or val.shape == (4,):
+                elif val.shape == (4, 1) or val.shape == (4,):
                     self.x, self.y, self.z, self.w = val
-                elif val.squeeze().shape == (3,) and euler == 'xyz':
-                    self.x, self.y, self.z, self.w = R.from_euler('xyz', val).as_quat()
+                elif val.squeeze().shape == (3,) and euler == "xyz":
+                    self.x, self.y, self.z, self.w = R.from_euler("xyz", val).as_quat()
                 else:
                     print("Wrong dimensions of np.ndarray for Quaternion!")
                     raise ValueError
@@ -55,7 +68,9 @@ class Quaternion(object):
             else:
                 raise_wrong_input(val)
         elif v is not None and w is not None:
-            self.x, self.y, self.z = v.reshape(3,)
+            self.x, self.y, self.z = v.reshape(
+                3,
+            )
         elif not None in [x, y, z, w]:
             pass
         else:
@@ -68,20 +83,21 @@ class Quaternion(object):
         # error checking
         do_check = False
         if do_check:
-            euler_error_checking(self.euler_xyz_deg,
-                                 self.euler_zyx_deg, verbosity=True)
+            euler_error_checking(self.euler_xyz_deg, self.euler_zyx_deg, verbosity=True)
 
     def __repr__(self):
         return f"Quaternion [x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f}, w={self.w:.3f}]"
 
     @property
     def v(self):
-        return np.array([self.x, self.y, self.z]).reshape(3,)
+        return np.array([self.x, self.y, self.z]).reshape(
+            3,
+        )
 
     # rotation representations
     @property
     def sp_rot(self):
-        """ Scipy Rotation object """
+        """Scipy Rotation object"""
         return R.from_quat(self.xyzw)
 
     @property
@@ -98,19 +114,19 @@ class Quaternion(object):
 
     @property
     def euler_xyz_rad(self):
-        return self.sp_rot.as_euler('xyz', degrees=False)
+        return self.sp_rot.as_euler("xyz", degrees=False)
 
     @property
     def euler_xyz_deg(self):
-        return self.sp_rot.as_euler('xyz', degrees=True)
+        return self.sp_rot.as_euler("xyz", degrees=True)
 
     @property
     def euler_zyx_rad(self):
-        return self.sp_rot.as_euler('zyx', degrees=False)
+        return self.sp_rot.as_euler("zyx", degrees=False)
 
     @property
     def euler_zyx_deg(self):
-        return self.sp_rot.as_euler('zyx', degrees=True)
+        return self.sp_rot.as_euler("zyx", degrees=True)
 
     @property
     def conjugate(self):
@@ -118,7 +134,7 @@ class Quaternion(object):
 
     @property
     def angle(self):
-        """ in radians """
+        """in radians"""
         # https://github.com/aipiano/ESEKF_IMU/blob/38320a8617cd3cf07231c9f6394b01755f7a5fff/esekf.py#L164
         ang1 = math.asin(np.linalg.norm(self.v))
         # ang2 = np.linalg.norm(self.axis)
@@ -133,16 +149,20 @@ class Quaternion(object):
         ang1 = math.asin(np.linalg.norm(self.v))
         ang3 = 2 * math.acos(self.w)
 
-        ax1 = np.zeros(3,) if math.isclose(ang1, 0) else \
-                self.v / np.linalg.norm(self.v)
+        ax1 = (
+            np.zeros(
+                3,
+            )
+            if math.isclose(ang1, 0)
+            else self.v / np.linalg.norm(self.v)
+        )
         # ax2 = self.sp_rot.as_rotvec()
         # ax3 = np.zeros(3,) if math.isclose(ang3, 0) else \
-                # self.v / np.sin (ang3)
+        # self.v / np.sin (ang3)
         # print(f'ax1 {ax1}')
         # print(f'ax2 {ax2}')
         # print(f'ax3 {ax3}')
         return ax1
-
 
     # operators
     def __mul__(self, other):
@@ -152,7 +172,7 @@ class Quaternion(object):
         elif isinstance(other, float) or isinstance(other, int):
             w = other * self.w
             v = other * self.v
-        elif isinstance(other, np.ndarray) and other.shape == (3,3):
+        elif isinstance(other, np.ndarray) and other.shape == (3, 3):
             q_other = Quaternion(val=other, do_normalise=True)
             w = self.w * q_other.w - self.v @ q_other.v
             v = self.w * q_other.v + q_other.w * self.v + np.cross(self.v, q_other.v)
@@ -171,14 +191,13 @@ class Quaternion(object):
         return Quaternion(w=w, v=v, do_normalise=True)
 
     def normalise(self):
-        d = math.sqrt(self.x**2 + self.y**2 + self.z**2 + self.w**2)
-        self.x = self.x/d
-        self.y = self.y/d
-        self.z = self.z/d
-        self.w = self.w/d
+        d = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2 + self.w ** 2)
+        self.x = self.x / d
+        self.y = self.y / d
+        self.z = self.z / d
+        self.w = self.w / d
 
         # constrain scalar part to be positive
         if self.w < 0:
             xyzw = -self.xyzw
             self.__init__(val=xyzw)
-

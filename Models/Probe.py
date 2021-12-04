@@ -1,56 +1,58 @@
+import numpy as np
 import roboticstoolbox as rtb
+import sympy as sp
+from casadi import *
 from spatialmath import SE3
 from spatialmath.base.symbolic import issymbol
+from sympy.tensor.array import tensorcontraction, tensorproduct
 
-from casadi import *
-import numpy as np
-import sympy as sp
-from sympy.tensor.array import tensorproduct, tensorcontraction
-
-from .context import syms, symfcns
+from .context import symfcns, syms
 
 # just so that the plot is orientated correctly...
-plot_rotation = SE3.Ry(-180, 'deg')
+plot_rotation = SE3.Ry(-180, "deg")
+
 
 class Probe(rtb.DHRobot):
     def __init__(self, scope_length, theta_cam):
-        """ Initialises robot links. """
+        """Initialises robot links."""
 
         links = self._gen_links(scope_length, theta_cam)
-        super().__init__(links, name='probe', base=plot_rotation)
+        super().__init__(links, name="probe", base=plot_rotation)
 
         self.q_s = syms.q_s.copy()
         self.qd_s = syms.qd_s.copy()
         self.qdd_s = syms.qdd_s.copy()
 
     def _gen_links(self, scope_length, theta_cam):
-        """ Generates robot links according to chosen configuration. """
+        """Generates robot links according to chosen configuration."""
         links_imu_to_cam = [
             # imu orientation
-            rtb.RevoluteDH(alpha=sp.pi/2, offset=sp.pi/2),
-            rtb.RevoluteDH(alpha=-sp.pi/2, offset=-sp.pi/2),
+            rtb.RevoluteDH(alpha=sp.pi / 2, offset=sp.pi / 2),
+            rtb.RevoluteDH(alpha=-sp.pi / 2, offset=-sp.pi / 2),
             rtb.RevoluteDH(alpha=0, offset=0),
             # # imu translation
-            rtb.PrismaticDH(theta=0, alpha=sp.pi/2),
-            rtb.PrismaticDH(theta=sp.pi/2, alpha=sp.pi/2),
-            rtb.PrismaticDH(theta=-sp.pi/2, alpha=sp.pi/2),
-            ]
+            rtb.PrismaticDH(theta=0, alpha=sp.pi / 2),
+            rtb.PrismaticDH(theta=sp.pi / 2, alpha=sp.pi / 2),
+            rtb.PrismaticDH(theta=-sp.pi / 2, alpha=sp.pi / 2),
+        ]
 
         links_cam_to_slam = [
             # cam to scope end
             rtb.RevoluteDH(d=scope_length, a=0, alpha=theta_cam, offset=0),
             # scope end to virtual slam
-            rtb.RevoluteDH(d=0*scope_length, a=0, alpha=0, offset=0),
-            ]
+            rtb.RevoluteDH(d=0 * scope_length, a=0, alpha=0, offset=0),
+        ]
 
         return links_imu_to_cam + links_cam_to_slam
 
     @property
     def q_cas(self):
         return self._to_casadi(self.q_s)
+
     @property
     def qd_cas(self):
         return self._to_casadi(self.qd_s)
+
     @property
     def qdd_cas(self):
         return self._to_casadi(self.qdd_s)
@@ -95,7 +97,7 @@ class Probe(rtb.DHRobot):
     ## --- acceleration calculations --- ##
     def hessian_symbolic(self, J0):
         n = self.n
-        H = sp.MutableDenseNDimArray([0]*(6*n*n), (6, n, n))
+        H = sp.MutableDenseNDimArray([0] * (6 * n * n), (6, n, n))
 
         for j in range(n):
             for i in range(j, n):
@@ -112,11 +114,13 @@ class Probe(rtb.DHRobot):
         J0 = self.jacob0(self.q_s)
         H = self.hessian_symbolic(J0)
 
-        tp1 = tensorcontraction(tensorproduct(H, self.qd_s_arr), (2,3)) # 6x8x8x8x1
-        tp1 = tp1[:,:,0] # 6x8
+        tp1 = tensorcontraction(tensorproduct(H, self.qd_s_arr), (2, 3))  # 6x8x8x8x1
+        tp1 = tp1[:, :, 0]  # 6x8
 
-        tp2 = tensorcontraction(tensorproduct(tp1, self.qd_s_arr), (1,2)) # 6x1
-        tp2 = tp2.reshape(6,)
+        tp2 = tensorcontraction(tensorproduct(tp1, self.qd_s_arr), (1, 2))  # 6x1
+        tp2 = tp2.reshape(
+            6,
+        )
 
         # H @ qd @ qd + J @ qdd
         res = tp2 + J0 @ self.qdd_s
@@ -144,8 +148,7 @@ class Probe(rtb.DHRobot):
     def _to_casadi(self, var):
         if isinstance(var, np.ndarray):
             is_1dim = var.ndim == 1
-            cs = casadi.SX(var.shape[0], 1) if is_1dim \
-                    else casadi.SX(*var.shape)
+            cs = casadi.SX(var.shape[0], 1) if is_1dim else casadi.SX(*var.shape)
         elif isinstance(var, list):
             is_1dim = True
             cs = casadi.SX(len(var), 1)
@@ -154,19 +157,19 @@ class Probe(rtb.DHRobot):
             for i, v in enumerate(var):
                 if isinstance(v, sp.Expr):
                     f = sp.lambdify(syms.dofs_s, symfcns.dummify_array(v))
-                    cs[i,0] = f(*syms.dofs_cas_list)
+                    cs[i, 0] = f(*syms.dofs_cas_list)
                 else:
-                    cs[i,0] = v
+                    cs[i, 0] = v
         else:
             for i, r in enumerate(var):
                 for j, c in enumerate(r):
                     f = sp.lambdify(syms.dofs_s, symfcns.dummify_array(c))
-                    cs[i,j] = f(*syms.dofs_cas_list)
+                    cs[i, j] = f(*syms.dofs_cas_list)
 
         return cs
 
     def __str__(self):
-        """ Modified to enable printing of table with symbolic offsets."""
+        """Modified to enable printing of table with symbolic offsets."""
 
         offsets = [L.offset for L in self]
         offset_sym = [issymbol(offset) for offset in offsets]
@@ -204,11 +207,15 @@ class Probe(rtb.DHRobot):
 
         return p, R, v, om, acc, alp
 
-    def plot(self, config, block=True, limits=None, movie=None, is_static=True, dt=0.05):
-        """ Modified to allow 'hold' of figure. """
+    def plot(
+        self, config, block=True, limits=None, movie=None, is_static=True, dt=0.05
+    ):
+        """Modified to allow 'hold' of figure."""
+
+        import tkinter
 
         from roboticstoolbox.backends.PyPlot import PyPlot
-        import tkinter
+
         print(f"Plotting robot with the configuration:\n\t {config}")
 
         env = PyPlot()
@@ -216,7 +223,7 @@ class Probe(rtb.DHRobot):
         # visuals
         limit_x = [-0.1, 0.1]
         limit_y = [-0.7, 0.1]
-        limit_z = [0., 0.7]
+        limit_z = [0.0, 0.7]
         limits = [*limit_x, *limit_y, *limit_z] if (limits is None) else limits
 
         env.launch(limits=limits)
@@ -224,11 +231,10 @@ class Probe(rtb.DHRobot):
         try:
             ax.view_init(azim=azim, elev=elev)
         except NameError:
-            pass # default view
+            pass  # default view
 
         # robots
-        env.add(self, jointlabels=True, jointaxes=False,
-                    eeframe=True, shadow=False)
+        env.add(self, jointlabels=True, jointaxes=False, eeframe=True, shadow=False)
 
         # save gif
         loop = True if (movie is None) else False
@@ -274,24 +280,25 @@ class Probe(rtb.DHRobot):
                 # handles error when closing the window
                 return None
 
+
 class SimpleProbe(Probe):
-    """ Simple probe with ROT9 as the only degree of freedom. """
+    """Simple probe with ROT9 as the only degree of freedom."""
 
-    ROT1, ROT2, ROT3 = 0., 0., 0.
-    TRANS4, TRANS5, TRANS6 = 0., 0., 20
+    ROT1, ROT2, ROT3 = 0.0, 0.0, 0.0
+    TRANS4, TRANS5, TRANS6 = 0.0, 0.0, 20
 
-    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, None, 0.]
+    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, None, 0.0]
 
     def __init__(self, scope_length, theta_cam):
-        """ Initialises probe as normal and sets the generalised
-            coordinates, which are to be constrained, to the
-            corresponding constant values. """
+        """Initialises probe as normal and sets the generalised
+        coordinates, which are to be constrained, to the
+        corresponding constant values."""
 
         super().__init__(scope_length, theta_cam)
 
         # populate dof vectors q, qd, qdd with constraints
         constraints = self.__class__.constraints
-        assert(len(constraints) == len(self.q_s))
+        assert len(constraints) == len(self.q_s)
 
         for i, c in enumerate(constraints):
             if c is not None:
@@ -304,26 +311,28 @@ class SimpleProbe(Probe):
                 self.qdd[i] = 0
                 self.qdd_s[i] = 0
 
+
 class RigidSimpleProbe(SimpleProbe):
-    """ Simple probe with non-rotating, non-translating parts.
-        Uses the BC configuration. """
+    """Simple probe with non-rotating, non-translating parts.
+    Uses the BC configuration."""
 
-    ROT1, ROT2, ROT3 = 0., 0., 0.
-    TRANS4, TRANS5, TRANS6 = 0., 0., 20
+    ROT1, ROT2, ROT3 = 0.0, 0.0, 0.0
+    TRANS4, TRANS5, TRANS6 = 0.0, 0.0, 20
 
-    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, 0., 0.]
+    constraints = [ROT1, ROT2, ROT3, TRANS4, TRANS5, TRANS6, 0.0, 0.0]
 
     def __init__(self, scope_length, theta_cam):
         super().__init__(scope_length, theta_cam)
 
         # set all joint values to 0 except for the given constant values
-        self.q = [q if not isinstance(q, sp.Expr) else 0. for q in self.q_s]
+        self.q = [q if not isinstance(q, sp.Expr) else 0.0 for q in self.q_s]
         self.qd = [0] * self.n
         self.qdd = [0] * self.n
 
+
 class SymProbe(object):
-    """ Container class for probe that only stores the
-        symbolic forward kinematics relations. """
+    """Container class for probe that only stores the
+    symbolic forward kinematics relations."""
 
     def __init__(self, probe, const_dofs=False):
         self.n = probe.n
@@ -356,18 +365,18 @@ class SymProbe(object):
         self._flag_const_dofs = const_dofs
 
     def _get_tr(self, expr):
-        """ Returns kinematic expressions in terms of
-            estimated DOFs and error DOFs."""
+        """Returns kinematic expressions in terms of
+        estimated DOFs and error DOFs."""
         return casadi.substitute(expr, syms.q_cas, syms.q_tr_cas)
 
     def get_est_fwkin(self, dofs_est, notchdofs):
-        """ Returns the estimated relative kinematics
-            using the estimated dofs. """
-        f_est_probe = casadi.Function('f_est_probe',
-                    [syms.dofs, syms.notchdofs],
-                    [*self.sym_fwkin],
-                    ['dofs', 'notchdofs'],
-                    [*syms.probe_fwkin_str],
-                    )
-        return [casadi.DM(r).full()
-                    for r in f_est_probe(dofs_est, notchdofs)]
+        """Returns the estimated relative kinematics
+        using the estimated dofs."""
+        f_est_probe = casadi.Function(
+            "f_est_probe",
+            [syms.dofs, syms.notchdofs],
+            [*self.sym_fwkin],
+            ["dofs", "notchdofs"],
+            [*syms.probe_fwkin_str],
+        )
+        return [casadi.DM(r).full() for r in f_est_probe(dofs_est, notchdofs)]

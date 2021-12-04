@@ -1,9 +1,7 @@
 import context
-
 import matplotlib.pyplot as plt
-
 # load data
-from generate_data import imu_mono_traj, imu_gt_traj, min_t, max_t
+from generate_data import imu_gt_traj, imu_mono_traj, max_t, min_t
 
 gt_axes = None
 gt_axes = imu_gt_traj.noisy.plot(min_t=min_t, max_t=max_t)
