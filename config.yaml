@@ -1,0 +1,75 @@
+simulation:
+  data_base_path: data
+  traj_name: mandala0_mono # e.g. trans_x, rot_x, ...
+  num_kf_runs: 1
+  mode: run # or tune
+  do_plot: false
+  do_fast_sim: true
+
+camera:
+  start_frame: null
+  total_frames: all
+  scale: 10
+  # for the Kalman filter measurement noise matrix
+  noise:
+    position: [0.02, 0.002, 0.02]
+    theta: [0.00001, 0.00001, 0.00001] # degrees
+    notch: 0.01 # degrees
+
+imu:
+  # number of IMU data between previous frame up to and includig the next frame
+  interframe_vals: 10
+  # from datasheet; used for generating values for the Kalman filter process noise matrix
+  noise_sample_rate: 10 # Hz
+  gravity: 981 # cm/s^2, adjust units if necessary
+
+model:
+  length: 50 # cm
+  angle: 30 # degrees
+
+filter:
+  # initial conditions
+  ic:
+    # initial uncertainties / covariance values (diagonal entries)
+    cov0:
+      # IMU position in world coordinates
+      imu_pos: [0.02, 0.002, 0.002]
+      # IMU velocity in world coordintes
+      imu_vel: [0.1, 0.1, 0.1]
+      # IMU orientation parametrisation in world coordinates
+      imu_theta: [1.0, 1, 1] # degrees
+      # relative rotation from IMU to camera
+      dofs_rot: [5, 5, 5] # degrees
+      # relative translation from IMU to camera
+      dofs_trans: [10, 10, 10]
+      # notch rotation and its first two derivatives
+      notch: [0.2, 0.02, 0.02] # degrees
+      # camera position in world coordinates
+      camera_pos: [0.02, 0.002, 0.002]
+      # camera orientation parametrisation  in world coordinates
+      camera_theta: [0.2, 0.2, 0.2] # degrees
+    # initial states
+    x0:
+      # IMU position in world coordinates
+      imu_pos: [0, 0, 0]
+      # IMU velocity in world coordintes
+      imu_vel: [0, 0, 0]
+      # IMU orientation parametrisation in world coordinates
+      imu_theta: [0, 0, 0] # degrees
+      # relative rotation from IMU to camera
+      dofs_rot: [0, 0, 0] # degrees
+      # relative translation from IMU to camera
+      dofs_trans: [0, 0, 20]
+      # notch rotation and its first two derivatives
+      notch: [0, 0, 0] # degrees
+      # camera position in world coordinates
+      camera_pos: [0, 0, 0]
+      # camera orientation parametrisation  in world coordinates
+      camera_theta: [0, 0, 0] # degrees
+  # variables for the process noise matrix Q
+  process_noise:
+    # random walk of the dof params (step taken between frames)
+    dofs:
+      translation: [0.25, 0.25, 0.25]
+      rotation: [1, 1, 10] # degrees
+      notch_accel: 0.05 # degrees/s^2

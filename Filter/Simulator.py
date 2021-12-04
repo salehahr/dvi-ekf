@@ -14,7 +14,7 @@ class Simulator(object):
         self.camera = config.get_camera()
         self.imu = config.get_imu(self.camera, gen_ref=True)
 
-        self.x0, self.cov0 = config.get_IC(self.camera, self.imu)
+        self.x0, self.cov0 = config.get_ic(self.camera, self.imu)
         self.kf = Filter(self)
 
         # optimisation variables
@@ -25,8 +25,8 @@ class Simulator(object):
         ]
 
         # simulation run params
-        self.num_kf_runs = self.config.num_kf_runs
-        self.cap_t = self.config.cap_t
+        self.num_kf_runs = config.sim.num_kf_runs
+        self.mode = config.sim.mode
         self.show_run_progress = True
 
         # results
@@ -60,7 +60,7 @@ class Simulator(object):
         self.camera = config.get_camera()
         self.imu = config.get_imu(self.camera, gen_ref=True)
 
-        self.x0, self.cov0 = config.get_IC(self.camera, self.imu)
+        self.x0, self.cov0 = config.get_ic(self.camera, self.imu)
 
     @property
     def best_run_id(self):
@@ -77,7 +77,7 @@ class Simulator(object):
             averaged from all the KF runs.
         """
         # make sure that KF has the right config
-        if self.config.mode == "tune":
+        if self.mode == "tune":
             self.kf.config = self.config
 
         if disp_config:

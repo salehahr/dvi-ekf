@@ -465,7 +465,7 @@ class Filter(object):
 
     def calculate_dof_metric(self):
         """at end of run"""
-        res = self.states.dofs - self.config.real_imu_dofs
+        res = self.states.dofs - self.config.gt_imudof
         return np.dot(res, res) / 6
 
     def save(self):
