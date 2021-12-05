@@ -3,10 +3,10 @@
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)  
 
 Implementation of a loosely-coupled VI-ESKF SLAM to estimate
-the calibration parameters in a camera-IMU sensor setup on a cystoscope.
+the calibration parameters in a cystoscopic camera-IMU sensor setup.
 
-![](docs/sensor-setup-real.png)  
-![](docs/sensor-setup-model.png)
+![](docs/_img/sensor-setup-real.png)  
+![](docs/_img/sensor-setup-model.png)
 
 ## Usage
 1. Configure settings in `config.yaml`
