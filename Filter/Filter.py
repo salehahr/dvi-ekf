@@ -9,7 +9,7 @@ from Visuals import FilterPlot
 
 from .context import eqns, syms
 from .Quaternion import Quaternion, skew
-from .States import ErrorStates, States
+from .States import ErrorStates
 from .Trajectory import FilterTraj
 
 UPDATE_MSE_THRESHOLD = 1
@@ -20,6 +20,7 @@ class Filter(object):
     def __init__(self, sim):
         # simulation
         self.sim = sim
+        self.config = sim.config
         self.show_progress = True
         self._run_id = None
         self.dt = 0.0
@@ -41,7 +42,7 @@ class Filter(object):
         self._u = []
 
         # objects
-        self.probe = self.sim.sym_probe
+        self.probe = sim.sym_probe
         self.camera = sim.camera
         self.imu = sim.imu
 
@@ -101,14 +102,6 @@ class Filter(object):
         self.Q = Q
 
         self.R = np.diag(self.config.meas_noise_var)
-
-    @property
-    def config(self):
-        return self.sim.config
-
-    @config.setter
-    def config(self, obj):
-        self.sim.config = obj
 
     @property
     def run_id(self):

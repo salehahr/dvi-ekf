@@ -1,4 +1,4 @@
-from Filter.Simulator import Simulator
+from Filter import Simulator
 from tools import Config
 
 config = Config("config.yaml")
