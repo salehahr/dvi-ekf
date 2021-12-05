@@ -1,20 +1,34 @@
 import copy
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 from scipy.optimize import differential_evolution
 from tqdm import trange
 
-from Filter.Filter import Filter
-from Filter.States import States
 from Models.Camera import Camera
 from Models.Imu import Imu
 from Models.Probe import SimpleProbe, SymProbe
 
+from .Filter import Filter
+from .States import States
+
+
+def save_params(x, filename=None):
+    filename = "./opt-tune-params.txt" if not filename else filename
+    with open(filename, "w+") as f:
+        f.write(x)
+
 
 class Simulator(object):
     def __init__(self, config):
-        # simulation objects
+        # probe must be defined first as the IMU depends on the GT joint values
+        probe = SimpleProbe(
+            scope_length=config.model.length, theta_cam=config.model.angle
+        )
+        self.probe = probe
+        self.sym_probe = SymProbe(probe)
+
+        # initialise simulation objects
         self._config = None
         self.camera: Optional[Camera] = None
         self.imu: Optional[Imu] = None
@@ -22,46 +36,44 @@ class Simulator(object):
         self.x0: Optional[States] = None
         self.cov0: Optional[np.ndarray] = None
 
-        probe = SimpleProbe(
-            scope_length=config.model.length, theta_cam=config.model.angle
-        )
-        self.probe = probe
-        self.sym_probe = SymProbe(probe)
-
-        # update config
+        # update and set config, which defines the simulation objects
         config.update_dofs(probe)
         self.config = config
 
         self.kf = Filter(self)
 
-        # optimisation variables
-        # for now ignoring dofs
-        self._optim_std = [
+        # optimisation variables -- for now ignoring dofs
+        self._optim_std: List[float] = [
             *self.config.process_noise_rw_std,
             *self.config.meas_noise_std,
         ]
 
         # simulation run params
-        self.num_kf_runs = config.sim.num_kf_runs
+        self.num_kf_runs: int = config.sim.num_kf_runs
         self.mode = config.sim.mode
-        self.show_run_progress = True
+        self.show_run_progress: bool = True
 
         # results
-        self.mses = []
-        self.mse_best = 1e10
-        self.mse_avg = None
-        self.kf_best = None
-        self.best_x = None
+        self.mses: List[float] = []
+        self.mse_best: float = 1e10
+        self.mse_avg: Optional[float] = None
+        self._kf_best: Optional[Filter] = None
+        self._dof_mse: Optional[float] = None
+        self._file = None
 
     # optimisation variables
     # for now ignoring dofs
     @property
-    def optim_std(self):
+    def optim_std(self) -> List[float]:
         return self._optim_std
 
     @optim_std.setter
-    def optim_std(self, val):
+    def optim_std(self, val: List[float]) -> None:
         self._optim_std = val
+
+        # set the config values
+        # -- note: random walk might be problematic due to
+        # division by interframe values in the initial definition
         self.config.process_noise_rw_std = val[0:7]
         self.config.meas_noise_std = val[7:8]
 
@@ -72,8 +84,13 @@ class Simulator(object):
         return self._config
 
     @config.setter
-    def config(self, new_config):
+    def config(self, new_config) -> None:
+        """
+        Setting the config creates new camera and IMU objects.
+        This affects the initial states.
+        """
         self._config = new_config
+
         self.camera = Camera.create(new_config)
         self.imu = Imu.create(new_config.imu, self.camera, self.probe, gen_ref=True)
 
@@ -81,15 +98,15 @@ class Simulator(object):
         self.cov0 = new_config.cov0_matrix
 
     @property
-    def best_run_id(self):
-        return self.kf_best.run_id
+    def best_run_id(self) -> int:
+        return self._kf_best.run_id
 
-    def run_once(self):
+    def run_once(self) -> None:
         self.kf.run(self.camera, 0, "KF run", verbose=True)
         self.mse_best = self.kf.mse
         print(f"\t MSE: {self.mse_best:.2E}")
 
-    def run(self, disp_config=False, save_best=False, verbose=True):
+    def run(self, disp_config=False, save_best=False, verbose=True) -> None:
         """Runs KF on the camera trajectory several times.
         Calculates the mean squared error of the DOFs,
             averaged from all the KF runs.
@@ -99,7 +116,7 @@ class Simulator(object):
             self.kf.config = self.config
 
         if disp_config:
-            self.config.print_config()
+            self.config.print()
 
         run_bar = trange(
             self.num_kf_runs, desc="KF runs", disable=not self.show_run_progress
@@ -118,7 +135,7 @@ class Simulator(object):
                 self.mse_best = self.kf.mse
 
                 if save_best:
-                    self.kf_best = copy.deepcopy(self.kf)
+                    self._kf_best = copy.deepcopy(self.kf)
 
             # reset for next run
             self.reset_kf()
@@ -128,12 +145,10 @@ class Simulator(object):
             print(f"\tOptimvars: {self.optim_std}")
             print(f"\tDOF MSE: {self.mse_avg:.2E}")
 
-    def reset_kf(self):
-        self.kf = Filter(
-            self.config, self.imu, self.x0, self.cov0, self.config.frozen_dofs
-        )
+    def reset_kf(self) -> None:
+        self.kf = Filter(self)
 
-    def optimise(self):
+    def optimise(self) -> None:
         """For tuning the KF parameters.
         Currently only for kp (scale factor for process noise).
         """
@@ -169,11 +184,10 @@ class Simulator(object):
                 f"Convergence: {convergence}\n\n",
             ]
 
-            self.file.write("\n".join(res_str))
+            self._file.write("\n".join(res_str))
             print(res_str)
 
-        file = open("output.txt", "a+")
-        self.file = file
+        self._file = open("output.txt", "a+")
 
         bounds = (
             (0, 10),  # random walk p
@@ -197,7 +211,7 @@ class Simulator(object):
 
         print("Running optimiser (differential evolution)... ")
         print("Initial config")
-        self.config.print_config()
+        self.config.print()
 
         ret = differential_evolution(
             optim_func,
@@ -213,20 +227,14 @@ class Simulator(object):
 
         # results
         print(f"\nglobal minimum using params: {ret.x},\nmse = {ret.fun:.3f}")
-        self.save_params(ret.x, filename="./opt-tune-params-de.txt")
-        self.dof_mse = ret.fun
+        save_params(ret.x, filename="./opt-tune-params-de.txt")
+        self._dof_mse = ret.fun
 
-        file.close()
+        self._file.close()
 
-    def save_params(self, x, filename=None):
-        # 7.779E-09 1.355 0.544 0.034 average MSE 5.0474 (fast run)
-        filename = "./opt-tune-params.txt" if not filename else filename
-        with open(filename, "w+") as f:
-            f.write(x)
-
-    def plot(self, compact=True):
-        if self.kf_best:
-            self.kf_best.plot(self.camera, compact=compact)
+    def plot(self, compact=True) -> None:
+        if self._kf_best:
+            self._kf_best.plot(self.camera, compact=compact)
             print(f"Best run: #{self.best_run_id}; average MSE = {self.mse_avg:.2E}")
         else:
             self.kf.plot(self.camera, compact=compact)
