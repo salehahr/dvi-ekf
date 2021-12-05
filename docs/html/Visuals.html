@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visuals package &mdash; DVI-EKF  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> DVI-EKF
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Visuals package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-Visuals.MatrixPlotter">Visuals.MatrixPlotter module</a></li>
+<li><a class="reference internal" href="#module-Visuals.Plotter">Visuals.Plotter module</a></li>
+<li><a class="reference internal" href="#module-Visuals.decorators">Visuals.decorators module</a></li>
+<li><a class="reference internal" href="#module-Visuals.line_formats">Visuals.line_formats module</a></li>
+<li><a class="reference internal" href="#module-Visuals">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DVI-EKF</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Visuals package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Visuals.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="visuals-package">
+<h1>Visuals package<a class="headerlink" href="#visuals-package" title="Permalink to this headline"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline"></a></h2>
+</section>
+<section id="module-Visuals.MatrixPlotter">
+<span id="visuals-matrixplotter-module"></span><h2>Visuals.MatrixPlotter module<a class="headerlink" href="#module-Visuals.MatrixPlotter" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="Visuals.MatrixPlotter.MatrixPlotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Visuals.MatrixPlotter.</span></span><span class="sig-name descname"><span class="pre">MatrixPlotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_row</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_row</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.MatrixPlotter.MatrixPlotter" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="Visuals.MatrixPlotter.MatrixPlotter.append">
+<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.MatrixPlotter.MatrixPlotter.append" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Visuals.MatrixPlotter.MatrixPlotter.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_from_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.MatrixPlotter.MatrixPlotter.plot" title="Permalink to this definition"></a></dt>
+<dd><p>Creates a plot of them matrix entries.</p>
+<p>Param:
+* index_from_zero - whether to label matrix entries starting from</p>
+<blockquote>
+<div><p>0 or starting from 1</p>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-Visuals.Plotter">
+<span id="visuals-plotter-module"></span><h2>Visuals.Plotter module<a class="headerlink" href="#module-Visuals.Plotter" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="Visuals.Plotter.CameraPlot">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Visuals.Plotter.</span></span><span class="sig-name descname"><span class="pre">CameraPlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">camera</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.CameraPlot" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Visuals.Plotter.Plotter" title="Visuals.Plotter.Plotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Visuals.Plotter.Plotter</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="Visuals.Plotter.CameraPlot.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.CameraPlot.plot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Visuals.Plotter.CameraPlot.plot_notch">
+<span class="sig-name descname"><span class="pre">plot_notch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.CameraPlot.plot_notch" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="Visuals.Plotter.DofRef">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Visuals.Plotter.</span></span><span class="sig-name descname"><span class="pre">DofRef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.DofRef" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="Visuals.Plotter.FilterPlot">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Visuals.Plotter.</span></span><span class="sig-name descname"><span class="pre">FilterPlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.FilterPlot" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Visuals.Plotter.Plotter" title="Visuals.Plotter.Plotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Visuals.Plotter.Plotter</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="Visuals.Plotter.FilterPlot.img_filepath_cam">
+<span class="sig-name descname"><span class="pre">img_filepath_cam</span></span><a class="headerlink" href="#Visuals.Plotter.FilterPlot.img_filepath_cam" title="Permalink to this definition"></a></dt>
+<dd><p>labels that start at row = 1</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Visuals.Plotter.FilterPlot.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.FilterPlot.plot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Visuals.Plotter.FilterPlot.plot_compact">
+<span class="sig-name descname"><span class="pre">plot_compact</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.FilterPlot.plot_compact" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="Visuals.Plotter.Plotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Visuals.Plotter.</span></span><span class="sig-name descname"><span class="pre">Plotter</span></span><a class="headerlink" href="#Visuals.Plotter.Plotter" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="Visuals.Plotter.Plotter.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.Plotter.plot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Visuals.Plotter.Plotter.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.Plotter.save" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Visuals.Plotter.np_string">
+<span class="sig-prename descclassname"><span class="pre">Visuals.Plotter.</span></span><span class="sig-name descname"><span class="pre">np_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.Plotter.np_string" title="Permalink to this definition"></a></dt>
+<dd><p>For formatting np arrays when printing.</p>
+</dd></dl>
+
+</section>
+<section id="module-Visuals.decorators">
+<span id="visuals-decorators-module"></span><h2>Visuals.decorators module<a class="headerlink" href="#module-Visuals.decorators" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="Visuals.decorators.plot_loop">
+<span class="sig-prename descclassname"><span class="pre">Visuals.decorators.</span></span><span class="sig-name descname"><span class="pre">plot_loop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f_plot_objs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.decorators.plot_loop" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Visuals.decorators.show_plot">
+<span class="sig-prename descclassname"><span class="pre">Visuals.decorators.</span></span><span class="sig-name descname"><span class="pre">show_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_func</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Visuals.decorators.show_plot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-Visuals.line_formats">
+<span id="visuals-line-formats-module"></span><h2>Visuals.line_formats module<a class="headerlink" href="#module-Visuals.line_formats" title="Permalink to this headline"></a></h2>
+</section>
+<section id="module-Visuals">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-Visuals" title="Permalink to this headline"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Salehah.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
