@@ -102,6 +102,7 @@ class Simulator(object):
         return self._kf_best.run_id
 
     def run_once(self) -> None:
+        """Only performs a single run of the filter."""
         self.kf.run(self.camera, 0, "KF run", verbose=True)
         self.mse_best = self.kf.mse
         print(f"\t MSE: {self.mse_best:.2E}")

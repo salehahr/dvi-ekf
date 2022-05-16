@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from copy import copy
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
@@ -10,6 +11,9 @@ from Filter.Trajectory import VisualTraj
 from Visuals import CameraPlot
 
 from .Interpolator import Interpolator
+
+if TYPE_CHECKING:
+    from tools.config import Config
 
 
 class Camera(object):
@@ -25,14 +29,23 @@ class Camera(object):
 
     def __init__(
         self,
-        filepath,
-        notch_filepath=None,
-        traj=None,
-        max_vals=None,
-        scale=None,
-        with_notch=False,
+        filepath: str,
+        notch_filepath: str = None,
+        traj: Optional[VisualTraj] = None,
+        max_vals: Optional[int] = None,
+        scale: Optional[float] = None,
+        with_notch: bool = False,
         start_at=None,
     ):
+        """
+        :param filepath: camera trajectory filepath
+        :param notch_filepath: notch trajectory filepath
+        :param traj: VisualTraj object
+        :param max_vals: maximum number of frames
+        :param scale: scaling factor
+        :param with_notch: whether to incorporate notch trajectory or not
+        :param start_at: which frame number to start the trajectory at
+        """
         self.traj = (
             traj
             if traj
@@ -101,14 +114,15 @@ class Camera(object):
             self.gen_rotated()
 
     @staticmethod
-    def create(config) -> Camera:
-        filepath_cam = os.path.join(config.traj_path, f"{config.traj_name}.txt")
+    def create(config: Config) -> Camera:
+        """Creates new camera object from the config object."""
+        trajectory_fp = os.path.join(config.traj_path, f"{config.traj_name}.txt")
         notch_fp = os.path.join(
             config.sim.data_folder, f"{config.sim.notch_traj_name}.txt"
         )
 
         cam = Camera(
-            filepath=filepath_cam,
+            filepath=trajectory_fp,
             notch_filepath=notch_fp,
             max_vals=config.max_vals,
             scale=config.camera.scale,
@@ -134,14 +148,13 @@ class Camera(object):
         return self.traj.is_interpolated
 
     def update_sim_params(self, config):
-        """Updates time-related info from camera data."""
+        """Updates time-related info in the config, from camera data."""
         config.max_vals = self.max_vals
         config.min_t = self.min_t
         config.max_t = self.max_t
         config.total_data_pts = (self.max_vals - 1) * config.interframe_vals + 1
 
     def interpolate(self, interframe_vals):
-        interp_labels = ["t", "x", "y", "z", "qx", "qy", "qz", "qw"]
         interp_traj = Interpolator(interframe_vals, self).interpolated
         interp_traj.with_notch = self.with_notch
 
