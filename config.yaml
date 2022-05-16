@@ -2,6 +2,7 @@ simulation:
   mode: run # or tune
   data_folder: data
   traj_name: mandala0_mono # e.g. trans_x, rot_x, ...
+  notch_traj_name: notch90
   num_kf_runs: 1
   frozen_dofs: [1, 1, 1, 1, 1, 1]
   do_plot: true
@@ -11,6 +12,7 @@ camera:
   start_frame: null
   total_frames: all
   scale: 10
+  with_notch: false
   # for the Kalman filter measurement noise matrix
   noise:
     position: [0.02, 0.002, 0.02]

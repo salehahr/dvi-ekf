@@ -26,6 +26,7 @@ class Camera(object):
     def __init__(
         self,
         filepath,
+        notch_filepath=None,
         traj=None,
         max_vals=None,
         scale=None,
@@ -38,6 +39,7 @@ class Camera(object):
             else VisualTraj(
                 "camera",
                 filepath,
+                notch_filepath=notch_filepath,
                 cap=max_vals,
                 scale=scale,
                 with_notch=with_notch,
@@ -101,22 +103,20 @@ class Camera(object):
     @staticmethod
     def create(config) -> Camera:
         filepath_cam = os.path.join(config.traj_path, f"{config.traj_name}.txt")
-
-        if config.max_vals:
-            with_notch = True if config.max_vals > 10 else False
-        else:
-            with_notch = True
-        # with_notch = False
+        notch_fp = os.path.join(
+            config.sim.data_folder, f"{config.sim.notch_traj_name}.txt"
+        )
 
         cam = Camera(
             filepath=filepath_cam,
+            notch_filepath=notch_fp,
             max_vals=config.max_vals,
             scale=config.camera.scale,
-            with_notch=with_notch,
+            with_notch=config.with_notch,
             start_at=config.camera.start_frame,
         )
 
-        if with_notch:
+        if config.with_notch:
             assert cam.rotated is not None
         else:
             assert cam.rotated is None
