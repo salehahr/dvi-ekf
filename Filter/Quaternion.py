@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import math
+from typing import Optional
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -14,7 +17,7 @@ def raise_wrong_input(val):
 
 
 def euler_error_checking(e1, e2, verbosity=False):
-    def ensure_close_deg(v1, v2, verbosity=False):
+    def ensure_close_deg(v1, v2):
         try:
             assert math.isclose(v1, v2, rel_tol=0.1, abs_tol=0.05)
         except AssertionError as e:
@@ -23,9 +26,9 @@ def euler_error_checking(e1, e2, verbosity=False):
 
     x1, y1, z1 = e1
     z2, y2, x2 = e2
-    ensure_close_deg(x1, x2, verbosity)
-    ensure_close_deg(y1, y2, verbosity)
-    ensure_close_deg(z1, z2, verbosity)
+    ensure_close_deg(x1, x2)
+    ensure_close_deg(y1, y2)
+    ensure_close_deg(z1, z2)
 
 
 class Quaternion(object):
@@ -34,21 +37,44 @@ class Quaternion(object):
 
     def __init__(
         self,
-        val=None,
-        x=None,
-        y=None,
-        z=None,
-        w=None,
-        v=None,
-        do_normalise=False,
-        euler="",
+        val: Optional[np.ndarray, Quaternion] = None,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        z: Optional[float] = None,
+        w: Optional[float] = None,
+        v: Optional[np.ndarray] = None,
+        do_normalise: bool = False,
+        euler: str = "",
     ):
         self.x = x
         self.y = y
         self.z = z
         self.w = w
 
-        # parsing
+        self._parse_inputs(val, x, y, z, w, v, euler)
+
+        # normalise
+        if do_normalise:
+            self.normalise()
+
+        # error checking
+        do_check = False
+        if do_check:
+            euler_error_checking(self.euler_xyz_deg, self.euler_zyx_deg, verbosity=True)
+
+    def __repr__(self):
+        return f"Quaternion [x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f}, w={self.w:.3f}]"
+
+    def _parse_inputs(
+        self,
+        val: Optional[np.ndarray, Quaternion] = None,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        z: Optional[float] = None,
+        w: Optional[float] = None,
+        v: Optional[np.ndarray] = None,
+        euler: str = "",
+    ) -> None:
         if val is not None:
             if isinstance(val, np.ndarray):
                 if val.shape == (3, 3):
@@ -68,31 +94,19 @@ class Quaternion(object):
             else:
                 raise_wrong_input(val)
         elif v is not None and w is not None:
-            self.x, self.y, self.z = v.reshape(
-                3,
-            )
+            # fmt: off
+            self.x, self.y, self.z = v.reshape(3,)
+            # fmt: on
         elif not None in [x, y, z, w]:
             pass
         else:
             raise_wrong_input(val)
 
-        # normalise
-        if do_normalise:
-            self.normalise()
-
-        # error checking
-        do_check = False
-        if do_check:
-            euler_error_checking(self.euler_xyz_deg, self.euler_zyx_deg, verbosity=True)
-
-    def __repr__(self):
-        return f"Quaternion [x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f}, w={self.w:.3f}]"
-
     @property
     def v(self):
-        return np.array([self.x, self.y, self.z]).reshape(
-            3,
-        )
+        # fmt: off
+        return np.array([self.x, self.y, self.z]).reshape(3,)
+        # fmt: on
 
     # rotation representations
     @property
