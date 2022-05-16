@@ -32,6 +32,10 @@ class SimConfig(BaseModel):
     do_plot: bool
     do_fast_sim: bool
 
+    @validator("mode")
+    def to_radians(cls, v) -> SimMode:
+        return SimMode(v)
+
 
 class CameraNoise(BaseModel):
     position: List[float]
