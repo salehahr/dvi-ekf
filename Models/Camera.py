@@ -116,7 +116,7 @@ class Camera(object):
     @staticmethod
     def create(config: Config) -> Camera:
         """Creates new camera object from the config object."""
-        trajectory_fp = os.path.join(config.traj_path, f"{config.traj_name}.txt")
+        trajectory_fp = os.path.join(config.traj_path, f"{config.traj_name}.csv")
         notch_fp = os.path.join(
             config.sim.data_folder, f"{config.sim.notch_traj_name}.txt"
         )

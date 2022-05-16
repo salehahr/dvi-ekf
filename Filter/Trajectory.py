@@ -6,6 +6,8 @@ import numpy as np
 from scipy.integrate import cumtrapz
 from scipy.spatial.transform import Rotation as R
 
+from tools import files
+
 from .Measurement import ImuMeasurement, VisualMeasurement
 from .Quaternion import Quaternion
 
@@ -38,7 +40,7 @@ class Trajectory(object):
         self._is_interpolated = False
         self._interframe_vals = 1
 
-        self.t: Optional[List[float]] = None
+        self.t: np.ndarray
 
         self.reset()
         self._parse_if_file_exists(filepath, cap)
@@ -46,7 +48,7 @@ class Trajectory(object):
     def reset(self):
         """Reinitialises data labels."""
         for label in self.labels:
-            self.__dict__[label] = []
+            self.__dict__[label] = None
 
     @property
     def nvals(self) -> int:
@@ -101,18 +103,9 @@ class Trajectory(object):
         Extract data from file.
         :param max_vals: maxinum number of data to store
         """
-        with open(self.filepath, "r") as f:
-            for i, line in enumerate(f):
-                data = line.split()
-
-                # iterate over data labels
-                for j, label in enumerate(self.labels):
-                    measurement = float(data[j])
-                    self.__dict__[label].append(measurement)
-
-                if max_vals is not None:
-                    if i >= max_vals - 1:
-                        break
+        df = files.parse(self.filepath, max_vals)
+        for label in self.labels:
+            self.__dict__[label] = df[label].to_numpy()
 
     def _get_index_at(self, T: float) -> int:
         """
@@ -164,17 +157,17 @@ class VisualTraj(Trajectory):
         :param start_at: which frame number to start the trajectory at
         """
         labels = ["t", "x", "y", "z", "qx", "qy", "qz", "qw"]
-        self.x = []
-        self.y = []
-        self.z = []
-        self.qx = []
-        self.qy = []
-        self.qz = []
-        self.qw = []
-        self.quats = []
-        self.rx_deg = []
-        self.ry_deg = []
-        self.rz_deg = []
+        self.x: np.ndarray
+        self.y: np.ndarray
+        self.z: np.ndarray
+        self.qx: np.ndarray
+        self.qy: np.ndarray
+        self.qz: np.ndarray
+        self.qw: np.ndarray
+        self.quats: np.ndarray
+        self.rx_deg: np.ndarray
+        self.ry_deg: np.ndarray
+        self.rz_deg: np.ndarray
 
         super().__init__(name, labels, filepath, cap)
 
@@ -183,9 +176,9 @@ class VisualTraj(Trajectory):
         self._scale_values(scale)
 
         self.labels_notch = ["notch", "notch_d", "notch_dd"]
-        self.notch = []
-        self.notch_d = []
-        self.notch_dd = []
+        self.notch: np.ndarray
+        self.notch_d: np.ndarray
+        self.notch_dd: np.ndarray
         self.notch_filepath = notch_filepath
 
         self.gen_angle_arrays()
@@ -257,7 +250,7 @@ class VisualTraj(Trajectory):
 
     def gen_angle_arrays(self) -> None:
         """Updates angles."""
-        if not self.qx:
+        if self.qx is None:
             return
 
         self._gen_quats_array()
@@ -322,7 +315,10 @@ class ImuRefTraj(Trajectory):
         data = [t, *p, *v, *euler_angs, *quats.wxyz]
 
         for i, label in enumerate(self.labels):
-            self.__dict__[label].append(data[i])
+            if self.__dict__[label] is None:
+                self.__dict__[label] = [data[i]]
+            else:
+                self.__dict__[label].append(data[i])
 
 
 class FilterTraj(Trajectory):
@@ -379,7 +375,10 @@ class FilterTraj(Trajectory):
     def append_propagated_states(self, t, state):
         data = self._process_data(t, state)
         for i, label in enumerate(self.labels):
-            self.__dict__[label].append(data[i])
+            if self.__dict__[label] is None:
+                self.__dict__[label] = [data[i]]
+            else:
+                self.__dict__[label].append(data[i])
 
     def append_updated_states(self, t, state):
         data = self._process_data(t, state)
