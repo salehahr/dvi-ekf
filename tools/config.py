@@ -27,6 +27,8 @@ class SimConfig(BaseModel):
     mode: SimMode
     data_folder: str
     traj_name: str
+    notch_traj_name: str
+
     num_kf_runs: int
     frozen_dofs: List[int]
     do_plot: bool
@@ -55,6 +57,7 @@ class CameraConfig(BaseModel):
     start_frame: Optional[int]
     total_frames: Optional[Union[str, int]]
     scale: int
+    with_notch: bool = False
     noise: CameraNoise
 
     @validator("total_frames")
@@ -171,6 +174,7 @@ class Config(object):
         # simulation params
         self.interframe_vals = 1 if self.sim.do_fast_sim else self.imu.interframe_vals
         self.cov0_matrix = self.filter.ic.cov0_matrix
+        self.with_notch = self.camera.with_notch
 
         # these get initialised after loading the Camera object
         self.max_vals = 10 if self.sim.do_fast_sim else self.camera.total_frames

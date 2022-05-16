@@ -144,7 +144,14 @@ class VisualTraj(Trajectory):
     """Visual trajectory containing time and pose."""
 
     def __init__(
-        self, name, filepath=None, cap=None, scale=None, with_notch=False, start_at=None
+        self,
+        name,
+        filepath=None,
+        notch_filepath=None,
+        cap=None,
+        scale=None,
+        with_notch=False,
+        start_at=None,
     ):
         labels = ["t", "x", "y", "z", "qx", "qy", "qz", "qw"]
         super().__init__(name, labels, filepath, cap)
@@ -153,7 +160,7 @@ class VisualTraj(Trajectory):
         self._start_at(labels, start_index, cap)
 
         self.labels_notch = ["notch", "notch_d", "notch_dd"]
-        self.notch_filepath = "./data/trajs/notch90.txt"
+        self.notch_filepath = notch_filepath
 
         if scale:
             self._apply_scale(scale)
