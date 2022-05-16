@@ -1,10 +1,10 @@
 casadi==3.5.5.post2
-matplotlib==3.5.0
-numpy==1.21.4
-pydantic==1.8.2
+generate_data==0.0.1
+matplotlib==3.3.1
+numpy==1.19.1
+pandas==1.4.2
+pydantic==1.9.0
 PyYAML==6.0
-roboticstoolbox_python==0.11.0
-scipy==1.7.3
-spatialmath_python==0.11
-sympy==1.9
+scipy==1.5.2
+sympy==1.10.1
 tqdm==4.62.3
