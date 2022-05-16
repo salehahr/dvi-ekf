@@ -1,10 +1,10 @@
 from Filter import Simulator
-from tools import Config
+from tools import Config, SimMode
 
 config = Config("config.yaml")
 sim = Simulator(config)
 
-if config.sim.mode == "tune":
+if config.sim.mode == SimMode.TUNE:
     sim.optimise()
 else:
     sim.show_run_progress = False
