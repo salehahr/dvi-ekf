@@ -12,25 +12,37 @@ from tools import utils
 np.set_printoptions(suppress=True, precision=3)
 
 
-def np_string(arr):
-    """For formatting numpy arrays when printing."""
+def np_string(arr: np.ndarray, precision: int = 4) -> str:
+    """Formats numpy arrays for printing."""
     arr = np.array(arr) if isinstance(arr, list) else arr
-    return np.array2string(arr, precision=4, suppress_small=True)
+    return np.array2string(arr, precision=precision, suppress_small=True)
 
 
 class SimMode(Enum):
+    """Simulation categories: either run the filter or tune the filter."""
+
     RUN = "run"
     TUNE = "tune"
 
 
 class SimConfig(BaseModel):
+    """Configuration of the simulation."""
+
+    # mode: either run or tune
     mode: SimMode
+
+    # filepath configurations
     data_folder: str
     traj_name: str
     notch_traj_name: str
 
-    num_kf_runs: int
+    # number of times to run the simulation (e.g. for averaging across runs)
+    num_kf_runs: int = 1
+
+    # sensor setup DOFs to freeze
     frozen_dofs: List[int]
+
+    # boolean options
     do_plot: bool
     do_fast_sim: bool
 
@@ -40,6 +52,12 @@ class SimConfig(BaseModel):
 
 
 class CameraNoise(BaseModel):
+    """
+    Settings for the noise matrix of the visual measurements.
+    Angle values are given in degrees by the user in the yaml file,
+    but are converted to radians for simulation.
+    """
+
     position: List[float]
     theta: List[float]
     notch: float
@@ -54,6 +72,10 @@ class CameraNoise(BaseModel):
 
 
 class CameraConfig(BaseModel):
+    """
+    Configuration of the camera trajectory.
+    """
+
     start_frame: Optional[int]
     total_frames: Optional[Union[str, int]]
     scale: int
@@ -66,6 +88,10 @@ class CameraConfig(BaseModel):
 
 
 class ImuConfig(BaseModel):
+    """
+    Configuration of the IMU trajectory.
+    """
+
     interframe_vals: int
     noise_sample_rate: float
     gravity: float
@@ -87,6 +113,10 @@ class ImuConfig(BaseModel):
 
 
 class ModelConfig(BaseModel):
+    """
+    Dimensions of the sensor setup model.
+    """
+
     length: float
     angle: float
 
@@ -96,6 +126,10 @@ class ModelConfig(BaseModel):
 
 
 class States(BaseModel):
+    """
+    Values of the filter states.
+    """
+
     imu_pos: List[float]
     imu_vel: List[float]
     imu_theta: List[float]
@@ -126,6 +160,10 @@ class States(BaseModel):
 
 
 class InitialConditions(BaseModel):
+    """
+    Initial values of the filter states.
+    """
+
     cov0: States
     x0: States
 
@@ -135,6 +173,10 @@ class InitialConditions(BaseModel):
 
 
 class DofsNoise(BaseModel):
+    """
+    Settings for the process matrix (DOFs random walk parameters).
+    """
+
     translation: List[float]
     rotation: List[float]
     notch_accel: float
@@ -149,6 +191,10 @@ class DofsNoise(BaseModel):
 
 
 class FilterConfig(BaseModel):
+    """
+    Configuration of the filter.
+    """
+
     ic: InitialConditions
     process_noise: Dict
 
@@ -158,10 +204,16 @@ class FilterConfig(BaseModel):
 
 
 class Config(object):
+    """
+    Configuration object that contains settings for the
+    simulation, models, trajectories as well as initial conditions.
+    """
+
     def __init__(self, filepath: str):
         """
         :param filepath: yaml file
         """
+
         with open(filepath) as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -196,7 +248,7 @@ class Config(object):
 
         # save and plot
         data_path = self.sim.data_folder
-        self.img_path = "./doc/img"
+        self.img_path = "./docs/img"
         self.traj_path = os.path.join(data_path, "trajs")
         self.traj_name: str = self.sim.traj_name
 

@@ -1,10 +1,8 @@
-import math
 import os
 import sys
+from typing import List, Optional
 
-import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 from scipy.integrate import cumtrapz
 from scipy.spatial.transform import Rotation as R
 
@@ -18,53 +16,75 @@ class Trajectory(object):
     a filepath.
     """
 
-    def __init__(self, name: str, labels: list, filepath: str = None, cap: int = None):
+    def __init__(
+        self,
+        name: str,
+        labels: list,
+        filepath: Optional[str] = None,
+        cap: Optional[int] = None,
+    ):
+        """
+        :param name: name of the trajectory
+        :param labels: data labels/column names
+        :param filepath: camera trajectory filepath
+        :param cap: maximum number of data
+        """
         self.name = name
         self.labels = labels
         self.filepath = filepath
         self.cap = cap
 
+        # volatile values (can change after initialisation)
         self._is_interpolated = False
         self._interframe_vals = 1
 
-        self.clear()
-        if filepath:
-            self._parse_if_file_exists(filepath, cap)
+        self.t: Optional[List[float]] = None
+
+        self.reset()
+        self._parse_if_file_exists(filepath, cap)
 
     def reset(self):
+        """Reinitialises data labels."""
         for label in self.labels:
             self.__dict__[label] = []
 
     @property
-    def nvals(self):
+    def nvals(self) -> int:
+        """Number of values stored."""
         return len(self.t)
 
     @property
-    def is_interpolated(self):
+    def is_interpolated(self) -> bool:
         return self._is_interpolated
 
     @is_interpolated.setter
-    def is_interpolated(self, val: bool):
+    def is_interpolated(self, val: bool) -> None:
         self._is_interpolated = val
 
     @property
-    def interframe_vals(self):
+    def interframe_vals(self) -> int:
+        """Number of interpolated values between frames (F0 < interpolated_data <= F1)"""
         return self._interframe_vals
 
     @interframe_vals.setter
-    def interframe_vals(self, val):
+    def interframe_vals(self, val: int) -> None:
         self._interframe_vals = val
 
     def __iter__(self):
         for attr, value in self.__dict__.items():
             yield attr, value
 
-    def clear(self):
-        """Reinitialises data containers."""
-        for label in self.labels:
-            self.__dict__[label] = []
+    def _parse_if_file_exists(self, filepath: str, cap: int) -> None:
+        """
+        Parse trajectory from file if file is given and file exists.
 
-    def _parse_if_file_exists(self, filepath, cap):
+        :param filepath: trajectory filepath
+        :param cap: maximum number of measurement values
+        :return:
+        """
+        if self.filepath is None:
+            return
+
         if os.path.exists(self.filepath):
             self._parse(cap)
         else:
@@ -76,56 +96,37 @@ class Trajectory(object):
             else:
                 sys.exit()
 
-    def _parse(self, cap):
-        """Extract data from file."""
+    def _parse(self, max_vals: int) -> None:
+        """
+        Extract data from file.
+        :param max_vals: maxinum number of data to store
+        """
         with open(self.filepath, "r") as f:
             for i, line in enumerate(f):
                 data = line.split()
 
-                # iterate over data containers
+                # iterate over data labels
                 for j, label in enumerate(self.labels):
-                    meas = float(data[j])
-                    self.__dict__[label].append(meas)
+                    measurement = float(data[j])
+                    self.__dict__[label].append(measurement)
 
-                if cap is not None:
-                    if i >= cap - 1:
+                if max_vals is not None:
+                    if i >= max_vals - 1:
                         break
 
-    def append_data(self, t, data_labels, data):
-        """Appends new data not already belonging to the existing
-        labels."""
-
-        for i, label in enumerate(data_labels):
-            if label not in self.__dict__:
-                self.__dict__[label] = [data[i]]
-            else:
-                self.__dict__[label].append(data[i])
-
-    def plot_3d(self, ax=None):
-        if ax is None:
-            fig = plt.figure()
-            fig.tight_layout()
-            ax = fig.add_subplot(111, projection="3d")
-
-        ax.plot(self.x, self.y, self.z, label=self.name)
-
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
-        ax.set_zlabel("z")
-
-        # late setting of line styles
-        for line in ax.get_lines():
-            self._set_plot_line_style(line)
-
-        ax.legend()
-
-        return ax
-
-    def _get_index_at(self, T):
-        """Get index for which timestamp matches the argument T."""
+    def _get_index_at(self, T: float) -> int:
+        """
+        Get index for which timestamp matches the argument T.
+        :param T: time value to match
+        :return: index of the timestamp
+        """
         return max([i for i, t in enumerate(self.t) if t <= T])
 
-    def write_to_file(self, filename=None, discard_interframe_vals=False):
+    def write_to_file(self, filename: str) -> None:
+        """
+        Writes trajectory to disk.
+        :param filename: trajectory filepath.
+        """
         with open(filename, "w+") as f:
             data_str = ""
 
@@ -145,40 +146,64 @@ class VisualTraj(Trajectory):
 
     def __init__(
         self,
-        name,
-        filepath=None,
-        notch_filepath=None,
-        cap=None,
-        scale=None,
-        with_notch=False,
-        start_at=None,
+        name: str,
+        filepath: Optional[str] = None,
+        notch_filepath: Optional[str] = None,
+        cap: Optional[int] = None,
+        scale: Optional[float] = None,
+        with_notch: bool = False,
+        start_at: Optional[int] = None,
     ):
+        """
+        :param name: name of the trajectory
+        :param filepath: camera trajectory filepath
+        :param notch_filepath: notch trajectory filepath
+        :param cap: maximum number of frames
+        :param scale: scaling factor
+        :param with_notch: whether to incorporate notch trajectory or not
+        :param start_at: which frame number to start the trajectory at
+        """
         labels = ["t", "x", "y", "z", "qx", "qy", "qz", "qw"]
+        self.x = []
+        self.y = []
+        self.z = []
+        self.qx = []
+        self.qy = []
+        self.qz = []
+        self.qw = []
+        self.quats = []
+        self.rx_deg = []
+        self.ry_deg = []
+        self.rz_deg = []
+
         super().__init__(name, labels, filepath, cap)
 
         start_index = self.t.index(start_at) if start_at else None
-        self._start_at(labels, start_index, cap)
+        self._filter_values(labels, start_index, cap)
+        self._scale_values(scale)
 
         self.labels_notch = ["notch", "notch_d", "notch_dd"]
+        self.notch = []
+        self.notch_d = []
+        self.notch_dd = []
         self.notch_filepath = notch_filepath
 
-        if scale:
-            self._apply_scale(scale)
-
-        self.quats = None
-        self.rx_deg = None
-        self.ry_deg = None
-        self.rz_deg = None
-
-        if self.qx:
-            self.gen_angle_arrays()
+        self.gen_angle_arrays()
 
         if with_notch:
             self.read_notch_from_file()
-            self._start_at(self.labels_notch, start_index, cap)
+            self._filter_values(self.labels_notch, start_index, cap)
             assert len(self.t) == len(self.notch)
 
-    def _start_at(self, labels, index=None, cap=None):
+    def _filter_values(
+        self, labels: List[str], index: Optional[int] = None, cap: Optional[int] = None
+    ):
+        """
+        Filters the stored trajectory values by start index and max. values.
+        :param labels: data labels/column headings
+        :param index: start index of the data
+        :param cap: maximum number of data points
+        """
         if not index:
             if cap:
                 index = 0
@@ -192,11 +217,18 @@ class VisualTraj(Trajectory):
                 else self.__dict__[label][index : index + cap]
             )
 
-    def read_notch_from_file(self):
-        self.notch = []
-        self.notch_d = []
-        self.notch_dd = []
+    def _scale_values(self, scale: Optional[float]) -> None:
+        """
+        Scales x, y, z measurement values.
+        :param scale: scaling factor for the x, y, z values.
+        """
+        if not scale:
+            return
 
+        for label in ["x", "y", "z"]:
+            self.__dict__[label] = [val * scale for val in self.__dict__[label]]
+
+    def read_notch_from_file(self):
         with open(self.notch_filepath, "r") as f:
             for i, line in enumerate(f):
                 data = line.split()
@@ -206,13 +238,8 @@ class VisualTraj(Trajectory):
                     meas = float(data[j])
                     self.__dict__[label].append(meas)
 
-    def _apply_scale(self, scale):
-        for label in ["x", "y", "z"]:
-            self.__dict__[label] = [val * scale for val in self.__dict__[label]]
-
     def at_index(self, index):
         """Returns single visual measurement at the given index."""
-
         t = self.t[index]
 
         x = self.x[index]
@@ -228,20 +255,27 @@ class VisualTraj(Trajectory):
 
         return VisualMeasurement(t, pos, q_xyzw)
 
-    def gen_angle_arrays(self):
+    def gen_angle_arrays(self) -> None:
+        """Updates angles."""
+        if not self.qx:
+            return
+
         self._gen_quats_array()
         self._gen_euler_angles()
 
-    def _gen_quats_array(self):
+    def _gen_quats_array(self) -> None:
+        """Generates self.quats from individual quaternion components."""
         self.quats = [
             Quaternion(x=self.qx[i], y=self.qy[i], z=self.qz[i], w=w, do_normalise=True)
             for i, w in enumerate(self.qw)
         ]
 
     def _gen_euler_angles(self):
-        """extrinsic: xyz: rotations about fixed CS
-        intrinsic: XYZ: rotations about moving CS"""
-
+        """
+        Generates Euler angles from quaternions.
+        extrinsic: xyz: rotations about fixed (global) CS
+        intrinsic: XYZ: rotations about moving (local) CS
+        """
         euler = np.array(
             [R.from_quat(q.xyzw).as_euler("xyz", degrees=True) for q in self.quats]
         )
@@ -253,20 +287,6 @@ class VisualTraj(Trajectory):
         # self.rX_deg = euler[:,0]
         # self.rY_deg = euler[:,1]
         # self.rZ_deg = euler[:,2]
-
-    def write_notch(self):
-        with open(self.notch_filepath, "w+") as f:
-            data_str = ""
-
-            for n in range(self.nvals):
-                for label in self.labels_notch:
-                    data = self.__dict__[label][n]
-                    if label == "t":
-                        data_str += f"{data:.6f}"
-                    else:
-                        data_str += f" {data:.9f}"
-                data_str += " \n"
-            f.write(data_str)
 
 
 class ImuRefTraj(Trajectory):
@@ -420,7 +440,7 @@ class ImuTraj(Trajectory):
 
         # data generation
         if vis_data:
-            self.clear()
+            self.reset()
             self._gen_unnoisy_imu()
 
             if not unnoised:
@@ -503,7 +523,7 @@ class ImuTraj(Trajectory):
             interframe_vals=self.interframe_vals,
             covariance=covariance,
         )
-        noisy.clear()
+        noisy.reset()
 
         for i, label in enumerate(self.labels):
             if label == "t":
