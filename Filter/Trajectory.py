@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -16,21 +16,20 @@ class Trajectory(object):
     a filepath.
     """
 
+    labels: List[str] = ["t"]
+
     def __init__(
         self,
         name: str,
-        labels: list,
         filepath: Optional[str] = None,
         cap: Optional[int] = None,
     ):
         """
         :param name: name of the trajectory
-        :param labels: data labels/column names
         :param filepath: camera trajectory filepath
         :param cap: maximum number of data
         """
         self.name = name
-        self.labels = labels
         self.filepath = filepath
         self.cap = cap
 
@@ -135,24 +134,25 @@ class Trajectory(object):
 class ImuRefTraj(Trajectory):
     """Desired traj of the IMU."""
 
+    labels = [
+        "t",
+        "x",
+        "y",
+        "z",
+        "vx",
+        "vy",
+        "vz",
+        "rx",
+        "ry",
+        "rz",
+        "qw",
+        "qx",
+        "qy",
+        "qz",
+    ]
+
     def __init__(self, name, imu, filepath=None):
-        labels = [
-            "t",
-            "x",
-            "y",
-            "z",
-            "vx",
-            "vy",
-            "vz",
-            "rx",
-            "ry",
-            "rz",
-            "qw",
-            "qx",
-            "qy",
-            "qz",
-        ]
-        super().__init__(name, labels, filepath)
+        super().__init__(name, filepath)
         self.imu = imu
 
     def append_value(self, t, current_cam, current_notch):
@@ -172,37 +172,41 @@ class ImuRefTraj(Trajectory):
 
 
 class FilterTraj(Trajectory):
+    labels_imu = [
+        "x",
+        "y",
+        "z",
+        "vx",
+        "vy",
+        "vz",
+        "rx",
+        "ry",
+        "rz",
+        "qw",
+        "qx",
+        "qy",
+        "qz",
+    ]
+    labels_imu_dofs = ["dof1", "dof2", "dof3", "dof4", "dof5", "dof6"]
+    labels_camera = [
+        "xc",
+        "yc",
+        "zc",
+        "rx_degc",
+        "ry_degc",
+        "rz_degc",
+        "qwc",
+        "qxc",
+        "qyc",
+        "qzc",
+    ]
+    labels = ["t", *labels_imu, *labels_imu_dofs, *labels_camera]
+
     def __init__(self, name, filepath=None):
-        self.labels = []
-        self.labels_imu = [
-            "x",
-            "y",
-            "z",
-            "vx",
-            "vy",
-            "vz",
-            "rx",
-            "ry",
-            "rz",
-            "qw",
-            "qx",
-            "qy",
-            "qz",
-        ]
-        self.labels_imu_dofs = ["dof1", "dof2", "dof3", "dof4", "dof5", "dof6"]
-        self.labels_camera = [
-            "xc",
-            "yc",
-            "zc",
-            "rx_degc",
-            "ry_degc",
-            "rz_degc",
-            "qwc",
-            "qxc",
-            "qyc",
-            "qzc",
-        ]
-        labels = ["t", *self.labels_imu, *self.labels_imu_dofs, *self.labels_camera]
+        self.labels = self.labels
+        self.labels_imu = self.labels_imu
+        self.labels_imu_dofs = self.labels_imu_dofs
+        self.labels_camera = self.labels_camera
 
         self.rx: Optional[np.ndarray] = None
         self.ry: Optional[np.ndarray] = None
@@ -211,7 +215,7 @@ class FilterTraj(Trajectory):
         self.ry_degc: Optional[np.ndarray] = None
         self.rz_degc: Optional[np.ndarray] = None
 
-        super().__init__(name, labels, filepath)
+        super().__init__(name, filepath)
 
     def append_propagated_states(self, t, state):
         data = process_data(t, state)
