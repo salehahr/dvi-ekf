@@ -1,10 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from Filter.Trajectory import VisualTraj
+from Filter.VisualTrajectory import VisualTraj
+
+if TYPE_CHECKING:
+    from Models.Camera import Camera
 
 
 class Interpolator(object):
-    def __init__(self, interframe_vals: int, uninterp_camera: "Camera"):
+    def __init__(self, interframe_vals: int, uninterp_camera: Camera):
         name_interp = uninterp_camera.traj.name + " interpl"
 
         self.interframe_vals = interframe_vals
@@ -25,7 +32,7 @@ class Interpolator(object):
 
         return np.linspace(tmin, tmax, num=num_new_datapoints)
 
-    def interpolate(self):
+    def interpolate(self) -> None:
         """Interpolates data and stores it in self.interp_traj.
         Also generates quats_array in self.interp_traj.
         """
@@ -45,9 +52,9 @@ class Interpolator(object):
                 self._interpolate_notch_label(label)
 
         self.flag_done = True
-        self.interp_traj._gen_quats_array()
+        self.interp_traj.gen_angle_arrays()
 
-    def _interpolate_traj_label(self, label: str):
+    def _interpolate_traj_label(self, label: str) -> None:
         """Interpolate data corresponding to a single label."""
         if label == "t":
             self.interp_traj.t = self.t_new
@@ -58,7 +65,7 @@ class Interpolator(object):
 
         self.interp_traj.__dict__[label] = vals_new
 
-    def _interpolate_cam_label(self, label: str):
+    def _interpolate_cam_label(self, label: str) -> None:
         """Interpolate data corresponding to a single label."""
         component_values = {"x": [], "y": [], "z": []}
 
@@ -72,7 +79,7 @@ class Interpolator(object):
 
         self.interp_traj.__dict__[label] = vals_new
 
-    def _interpolate_notch_label(self, label: str):
+    def _interpolate_notch_label(self, label: str) -> None:
         """Interpolate data corresponding to a single label."""
         assert self.uninterp_camera.notch is not None
         vals_old = self.uninterp_camera.__dict__[label]
@@ -81,17 +88,17 @@ class Interpolator(object):
         self.interp_traj.__dict__[label] = vals_new
 
     @property
-    def flag_done(self):
+    def flag_done(self) -> bool:
         return self.interp_traj.is_interpolated
 
     @flag_done.setter
-    def flag_done(self, val: bool):
+    def flag_done(self, val: bool) -> None:
         if val is True:
             self.interp_traj.interframe_vals = self.interframe_vals
             self.interp_traj.is_interpolated = True
 
     @property
-    def interpolated(self):
+    def interpolated(self) -> VisualTraj:
         if not self.flag_done:
             self.interpolate()
         return self.interp_traj

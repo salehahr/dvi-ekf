@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 
 from Filter.Quaternion import Quaternion
-from Filter.Trajectory import VisualTraj
+from Filter.VisualTrajectory import VisualTraj
 from Visuals import CameraPlot
 
 from .Interpolator import Interpolator
@@ -29,8 +29,8 @@ class Camera(object):
 
     def __init__(
         self,
-        filepath: str,
-        notch_filepath: str = None,
+        filepath: Optional[str] = None,
+        notch_filepath: Optional[str] = None,
         traj: Optional[VisualTraj] = None,
         max_vals: Optional[int] = None,
         scale: Optional[float] = None,
@@ -61,10 +61,10 @@ class Camera(object):
         )
         self.max_vals = len(self.traj.t)
 
-        self.t = self.traj.t
-        self.dt = self.t[1] - self.t[0]
-        self.min_t = self.t[0]
-        self.max_t = self.t[-1]
+        self.t: np.ndarray = self.traj.t
+        self.dt: float = self.t[1] - self.t[0]
+        self.min_t: float = self.t[0]
+        self.max_t: float = self.t[-1]
 
         # measured data
         self.p = np.array((self.traj.x, self.traj.y, self.traj.z))
@@ -77,11 +77,7 @@ class Camera(object):
         self.acc = None
         self.om = None
         self.alp = None
-
-        if not self.flag_interpolated:
-            self._calc_derived_data()
-        else:
-            self._derived_data_from_traj()
+        self._calc_derived_data()
 
         # initial conditions
         self.vec0 = self.vec_at(0)
@@ -162,44 +158,44 @@ class Camera(object):
         cam.with_notch = self.with_notch
         return cam
 
-    def _calc_derived_data(self):
-        self.v = np.asarray(
-            (
-                np.gradient(self.p[0, :], self.dt),
-                np.gradient(self.p[1, :], self.dt),
-                np.gradient(self.p[2, :], self.dt),
+    def _calc_derived_data(self) -> None:
+        if self.flag_interpolated:
+            self.v = self.traj.v
+            self.om = self.traj.om
+            self.acc = self.traj.acc
+            self.alp = self.traj.alp
+        else:
+            self.v = np.asarray(
+                (
+                    np.gradient(self.p[0, :], self.dt),
+                    np.gradient(self.p[1, :], self.dt),
+                    np.gradient(self.p[2, :], self.dt),
+                )
             )
-        )
-        self.acc = np.asarray(
-            (
-                np.gradient(self.v[0, :], self.dt),
-                np.gradient(self.v[1, :], self.dt),
-                np.gradient(self.v[2, :], self.dt),
+            self.acc = np.asarray(
+                (
+                    np.gradient(self.v[0, :], self.dt),
+                    np.gradient(self.v[1, :], self.dt),
+                    np.gradient(self.v[2, :], self.dt),
+                )
             )
-        )
 
-        ang_WC = np.asarray([q.euler_zyx_rad for q in self.traj.quats])
-        rz, ry, rx = ang_WC[:, 0], ang_WC[:, 1], ang_WC[:, 2]
-        self.om = np.asarray(
-            (
-                np.gradient(rx, self.dt),
-                np.gradient(ry, self.dt),
-                np.gradient(rz, self.dt),
+            ang_WC = np.asarray([q.euler_zyx_rad for q in self.traj.quats])
+            rz, ry, rx = ang_WC[:, 0], ang_WC[:, 1], ang_WC[:, 2]
+            self.om = np.asarray(
+                (
+                    np.gradient(rx, self.dt),
+                    np.gradient(ry, self.dt),
+                    np.gradient(rz, self.dt),
+                )
             )
-        )
-        self.alp = np.asarray(
-            (
-                np.gradient(self.om[0, :], self.dt),
-                np.gradient(self.om[1, :], self.dt),
-                np.gradient(self.om[2, :], self.dt),
+            self.alp = np.asarray(
+                (
+                    np.gradient(self.om[0, :], self.dt),
+                    np.gradient(self.om[1, :], self.dt),
+                    np.gradient(self.om[2, :], self.dt),
+                )
             )
-        )
-
-    def _derived_data_from_traj(self):
-        self.v = self.traj.v
-        self.om = self.traj.om
-        self.acc = self.traj.acc
-        self.alp = self.traj.alp
 
     def gen_rotated(self):
         rotated_traj = VisualTraj("camera rot")
@@ -361,7 +357,7 @@ class Camera(object):
 
 
 class CameraInterpolated(Camera):
-    def __init__(self, traj):
+    def __init__(self, traj: VisualTraj):
         assert traj.is_interpolated
         super().__init__(filepath=None, traj=traj)
 

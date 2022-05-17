@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from typing import List
 
 import numpy as np
 
@@ -207,3 +208,21 @@ def quaternion_about_axis(angle, axis):
     q[0] = math.cos(angle / 2.0)
 
     return np.array([*q[1:4], q[0]])
+
+
+def process_data(t: float, state: States) -> List[float]:
+    """Appends new measurement from current state."""
+    dof_rots_deg = np.rad2deg(state.dofs[:3])
+    dof_trans = state.dofs[3:]
+    return [
+        t,
+        *state.p,
+        *state.v,
+        *state.q.euler_xyz_deg,
+        *state.q.wxyz,
+        *dof_rots_deg,
+        *dof_trans,
+        *state.p_cam,
+        *state.q_cam.euler_xyz_deg,
+        *state.q_cam.wxyz,
+    ]
