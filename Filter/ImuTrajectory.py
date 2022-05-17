@@ -15,6 +15,8 @@ class ImuTraj(Trajectory):
     """IMU trajectory containing the acceleration and
     angular velocity measurements."""
 
+    labels = ["t", "ax", "ay", "az", "gx", "gy", "gz"]
+
     def __init__(
         self,
         name="imu",
@@ -27,8 +29,7 @@ class ImuTraj(Trajectory):
     ):
 
         # base properties
-        labels = ["t", "ax", "ay", "az", "gx", "gy", "gz"]
-        super().__init__(name, labels, filepath, cap)
+        super().__init__(name, filepath, cap)
         self.vis_data = vis_data
 
         # extra data

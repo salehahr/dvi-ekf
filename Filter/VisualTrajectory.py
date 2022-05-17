@@ -44,12 +44,12 @@ class VisualTraj(Trajectory):
         self.ry_deg: Optional[np.ndarray] = None
         self.rz_deg: Optional[np.ndarray] = None
 
-        super().__init__(name, VisualTraj.labels, filepath, cap)
+        super().__init__(name, filepath, cap)
 
         start_index: Optional[int] = (
             np.argwhere(self.t == start_at).item() if start_at else None
         )
-        self._filter_values(VisualTraj.labels, start_index, cap)
+        self._filter_values(self.labels, start_index, cap)
         self._scale_values(scale)
 
         self.labels_notch = ["notch", "notch_d", "notch_dd"]
