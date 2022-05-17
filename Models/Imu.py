@@ -3,7 +3,8 @@ from __future__ import annotations
 import casadi
 import numpy as np
 
-from Filter.Trajectory import ImuRefTraj, ImuTraj
+from Filter.ImuTrajectory import ImuTraj
+from Filter.Trajectory import ImuRefTraj
 from symbolics import equations as eqns
 from symbolics import symbols as syms
 

@@ -1,4 +1,3 @@
-import numpy as np
 import roboticstoolbox as rtb
 import sympy as sp
 from casadi import *
