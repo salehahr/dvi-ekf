@@ -6,7 +6,7 @@ simulation:
   num_kf_runs: 1
   frozen_dofs: [1, 1, 1, 1, 1, 1]
   do_plot: true
-  do_fast_sim: true
+  do_fast_sim: false
 
 camera:
   start_frame: null
