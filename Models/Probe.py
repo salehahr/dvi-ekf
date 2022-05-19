@@ -1,3 +1,4 @@
+import matplotlib
 import roboticstoolbox as rtb
 import sympy as sp
 from casadi import *
@@ -9,7 +10,126 @@ from symbolics import symbols as syms
 from symbolics.functions import to_casadi
 
 # just so that the plot is orientated correctly...
+matplotlib.use("TkAgg")
 plot_rotation = SE3.Ry(-180, "deg")
+
+
+class TestProbe(rtb.DHRobot):
+    def __init__(self, scope_length, theta_cam, base=SE3()):
+        """Initialises robot links."""
+
+        links = self._gen_links(scope_length, theta_cam)
+        super().__init__(links, name="probe", base=base)
+
+    @property
+    def conf_q(self) -> list:
+        return [20, 0]
+
+    @property
+    def T(self) -> SE3:
+        T_sp = self.fkine(self.conf_q).A  # uses sympy data types
+        T_np = np.array(T_sp).astype(np.float64)
+        return SE3(T_np)
+
+    @staticmethod
+    def _gen_links(scope_length, theta_cam) -> list:
+        """Generates robot links according to chosen configuration."""
+        links_imu_to_cam = [
+            # # imu translation
+            rtb.PrismaticDH(theta=0, alpha=sp.pi / 2),
+        ]
+
+        links_cam_to_slam = [
+            # cam to scope end
+            rtb.RevoluteDH(d=scope_length, a=0, alpha=0, offset=0),
+            #     # scope end to virtual slam
+            #     rtb.RevoluteDH(d=0 * scope_length, a=0, alpha=0, offset=0),
+        ]
+
+        return links_imu_to_cam + links_cam_to_slam
+
+    def plot(
+        self,
+        block=True,
+        dt=0.05,
+        camera_frames=None,
+        imu_frames=None,
+        animate: bool = False,
+    ):
+        """To implement."""
+        import tkinter
+
+        import matplotlib.pyplot as plt
+        from roboticstoolbox.backends.PyPlot import PyPlot
+
+        xlim = (-5, 10)
+        ylim = (-60, 5)
+        zlim = (-5, 30)
+        env = PyPlot()
+        env.launch(limits=[*xlim, *ylim, *zlim])
+        ax = env.fig.axes[0]
+
+        # robots
+        env.add(self, jointlabels=True, jointaxes=False, eeframe=True, shadow=False)
+        self.q = self.conf_q
+        env.step(dt)
+
+        if camera_frames:
+            c0 = camera_frames[0]
+            b0 = imu_frames[0]
+            c0.plot(ax=ax, frame="C0", color="red", textcolor="red")
+            b0.plot(ax=ax, frame="B0")
+
+            cam_pos = camera_frames.t
+            imu_pos = imu_frames.t
+            ax.plot(*cam_pos.T, c="r")
+            ax.plot(*imu_pos.T, c="b")
+
+        if animate:
+            self._plot_anim_frames(
+                base=imu_frames,
+                camera=camera_frames,
+                n=len(imu_frames),
+                interval=dt,
+            )
+
+        try:
+            if animate:
+                for F in imu_frames:
+                    self.base = F
+                    env.step(dt)
+            if block:
+                env.hold()
+        except tkinter.TclError:
+            # handles error when closing the window
+            return None
+
+        plt.show()
+
+    def _plot_anim_frames(
+        self,
+        base=None,
+        camera=None,
+        n=None,
+        interval=None,
+    ):
+        """Double animations not possible yet."""
+        base.animate(
+            frame="B",
+            arrow=False,
+            length=0.1,
+            color="black",
+            nframes=n,
+            interval=interval,
+        )
+        # camera.animate(
+        #     frame="B",
+        #     arrow=False,
+        #     length=0.1,
+        #     color="black",
+        #     nframes=n,
+        #     interval=interval,
+        # )
 
 
 class Probe(rtb.DHRobot):
