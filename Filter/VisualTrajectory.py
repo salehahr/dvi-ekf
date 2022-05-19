@@ -163,3 +163,20 @@ class VisualTraj(Trajectory):
         # self.rX_deg = euler[:,0]
         # self.rY_deg = euler[:,1]
         # self.rZ_deg = euler[:,2]
+
+    @property
+    def x_lims(self):
+        return min(self.x), max(self.x)
+
+    @property
+    def y_lims(self):
+        return min(self.y), max(self.y)
+
+    @property
+    def z_lims(self):
+        return min(self.z), max(self.z)
+
+    @property
+    def lims(self):
+        limits = [self.x_lims, self.y_lims, self.z_lims]
+        return [val for min_max in limits for val in min_max]
