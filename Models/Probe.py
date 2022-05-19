@@ -5,8 +5,8 @@ from spatialmath import SE3
 from spatialmath.base.symbolic import issymbol
 from sympy.tensor.array import tensorcontraction, tensorproduct
 
-from symbolics import functions as symfcns
 from symbolics import symbols as syms
+from symbolics.functions import to_casadi
 
 # just so that the plot is orientated correctly...
 plot_rotation = SE3.Ry(-180, "deg")
@@ -23,7 +23,8 @@ class Probe(rtb.DHRobot):
         self.qd_s = syms.qd_s.copy()
         self.qdd_s = syms.qdd_s.copy()
 
-    def _gen_links(self, scope_length, theta_cam):
+    @staticmethod
+    def _gen_links(scope_length, theta_cam):
         """Generates robot links according to chosen configuration."""
         links_imu_to_cam = [
             # imu orientation
@@ -47,15 +48,15 @@ class Probe(rtb.DHRobot):
 
     @property
     def q_cas(self):
-        return self._to_casadi(self.q_s)
+        return to_casadi(self.q_s)
 
     @property
     def qd_cas(self):
-        return self._to_casadi(self.qd_s)
+        return to_casadi(self.qd_s)
 
     @property
     def qdd_cas(self):
-        return self._to_casadi(self.qdd_s)
+        return to_casadi(self.qdd_s)
 
     @property
     def qd_s_arr(self):
@@ -72,14 +73,14 @@ class Probe(rtb.DHRobot):
     @property
     def R(self):
         R = self.T.R
-        return self._to_casadi(R)
+        return to_casadi(R)
 
     @property
     def p(self):
         p = self.T.t
-        return self._to_casadi(p)
+        return to_casadi(p)
 
-    ## ---  velocity calculations --- ##
+    # ---  velocity calculations ---
     def _calc_velocity(self):
         J = self.jacob0(self.q_s)
         return J @ self.qd_s
@@ -87,14 +88,14 @@ class Probe(rtb.DHRobot):
     @property
     def v(self):
         v = self._calc_velocity()[:3]
-        return self._to_casadi(v)
+        return to_casadi(v)
 
     @property
     def om(self):
         om = self._calc_velocity()[-3:]
-        return self._to_casadi(om)
+        return to_casadi(om)
 
-    ## --- acceleration calculations --- ##
+    # --- acceleration calculations ---
     def hessian_symbolic(self, J0):
         n = self.n
         H = sp.MutableDenseNDimArray([0] * (6 * n * n), (6, n, n))
@@ -109,7 +110,7 @@ class Probe(rtb.DHRobot):
 
         return H
 
-    ## --- acceleration calculations --- ##
+    # --- acceleration calculations ---
     def _calc_acceleration(self):
         J0 = self.jacob0(self.q_s)
         H = self.hessian_symbolic(J0)
@@ -130,43 +131,20 @@ class Probe(rtb.DHRobot):
     @property
     def acc(self):
         acc = self._calc_acceleration()[:3]
-        return self._to_casadi(acc)
+        return to_casadi(acc)
 
     @property
     def alp(self):
         alp = self._calc_acceleration()[-3:]
-        return self._to_casadi(alp)
+        return to_casadi(alp)
 
     @property
-    def joint_dofs(self):
+    def joint_dofs(self) -> list:
         return [self.q_cas, self.qd_cas, self.qdd_cas]
 
     @property
     def imu_dofs(self):
         return [*self.q[:6]]
-
-    def _to_casadi(self, var):
-        if isinstance(var, np.ndarray):
-            is_1dim = var.ndim == 1
-            cs = casadi.SX(var.shape[0], 1) if is_1dim else casadi.SX(*var.shape)
-        elif isinstance(var, list):
-            is_1dim = True
-            cs = casadi.SX(len(var), 1)
-
-        if is_1dim:
-            for i, v in enumerate(var):
-                if isinstance(v, sp.Expr):
-                    f = sp.lambdify(syms.dofs_s, symfcns.dummify_array(v))
-                    cs[i, 0] = f(*syms.dofs_cas_list)
-                else:
-                    cs[i, 0] = v
-        else:
-            for i, r in enumerate(var):
-                for j, c in enumerate(r):
-                    f = sp.lambdify(syms.dofs_s, symfcns.dummify_array(c))
-                    cs[i, j] = f(*syms.dofs_cas_list)
-
-        return cs
 
     def __str__(self):
         """Modified to enable printing of table with symbolic offsets."""
