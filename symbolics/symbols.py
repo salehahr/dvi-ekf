@@ -1,5 +1,4 @@
 import casadi
-import numpy as np
 import sympy as sp
 
 ### ROBOT KINEMATICS

@@ -1,6 +1,8 @@
 import sympy as sp
 from casadi import *
 
+from symbolics import symbols as syms
+
 
 def sympy2casadi(sympy_expr, sympy_var, casadi_var):
     # run checks on sympy_var
@@ -57,3 +59,27 @@ def dummify_array(expr):
         return expr
     else:
         return dummify_undefined_functions(expr)
+
+
+def to_casadi(var):
+    if isinstance(var, np.ndarray):
+        is_1dim = var.ndim == 1
+        cs = casadi.SX(var.shape[0], 1) if is_1dim else casadi.SX(*var.shape)
+    elif isinstance(var, list):
+        is_1dim = True
+        cs = casadi.SX(len(var), 1)
+
+    if is_1dim:
+        for i, v in enumerate(var):
+            if isinstance(v, sp.Expr):
+                f = sp.lambdify(syms.dofs_s, dummify_array(v))
+                cs[i, 0] = f(*syms.dofs_cas_list)
+            else:
+                cs[i, 0] = v
+    else:
+        for i, r in enumerate(var):
+            for j, c in enumerate(r):
+                f = sp.lambdify(syms.dofs_s, dummify_array(c))
+                cs[i, j] = f(*syms.dofs_cas_list)
+
+    return cs
