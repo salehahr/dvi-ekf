@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from . import line_formats as lf
@@ -172,23 +173,39 @@ class Plotter(object):
 
 
 class CameraPlot(Plotter):
-    def __init__(self, camera):
+    def __init__(self, camera, config):
+        super(CameraPlot, self).__init__()
+
         self.min_t = camera.traj.t[0]
         self.max_t = camera.traj.t[-1]
         self.camera = camera
+        self.config = config
 
         self.traj = camera.traj
         self.jump_labels = ["x"]
+        self.labels_camera_compact = self.traj.labels[1:]
 
     @show_plot
-    def plot(self, config, axes=None):
+    def plot(self, axes=None):
         labels = self.traj.labels[1:]
-        num_cols = 2
-        offset = 1
+        pos_labels = labels[:3]
+        quat_labels = labels[-4:]
+        t = self.traj.t
 
-        self._get_plot_objects(
-            filename=None, labels=labels, num_cols=num_cols, axes=axes, config=config
-        )
+        num_rows = 4
+        num_cols = 2
+
+        for i, p in enumerate(pos_labels):
+            plt.subplot(num_rows, num_cols, (i + 1) * num_cols + 1)
+            plt.plot(t, self.traj.__dict__[p])
+            plt.title(p)
+            plt.xlabel("t")
+
+        for i, q in enumerate(quat_labels):
+            plt.subplot(num_rows, num_cols, (i + 1) * num_cols)
+            plt.plot(t, self.traj.__dict__[q])
+            plt.title(q)
+            plt.xlabel("t")
 
     @show_plot
     def plot_notch(self, config, axes=None):

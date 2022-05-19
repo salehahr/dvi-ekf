@@ -1,16 +1,21 @@
+from __future__ import annotations
+
 import copy
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 from scipy.optimize import differential_evolution
 from tqdm import trange
 
-from Models.Camera import Camera
+from Models import create_camera
 from Models.Imu import Imu
 from Models.Probe import SimpleProbe, SymProbe
 
 from .Filter import Filter
 from .States import States
+
+if TYPE_CHECKING:
+    from Models.Camera import Camera
 
 
 def save_params(x, filename=None):
@@ -91,7 +96,7 @@ class Simulator(object):
         """
         self._config = new_config
 
-        self.camera = Camera.create(new_config)
+        self.camera = create_camera(new_config)
         self.imu = Imu.create(new_config.imu, self.camera, self.probe, gen_ref=True)
 
         self.x0 = States.get_ic(self.camera, self.imu, new_config.ic_imu_dofs)

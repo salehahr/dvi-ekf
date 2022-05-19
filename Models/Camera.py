@@ -5,6 +5,7 @@ from copy import copy
 from typing import TYPE_CHECKING, Optional
 
 import numpy as np
+from spatialmath import SE3, UnitQuaternion
 
 from Filter.Quaternion import Quaternion
 from Filter.VisualTrajectory import VisualTraj
@@ -14,6 +15,30 @@ from .Interpolator import Interpolator
 
 if TYPE_CHECKING:
     from tools.config import Config
+
+
+def create_camera(config: Config) -> Camera:
+    """Creates new camera object from the config object."""
+    trajectory_fp = os.path.join(config.traj_path, f"{config.traj_name}.csv")
+    notch_fp = os.path.join(config.sim.data_folder, f"{config.sim.notch_traj_name}.txt")
+
+    cam = Camera(
+        filepath=trajectory_fp,
+        notch_filepath=notch_fp,
+        max_vals=config.max_vals,
+        scale=config.camera.scale,
+        with_notch=config.with_notch,
+        start_at=config.camera.start_frame,
+    )
+
+    if config.with_notch:
+        assert cam.rotated is not None
+    else:
+        assert cam.rotated is None
+
+    cam.update_sim_params(config)
+
+    return cam
 
 
 class Camera(object):
@@ -72,6 +97,11 @@ class Camera(object):
         self.R = [q.rot for q in self.traj.quats]
         self.q = np.array([q.xyzw for q in self.traj.quats]).T
 
+        # frames
+        rots_vec = SE3([UnitQuaternion(q.wxyz).SE3() for q in self.traj.quats])
+        trans_vec = SE3.Trans(self.p.T)
+        self.frames = trans_vec * rots_vec  # make use of local transformations
+
         # derived data
         self.v = None
         self.acc = None
@@ -109,36 +139,6 @@ class Camera(object):
             self._read_notch_from_traj()
             self.gen_rotated()
 
-    @staticmethod
-    def create(config: Config) -> Camera:
-        """Creates new camera object from the config object."""
-        trajectory_fp = os.path.join(config.traj_path, f"{config.traj_name}.csv")
-        notch_fp = os.path.join(
-            config.sim.data_folder, f"{config.sim.notch_traj_name}.txt"
-        )
-
-        cam = Camera(
-            filepath=trajectory_fp,
-            notch_filepath=notch_fp,
-            max_vals=config.max_vals,
-            scale=config.camera.scale,
-            with_notch=config.with_notch,
-            start_at=config.camera.start_frame,
-        )
-
-        if config.with_notch:
-            assert cam.rotated is not None
-        else:
-            assert cam.rotated is None
-
-        cam.update_sim_params(config)
-
-        return cam
-
-    @property
-    def filepath(self):
-        return self.traj.filepath
-
     @property
     def flag_interpolated(self):
         return self.traj.is_interpolated
@@ -165,37 +165,12 @@ class Camera(object):
             self.acc = self.traj.acc
             self.alp = self.traj.alp
         else:
-            self.v = np.asarray(
-                (
-                    np.gradient(self.p[0, :], self.dt),
-                    np.gradient(self.p[1, :], self.dt),
-                    np.gradient(self.p[2, :], self.dt),
-                )
-            )
-            self.acc = np.asarray(
-                (
-                    np.gradient(self.v[0, :], self.dt),
-                    np.gradient(self.v[1, :], self.dt),
-                    np.gradient(self.v[2, :], self.dt),
-                )
-            )
+            self.v = np.gradient(self.p, self.dt, axis=-1)
+            self.acc = np.gradient(self.v, self.dt, axis=-1)
 
-            ang_WC = np.asarray([q.euler_zyx_rad for q in self.traj.quats])
-            rz, ry, rx = ang_WC[:, 0], ang_WC[:, 1], ang_WC[:, 2]
-            self.om = np.asarray(
-                (
-                    np.gradient(rx, self.dt),
-                    np.gradient(ry, self.dt),
-                    np.gradient(rz, self.dt),
-                )
-            )
-            self.alp = np.asarray(
-                (
-                    np.gradient(self.om[0, :], self.dt),
-                    np.gradient(self.om[1, :], self.dt),
-                    np.gradient(self.om[2, :], self.dt),
-                )
-            )
+            ang_WC = np.asarray([q.euler_xyz_rad for q in self.traj.quats]).T
+            self.om = np.gradient(ang_WC, self.dt, axis=-1)
+            self.alp = np.gradient(self.om, self.dt, axis=-1)
 
     def gen_rotated(self):
         rotated_traj = VisualTraj("camera rot")
@@ -350,7 +325,7 @@ class Camera(object):
         return [p, R, v, om, acc, alp]
 
     def plot(self, config):
-        CameraPlot(self).plot(config)
+        CameraPlot(self, config).plot()
 
     def plot_notch(self, config):
         CameraPlot(self).plot_notch(config)
