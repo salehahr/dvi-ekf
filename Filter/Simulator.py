@@ -16,6 +16,7 @@ from .States import States
 
 if TYPE_CHECKING:
     from Models.Camera import Camera
+    from tools.config import Config, SimMode
 
 
 def save_params(x, filename=None):
@@ -25,7 +26,12 @@ def save_params(x, filename=None):
 
 
 class Simulator(object):
-    def __init__(self, config):
+    """
+    Simulation object with simulation settings as attributes.
+    Provides methods for running and tuning the Kalman filter simulation.
+    """
+
+    def __init__(self, config: Config):
         # probe must be defined first as the IMU depends on the GT joint values
         probe = SimpleProbe(
             scope_length=config.model.length, theta_cam=config.model.angle
@@ -34,16 +40,15 @@ class Simulator(object):
         self.sym_probe = SymProbe(probe)
 
         # initialise simulation objects
-        self._config = None
+        self._config: Optional[Config] = None
         self.camera: Optional[Camera] = None
         self.imu: Optional[Imu] = None
 
         self.x0: Optional[States] = None
         self.cov0: Optional[np.ndarray] = None
 
-        # update and set config, which defines the simulation objects
         config.update_dofs(probe)
-        self.config = config
+        self._update_config(config)
 
         self.kf = Filter(self)
 
@@ -54,8 +59,8 @@ class Simulator(object):
         ]
 
         # simulation run params
+        self.mode: SimMode = config.sim.mode
         self.num_kf_runs: int = config.sim.num_kf_runs
-        self.mode = config.sim.mode
         self.show_run_progress: bool = True
 
         # results
@@ -88,11 +93,15 @@ class Simulator(object):
     def config(self):
         return self._config
 
-    @config.setter
-    def config(self, new_config) -> None:
+    @property
+    def best_run_id(self) -> int:
+        return self._kf_best.run_id
+
+    def _update_config(self, new_config: Config) -> None:
         """
-        Setting the config creates new camera and IMU objects.
-        This affects the initial states.
+        Creates new camera and IMU objects from the new config.
+        Affects the initial states.
+        :param new_config: updated config object
         """
         self._config = new_config
 
@@ -101,10 +110,6 @@ class Simulator(object):
 
         self.x0 = States.get_ic(self.camera, self.imu, new_config.ic_imu_dofs)
         self.cov0 = new_config.cov0_matrix
-
-    @property
-    def best_run_id(self) -> int:
-        return self._kf_best.run_id
 
     def run_once(self) -> None:
         """Only performs a single run of the filter."""

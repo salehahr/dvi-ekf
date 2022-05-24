@@ -151,7 +151,7 @@ class Imu(object):
         filepath="",
         overwrite=False,
     ):
-        """Evaluates the symbolic expression using camera values and DOFs of the probe.
+        """Evaluates the symbolic expression for 'om' and 'acc' using camera values and DOFs of the probe.
 
         Args:
             append_array    : if True, appends the resulting data point (om, acc) to _om and _acc
@@ -168,14 +168,12 @@ class Imu(object):
 
         cam = [syms.W_p_CW, R_WC, syms.WW_v_CW, W_om_C, W_acc_C, W_alp_C]
 
+        # fmt: off
         res_om, res_acc = [
-            casadi.DM(r)
-            .full()
-            .reshape(
-                3,
-            )
+            casadi.DM(r).full().reshape(3,)
             for r in self.expr(q, qd, qdd, *cam)
         ]
+        # fmt: on
 
         if append_array:
             self.t.append(t)
@@ -196,9 +194,21 @@ class Imu(object):
 
         return res_om, res_acc
 
-    def eval_init(self, real_joint_dofs, notch0, overwrite=False):
-        q0, qd0, qdd0 = real_joint_dofs
-        q0[6], qd0[6], qdd0[6] = notch0
+    def eval_init(
+        self,
+        probe_joint_dofs: np.ndarray,
+        notch_dofs: np.ndarray,
+        overwrite: bool = False,
+    ):
+        """
+        Evaluates initial IMU values using the probe's and DOFs and the notch DOFS.
+        :param probe_joint_dofs: initial degrees of freedom of the sensor setup model
+        :param notch_dofs: initial degrees of freedom of the notch measurement
+        :param overwrite: whether to overwrite current 'om' and 'acc' values
+        :return:
+        """
+        q0, qd0, qdd0 = probe_joint_dofs
+        q0[6], qd0[6], qdd0[6] = notch_dofs
 
         self.eval_expr_single(
             self.cam.t[0],

@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import math
 import os
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import numpy as np
 import yaml
 from pydantic import BaseModel, validator
 
 from tools import utils
+
+if TYPE_CHECKING:
+    from Models.Probe import Probe
 
 np.set_printoptions(suppress=True, precision=3)
 
@@ -47,7 +52,7 @@ class SimConfig(BaseModel):
     do_fast_sim: bool
 
     @validator("mode")
-    def to_radians(cls, v) -> SimMode:
+    def set_mode(cls, v) -> SimMode:
         return SimMode(v)
 
 
@@ -224,21 +229,27 @@ class Config(object):
         self.filter = FilterConfig(**config["filter"])
 
         # simulation params
-        self.interframe_vals = 1 if self.sim.do_fast_sim else self.imu.interframe_vals
+        self.interframe_vals = self.imu.interframe_vals
         self.cov0_matrix = self.filter.ic.cov0_matrix
         self.with_notch = self.camera.with_notch
 
         # these get initialised after loading the Camera object
-        self.max_vals = 10 if self.sim.do_fast_sim else self.camera.total_frames
+        self.max_vals = self.camera.total_frames
         self.min_t: Optional[float] = None
         self.max_t: Optional[float] = None
         self.total_data_pts: Optional[int] = None
 
+        # overwrite some attributes if fast_sim is set
+        if self.sim.do_fast_sim:
+            self.interframe_vals = 1
+            self.max_vals = 10
+
         # probe
         self.frozen_dofs: List = self.sim.frozen_dofs
         self.gt_joint_dofs: Optional[List] = None
-        self.gt_imu_dofs: Optional[List] = None
-        self.ic_imu_dofs: Optional[List] = None
+        self.gt_imu_dofs: Optional[np.ndarray] = None
+        self.ic_imu_dofs: Optional[np.ndarray] = None
+        self._dofs_updated = False
 
         # noise
         self.process_noise_rw_std = self.filter.noise_dofs.vec / self.interframe_vals
@@ -255,50 +266,68 @@ class Config(object):
         self.mse: Optional[float] = None
         self.do_plot: bool = self.sim.do_plot
 
-    def update_dofs(self, probe) -> None:
+    @property
+    def dofs_updated(self) -> bool:
+        return self._dofs_updated
+
+    def update_dofs(self, probe: Probe) -> None:
         self.gt_joint_dofs = probe.joint_dofs.copy()
         self.gt_imu_dofs = probe.imu_dofs.copy()
         self.ic_imu_dofs = utils.generate_imudof_ic(self.gt_imu_dofs)
 
+        self._dofs_updated = True
+
     def print(self) -> None:
         cov0 = self.filter.ic.cov0
         print(
-            "Configuration: \n",
-            f"\t Trajectory          : {self.traj_name}\n",
-            f"\t Mode                : {self.sim.mode}\n\n",
-            f"\t Num. cam. frames    : {self.max_vals}\n",
-            f"\t Num. IMU data       : {self.total_data_pts}\n",
-            f"\t(num. IMU b/w frames : {self.interframe_vals})\n\n",
-            f"\t Frozen DOFs         : {self.frozen_dofs}\n\n",
-            f"\t ## Noise values\n",
-            f"\t #  P0: Initial process noise\n",
-            f"\t std_dp             = {cov0.imu_pos[0]:.1f} \t cm\n",
-            f"\t std_dv             = {cov0.imu_vel[0]:.1f} \t cm/s\n",
-            f"\t std_dtheta         = {np.rad2deg(cov0.imu_theta[0]):.1f} \t deg\n",
-            f"\t std_ddofs_rot      = {np.rad2deg(cov0.dofs_rot[0]):.1f} \t deg\n",
-            f"\t std_ddofs_trans    = {cov0.dofs_trans[0]:.1f} \t cm\n",
-            f"\t std_dnotch         = {np.rad2deg(cov0.notch[0]):.1f} \t deg\n",
-            f"\t std_dnotchd        = {np.rad2deg(cov0.notch[1]):.1f} \t deg/s\n",
-            f"\t std_dnotchdd       = {np.rad2deg(cov0.notch[2]):.1f} \t deg/s^2\n",
-            f"\t std_dp_cam         = {cov0.camera_pos[0]:.1f} \t cm\n",
-            f"\t std_dtheta_cam     = {cov0.camera_theta[0]:.1f} \t deg\n\n",
-            f"\t #  Q: IMU measurement noise\n",
-            f"\t std_acc            = {np_string(self.imu.stdev_accel)} cm/s^2\n",
-            f"\t std_om             = {np_string(np.rad2deg(self.imu.stdev_omega))} deg/s\n\n",
-            f"\t #  Q: IMU dofs random walk noise\n",
-            f"\t std_dofs_r  = {np_string(np.rad2deg(self.process_noise_rw_std[0:3]))} deg\n",
-            f"\t std_dofs_p  = {np_string(self.process_noise_rw_std[3:6])} cm\n\n",
-            f"\t #  Q: Notch accel random walk noise\n",
-            f"\t std_notchdd = {np.rad2deg(self.process_noise_rw_std[6]):.4f} deg/s^2\n\n",
-            f"\t #  R: Measurement noise\n",
-            f"\t std_pc     = {np_string(self.meas_noise_std[0:3])} cm \n",
+            "Configuration:",
+            f"\t Trajectory          : {self.traj_name}",
+            f"\t Mode                : {self.sim.mode.value}",
+            "",
+            f"\t Num. cam. frames    : {self.max_vals}",
+            f"\t Num. IMU data       : {self.total_data_pts}",
+            f"\t(num. IMU b/w frames : {self.interframe_vals})",
+            "",
+            f"\t Frozen DOFs         : {self.frozen_dofs}",
+            "",
+            f"\t ## Noise values",
+            f"\t #  P0: Initial process noise",
+            f"\t std_dp             = {cov0.imu_pos[0]:.1f} \t cm",
+            f"\t std_dv             = {cov0.imu_vel[0]:.1f} \t cm/s",
+            f"\t std_dtheta         = {np.rad2deg(cov0.imu_theta[0]):.1f} \t deg",
+            f"\t std_ddofs_rot      = {np.rad2deg(cov0.dofs_rot[0]):.1f} \t deg",
+            f"\t std_ddofs_trans    = {cov0.dofs_trans[0]:.1f} \t cm",
+            f"\t std_dnotch         = {np.rad2deg(cov0.notch[0]):.1f} \t deg",
+            f"\t std_dnotchd        = {np.rad2deg(cov0.notch[1]):.1f} \t deg/s",
+            f"\t std_dnotchdd       = {np.rad2deg(cov0.notch[2]):.1f} \t deg/s^2",
+            f"\t std_dp_cam         = {cov0.camera_pos[0]:.1f} \t cm",
+            f"\t std_dtheta_cam     = {cov0.camera_theta[0]:.1f} \t deg",
+            "",
+            f"\t #  Q: IMU measurement noise",
+            f"\t std_acc            = {np_string(self.imu.stdev_accel)} cm/s^2",
+            f"\t std_om             = {np_string(np.rad2deg(self.imu.stdev_omega))} deg/s",
+            "",
+            f"\t #  Q: IMU dofs random walk noise",
+            f"\t std_dofs_r  = {np_string(np.rad2deg(self.process_noise_rw_std[0:3]))} deg",
+            f"\t std_dofs_p  = {np_string(self.process_noise_rw_std[3:6])} cm",
+            "",
+            f"\t #  Q: Notch accel random walk noise",
+            f"\t std_notchdd = {np.rad2deg(self.process_noise_rw_std[6]):.4f} deg/s^2",
+            "",
+            f"\t #  R: Measurement noise",
+            f"\t std_pc     = {np_string(self.meas_noise_std[0:3])} cm",
             f"\t std_qc     = "
-            + f"{np_string(np.rad2deg(self.meas_noise_std[3:6]))} deg\n",
+            + f"{np_string(np.rad2deg(self.meas_noise_std[3:6]))} deg",
             f"\t std_notch  = "
-            + f"{np_string(np.rad2deg(self.meas_noise_std[6]))} deg\n\n",
+            + f"{np_string(np.rad2deg(self.meas_noise_std[6]))} deg",
+            "",
+            sep="\n",
         )
-        self.print_dofs()
+        self._print_dofs()
 
-    def print_dofs(self) -> None:
-        print(f"DOFs (real) : {np_string(self.gt_imu_dofs)}")
-        print(f"DOFs (IC)   : {np_string(self.ic_imu_dofs)}\n")
+    def _print_dofs(self) -> None:
+        if self.gt_imu_dofs:
+            print(f"DOFs (real) : {np_string(self.gt_imu_dofs)}")
+
+        if self.ic_imu_dofs:
+            print(f"DOFs (IC)   : {np_string(self.ic_imu_dofs)}\n")
