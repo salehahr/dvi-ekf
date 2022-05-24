@@ -9,7 +9,9 @@ simulation:
   do_fast_sim: true
 
 camera:
+  # Initial timestamp (if known)
   start_frame: null
+  # Number of camera frames to use starting from start_frame
   total_frames: all
   scale: 10
   with_notch: false

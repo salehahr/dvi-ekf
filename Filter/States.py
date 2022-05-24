@@ -34,7 +34,7 @@ class States(object):
         self.frozen_dofs = [False] * 6
 
     @staticmethod
-    def get_ic(camera, imu, imudof_ic: list) -> States:
+    def get_ic(camera, imu, imudof_ic: np.ndarray) -> States:
         """
         Returns the initial states given the camera and IMU states,
         as well as the initial values of the IMU DOFS.

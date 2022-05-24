@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def generate_imudof_ic(gt_dofs: list) -> list:
+def generate_imudof_ic(gt_dofs: np.ndarray) -> np.ndarray:
     """
     Generates synthetic initial conditions of the IMU dofs
     by perturbing the real DOFs
