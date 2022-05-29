@@ -240,10 +240,10 @@ class CameraPlot(Plotter):
 
 
 class FilterPlot(Plotter):
-    def __init__(self, kf, camera):
+    def __init__(self, kf, config, camera):
         self.min_t = None
         self.max_t = None
-        self.config = kf.config
+        self.config = config
 
         self.labels_camera_compact = kf.traj.labels_camera[:6]
         self.d_qweight_labels = {

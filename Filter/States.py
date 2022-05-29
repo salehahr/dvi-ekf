@@ -33,30 +33,6 @@ class States(object):
 
         self.frozen_dofs = [False] * 6
 
-    @staticmethod
-    def get_ic(camera, imu, imudof_ic: np.ndarray) -> States:
-        """
-        Returns the initial states given the camera and IMU states,
-        as well as the initial values of the IMU DOFS.
-        :param camera:
-        :param imu:
-        :param imudof_ic:
-        :return:
-        """
-        cam_reference = camera.rotated if camera.rotated else camera
-        notch0 = cam_reference.get_notch_at(0)
-        W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(cam_reference.vec0, notch0)
-
-        return States(
-            W_p_BW_0,
-            WW_v_BW_0,
-            R_WB_0,
-            imudof_ic,
-            notch0,
-            cam_reference.p0,
-            cam_reference.q0,
-        )
-
     def apply_correction(self, err):
         # fmt: off
         self.p += err.dp.reshape(3,)
