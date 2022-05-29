@@ -1,5 +1,5 @@
 import os
-from copy import copy, deepcopy
+from copy import copy
 
 import casadi
 import numpy as np
@@ -26,11 +26,11 @@ class Filter(object):
         self.dt = 0.0
 
         # initial states/covariance
-        self.states = deepcopy(sim.x0)
+        self.states = sim.x0
         self.P = np.copy(sim.cov0)
 
         # states
-        self.num_states = sim.x0.size
+        self.num_states = sim.num_states
         self.num_error_states = self.num_states - 2
         self.num_meas = 7
         self.num_noise = 13

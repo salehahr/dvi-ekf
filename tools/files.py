@@ -44,3 +44,9 @@ def write_angvel_data(
             data = [f"{t_interp[i]:.5f}", *[f"{x:.10f}" for x in omega]]
             data_str = ",".join(data) + "\n"
             f.write(data_str)
+
+
+def save_tuned_params(x, filename=None):
+    filename = "./opt-tune-params.txt" if not filename else filename
+    with open(filename, "w+") as f:
+        f.write(x)
