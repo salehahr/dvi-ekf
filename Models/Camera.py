@@ -19,12 +19,9 @@ if TYPE_CHECKING:
 
 def create_camera(config: Config) -> Camera:
     """Creates new camera object from the config object."""
-    trajectory_fp = os.path.join(config.traj_path, f"{config.traj_name}.csv")
-    notch_fp = os.path.join(config.sim.data_folder, f"{config.sim.notch_traj_name}.txt")
-
     cam = Camera(
-        filepath=trajectory_fp,
-        notch_filepath=notch_fp,
+        filepath=config.traj_fp,
+        notch_filepath=config.notch_fp,
         max_vals=config.max_vals,
         scale=config.camera.scale,
         with_notch=config.with_notch,

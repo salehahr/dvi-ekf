@@ -463,8 +463,9 @@ class Filter(object):
 
     def save(self):
         self.config.mse = self.mse
-        traj_path = self.config.traj_path
-        kf_filepath = os.path.join(traj_path, f"kf_best_{self.config.traj_name}.txt")
+        kf_filepath = os.path.join(
+            self.config.traj_path, f"kf_best_{self.config.traj_name}.txt"
+        )
         imuref_filepath = kf_filepath.replace("kf_best", "imu_ref")
 
         self.traj.write_to_file(kf_filepath)
