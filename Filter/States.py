@@ -1,22 +1,43 @@
 from __future__ import annotations
 
 import math
-from typing import List
+from typing import List, Optional, Union
 
 import numpy as np
 
 from .Quaternion import Quaternion
 
+Rotation = Union[Quaternion, np.ndarray]
+
 
 class States(object):
-    def __init__(self, p, v, q, dofs, ndofs, p_cam, q_cam):
+    def __init__(
+        self,
+        p: np.ndarray,
+        v: np.ndarray,
+        q: Rotation,
+        dofs: np.ndarray,
+        notch_dofs: np.ndarray,
+        p_cam: np.ndarray,
+        q_cam: Rotation,
+    ):
+        """
+        :param p: W_p_BW, IMU position in world coordinates
+        :param v: WW_v_BW, IMU velocity in world coordinates, differentiated w.r.t. W
+        :param q: R_WB, IMU orientation w.r.t. world coordinates
+        :param dofs: IMU degrees of freedom
+        :param notch_dofs: notch degrees of freedom
+        :param p_cam: W_p_CW, camera position in world coordinates
+        :param q_cam: camera orientation w.r.t. world coordinates
+        """
+
         # fmt: off
-        self._p = np.asarray(p).reshape(3,)
-        self._v = np.asarray(v).reshape(3,)
+        self._p = np.copy(p).reshape(3,)
+        self._v = np.copy(v).reshape(3,)
         self._q = Quaternion(val=q, do_normalise=True)
-        self._dofs = np.array(dofs).reshape(6,)
-        self._ndofs = np.array(ndofs).reshape(3,)
-        self._p_cam = p_cam.reshape(3,)
+        self._dofs = np.copy(dofs).reshape(6,)
+        self._notch_dofs = np.copy(notch_dofs).reshape(3, )
+        self._p_cam = np.copy(p_cam).reshape(3,)
         self._q_cam = Quaternion(val=q_cam, do_normalise=True)
         # fmt: on
 
@@ -25,61 +46,73 @@ class States(object):
             + len(v)
             + len(self.q.xyzw)
             + len(dofs)
-            + len(ndofs)
+            + len(notch_dofs)
             + len(p_cam)
             + len(self.q_cam.xyzw)
         )
         assert self.size == 26
 
-        self.frozen_dofs = [False] * 6
+        self._frozen_dofs: List[bool] = [False] * 6
 
-    def apply_correction(self, err):
+    def apply_correction(self, err: ErrorStates):
         # fmt: off
         self.p += err.dp.reshape(3,)
         self.v += err.dv.reshape(3,)
         self.q = self.q * err.dq
         self.q.normalise()
 
-        for i, fr in enumerate(self.frozen_dofs):
+        for i, fr in enumerate(self._frozen_dofs):
             if not fr:
                 self._dofs[i] += err.ddofs[i]
 
-        self.ndofs += err.dndofs.reshape(3,)
+        self.notch_dofs += err.dndofs.reshape(3, )
         self.p_cam += err.dpc.reshape(3,)
         self.q_cam = self.q_cam * err.dqc
         self.q_cam.normalise()
         # fmt: on
 
-    def set(self, vec):
+    def set(self, vec: List[np.ndarray]):
         self.p = vec[0].squeeze()
         self.v = vec[1].squeeze()
         self.q = vec[2].squeeze()
 
-        for i, fr in enumerate(self.frozen_dofs):
+        for i, fr in enumerate(self._frozen_dofs):
             if not fr:
                 self._dofs[i] = vec[3].squeeze()[i]
 
-        self.ndofs = np.array(vec[4:7]).squeeze()
+        self.notch_dofs = np.array(vec[4:7]).squeeze()
         self.p_cam = vec[7].squeeze()
         self.q_cam = vec[8].squeeze()
+
+    def copy(self) -> States:
+        """Clones current states to a new object."""
+        return States(
+            p=self.p,
+            v=self.v,
+            q=self.q,
+            dofs=self.dofs,
+            notch_dofs=self.notch_dofs,
+            p_cam=self.p_cam,
+            q_cam=self.q_cam,
+        )
 
     def __repr__(self):
         return f"State: p_cam ({self._p_cam}), ..."
 
     @property
-    def vec(self):
+    def vec(self) -> List[np.ndarray]:
         return [
             self.p,
             self.v,
             self.q.rot,
             self.dofs,
-            self.ndofs,
+            self.notch_dofs,
             self.p_cam,
             self.q_cam.rot,
         ]
 
     @property
-    def p(self):
+    def p(self) -> np.ndarray:
         return self._p.copy()
 
     @p.setter
@@ -87,7 +120,7 @@ class States(object):
         self._p = val
 
     @property
-    def v(self):
+    def v(self) -> np.ndarray:
         return self._v.copy()
 
     @v.setter
@@ -95,15 +128,15 @@ class States(object):
         self._v = val
 
     @property
-    def q(self):
-        return self._q
+    def q(self) -> Quaternion:
+        return Quaternion(val=self._q)
 
     @q.setter
     def q(self, val):
         self._q = Quaternion(val=val, do_normalise=True)
 
     @property
-    def dofs(self):
+    def dofs(self) -> np.ndarray:
         return self._dofs.copy()
 
     @dofs.setter
@@ -111,15 +144,15 @@ class States(object):
         self._dofs = val
 
     @property
-    def ndofs(self):
-        return self._ndofs.copy()
+    def notch_dofs(self) -> np.ndarray:
+        return self._notch_dofs.copy()
 
-    @ndofs.setter
-    def ndofs(self, val):
-        self._ndofs = val
+    @notch_dofs.setter
+    def notch_dofs(self, val):
+        self._notch_dofs = val
 
     @property
-    def p_cam(self):
+    def p_cam(self) -> np.ndarray:
         return self._p_cam.copy()
 
     @p_cam.setter
@@ -127,12 +160,20 @@ class States(object):
         self._p_cam = val
 
     @property
-    def q_cam(self):
-        return self._q_cam
+    def q_cam(self) -> Quaternion:
+        return Quaternion(val=self._q_cam)
 
     @q_cam.setter
     def q_cam(self, val):
         self._q_cam = Quaternion(val=val, do_normalise=True)
+
+    @property
+    def frozen_dofs(self) -> List[bool]:
+        return self._frozen_dofs
+
+    @frozen_dofs.setter
+    def frozen_dofs(self, value: List[bool]) -> None:
+        self._frozen_dofs = value
 
 
 class ErrorStates(object):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from copy import copy
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import casadi
 import numpy as np
@@ -36,8 +36,12 @@ class Filter(object):
         self.show_progress = True
 
         # initial states/covariance
-        self.states = sim.x0
-        self.P = np.copy(sim.cov0)
+        self._states = sim.x0
+        self._P = sim.cov0
+
+        # for casadi: states, inputs
+        self._x: List[np.ndarray] = []
+        self._u: List[np.ndarray] = []
 
         # states
         self.num_states = sim.num_states
@@ -45,19 +49,16 @@ class Filter(object):
         self.num_meas = 7
         self.num_noise = 13
 
-        assert self.P.shape == (self.num_error_states, self.num_error_states)
+        assert self._P.shape == (self.num_error_states, self.num_error_states)
 
-        self.states.frozen_dofs = [bool(fr) for fr in self._config.frozen_dofs]
-        self._x = []
-        self._u = []
+        self._states.frozen_dofs = [bool(fr) for fr in self._config.frozen_dofs]
 
         # objects
-        self.probe = sim.sym_probe
-        self.camera = sim.camera
+        self._probe = sim.sym_probe
         self.imu = sim.imu
 
         # imu
-        self.imu.eval_init(self._config.gt_joint_dofs, sim.x0.ndofs)
+        self.imu.eval_init(self._config.gt_joint_dofs, self._states.notch_dofs)
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
 
@@ -74,7 +75,7 @@ class Filter(object):
         # buffer
         self._om_old = self.imu.om.squeeze()
         self._acc_old = self.imu.acc.squeeze()
-        self.R_WB_old = self.states.q.rot
+        self.R_WB_old = self._states.q.rot
 
         # static matrices
         self.H = np.zeros([self.num_meas, self.num_error_states])
@@ -83,15 +84,15 @@ class Filter(object):
 
         # plot
         self.traj = FilterTraj("kf")
-        self.traj.append_propagated_states(self._config.min_t, self.states)
+        self.traj.append_propagated_states(self._config.min_t, self._states)
 
         # metrics
         self.mse = 0
         self.update_mse = 0  # non-cumulative; is overwritten every update stage
 
     def reset(self, x0, cov0, notch0):
-        self.states = copy(x0)
-        self.P = np.copy(cov0)
+        self._states = copy(x0)
+        self._P = np.copy(cov0)
         self._x = []
         self._u = []
         self._dt = 0.0
@@ -101,7 +102,7 @@ class Filter(object):
         self.imu.eval_init(self._config.gt_joint_dofs, notch0)
 
         self.traj.reset()
-        self.traj.append_propagated_states(self._config.min_t, self.states)
+        self.traj.append_propagated_states(self._config.min_t, self._states)
         self.mse = 0
 
     def update_noise_matrices(self):
@@ -115,7 +116,7 @@ class Filter(object):
 
     @property
     def x(self):
-        self._x = self.states.vec
+        self._x = self._states.vec
         return self._x
 
     @property
@@ -227,20 +228,22 @@ class Filter(object):
         # Buffer
         self.om_old = om
         self.acc_old = acc
-        self.R_WB_old = self.states.q.rot
+        self.R_WB_old = self._states.q.rot
 
         # for plotting
-        self.traj.append_propagated_states(t, self.states)
+        self.traj.append_propagated_states(t, self._states)
 
     def _predict_nominal(self, om, acc):
-        est_probe = self.probe.get_est_fwkin(self.states.dofs, self.states.ndofs)
+        est_probe = self._probe.get_est_fwkin(
+            self._states.dofs, self._states.notch_dofs
+        )
 
         res = [
             casadi.DM(r).full()
             for r in eqns.f_predict(self._dt, *self.x, *self.u, *est_probe, om, acc)
         ]
 
-        self.states.set(res)
+        self._states.set(res)
 
     def _predict_error(self):
         """Calculates jacobian of the error state kinematics w.r.t. error states and w.r.t. noise."""
@@ -267,9 +270,9 @@ class Filter(object):
         """Fills the error jacobian (either w.r.t. error state or
         w.r.t. noise) for the camera state entries."""
 
-        err_p_C_next = syms.err_p_C + syms.dt * syms.get_err_pc_dot(self.probe)
+        err_p_C_next = syms.err_p_C + syms.dt * syms.get_err_pc_dot(self._probe)
         err_theta_C_next = syms.err_theta_C + syms.dt * syms.get_err_theta_c_dot(
-            self.probe
+            self._probe
         )
 
         l_in = 0
@@ -318,8 +321,8 @@ class Filter(object):
         return casadi.DM(
             fun_jac(
                 dt=self._dt,
-                dofs=self.states.dofs,
-                notchdofs=self.states.ndofs,
+                dofs=self._states.dofs,
+                notchdofs=self._states.notch_dofs,
                 R_WB=self.R_WB_old,
                 B_om_BW=self.om_old,
                 B_acc_BW=self.acc_old,
@@ -342,15 +345,15 @@ class Filter(object):
         Q is calculated from IMU noise and
         from the DOF random walk params.
         """
-        self.P = self.Fx @ self.P @ self.Fx.T + self.Fi @ self.Q @ self.Fi.T
+        self._P = self.Fx @ self._P @ self.Fx.T + self.Fi @ self.Q @ self.Fi.T
 
     def update(self, t, camera, ang_notch):
         # compute gain
         H = self.H
 
-        S = H @ self.P @ H.T + self.R  # 7x7
+        S = H @ self._P @ H.T + self.R  # 7x7
         try:
-            K = self.P @ H.T @ np.linalg.inv(S)  # 24x7
+            K = self._P @ H.T @ np.linalg.inv(S)  # 24x7
         except np.linalg.LinAlgError as e:
             print(f"ERROR: {e}!")
             print("Stopping simulation.")
@@ -362,28 +365,28 @@ class Filter(object):
         # cam_rot_corrected = camera.qrot
 
         # compute error state
-        res_p_cam = camera.pos.reshape((3,)) - self.states.p_cam.reshape((3,))
-        err_q = cam_rot_corrected.conjugate * self.states.q_cam
+        res_p_cam = camera.pos.reshape((3,)) - self._states.p_cam.reshape((3,))
+        err_q = cam_rot_corrected.conjugate * self._states.q_cam
         res_q_cam = err_q.angle * err_q.axis
-        res_notch = ang_notch - self.states.ndofs[0]
-        # res_notch = 0 - self.states.ndofs[0]
+        res_notch = ang_notch - self._states.notch_dofs[0]
+        # res_notch = 0 - self.states.notch_dofs[0]
 
         res = np.hstack((res_p_cam, res_q_cam, res_notch))
         err = ErrorStates(K @ res)
 
         # correct predicted state and covariance
-        self.states.apply_correction(err)
+        self._states.apply_correction(err)
         I = np.eye(self.num_error_states)
-        self.P = (I - K @ H) @ self.P @ (I - K @ H).T + K @ self.R @ K.T
+        self._P = (I - K @ H) @ self._P @ (I - K @ H).T + K @ self.R @ K.T
 
         # reset error states
         G = np.eye(self.num_error_states)  # 24x24
         G[6:9, 6:9] = np.eye(3) - skew(0.5 * err.theta)
         G[-3:, -3:] = np.eye(3) - skew(0.5 * err.theta_c)
-        self.P = G @ self.P @ G.T
+        self._P = G @ self._P @ G.T
 
         # for plotting
-        self.traj.append_updated_states(t, self.states)
+        self.traj.append_updated_states(t, self._states)
 
         return K
 
@@ -444,7 +447,7 @@ class Filter(object):
 
     def calculate_dof_metric(self):
         """at end of run"""
-        res = self.states.dofs - self._config.gt_imu_dofs
+        res = self._states.dofs - self._config.gt_imu_dofs
         return np.dot(res, res) / 6
 
     def save(self):

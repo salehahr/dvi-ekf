@@ -46,6 +46,16 @@ class Quaternion(object):
         do_normalise: bool = False,
         euler: str = "",
     ):
+        """
+        :param val: 3x3 rotation matrix, 4x1 quaternion vector (xyzw), or 3x1 xyz Euler angles
+        :param x: x-component of quaternion
+        :param y: y-component of quaternion
+        :param z: z-component of quaternion
+        :param w: scalar part of quaternion
+        :param v: vector part of quaternion
+        :param do_normalise: whether to perform normalisation
+        :param euler: Euler convention, e.g. "xyz"
+        """
         self.x = x
         self.y = y
         self.z = z

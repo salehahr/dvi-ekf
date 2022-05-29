@@ -41,7 +41,7 @@ class Simulator(object):
         self.imu: Optional[Imu] = None
 
         self._x0: Optional[States] = None
-        self.cov0: Optional[np.ndarray] = None
+        self._cov0: Optional[np.ndarray] = None
 
         config.update_dofs(probe)
         self._update_config(config)
@@ -96,8 +96,12 @@ class Simulator(object):
     @property
     def x0(self) -> States:
         """Returns a copy of the initial conditions."""
-        x0 = self._x0
-        return States(x0.p, x0.v, x0.q, x0.dofs, x0.ndofs, x0.p_cam, x0.q_cam)
+        return self._x0.copy()
+
+    @property
+    def cov0(self) -> np.ndarray:
+        """Returns a copy of the initial covariance matrix."""
+        return self._cov0.copy()
 
     @property
     def num_states(self) -> int:
@@ -115,7 +119,7 @@ class Simulator(object):
         self.imu = Imu.create(new_config.imu, self.camera, self.probe, gen_ref=True)
 
         self._x0 = get_ic(self.camera, self.imu, new_config.ic_imu_dofs)
-        self.cov0 = new_config.cov0_matrix
+        self._cov0 = new_config.cov0_matrix
 
     def run_once(self) -> None:
         """Only performs a single run of the filter."""

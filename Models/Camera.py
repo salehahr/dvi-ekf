@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import os
 from copy import copy
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 from spatialmath import SE3, UnitQuaternion
@@ -108,14 +107,14 @@ class Camera(object):
 
         # initial conditions
         self.vec0 = self.vec_at(0)
-        self.p0 = self.p[:, 0].reshape(3, 1)
-        self.r0 = self.r[:, 0].reshape(3, 1)
-        self.R0 = self.R[0]
-        self.q0 = self.q[:, 0]
-        self.v0 = self.v[:, 0].reshape(3, 1)
-        self.om0 = self.om[:, 0].reshape(3, 1)
-        self.acc0 = self.acc[:, 0].reshape(3, 1)
-        self.alp0 = self.alp[:, 0].reshape(3, 1)
+        self.p0 = np.copy(self.p[:, 0]).reshape(3, 1)
+        self.r0 = np.copy(self.r[:, 0]).reshape(3, 1)
+        self.R0 = np.copy(self.R[0])
+        self.q0 = np.copy(self.q[:, 0])
+        self.v0 = np.copy(self.v[:, 0]).reshape(3, 1)
+        self.om0 = np.copy(self.om[:, 0]).reshape(3, 1)
+        self.acc0 = np.copy(self.acc[:, 0]).reshape(3, 1)
+        self.alp0 = np.copy(self.alp[:, 0]).reshape(3, 1)
 
         # notch
         self.with_notch = with_notch
@@ -311,13 +310,13 @@ class Camera(object):
         """Get index of camera data where the timestamp <= T."""
         return max([i for i, t in enumerate(self.t) if t <= T])
 
-    def vec_at(self, i):
-        p = self.p[:, i].reshape(3, 1)
-        R = self.R[i]
-        v = self.v[:, i].reshape(3, 1)
-        om = self.om[:, i].reshape(3, 1)
-        acc = self.acc[:, i].reshape(3, 1)
-        alp = self.alp[:, i].reshape(3, 1)
+    def vec_at(self, i: int) -> List[np.ndarray]:
+        p = np.copy(self.p[:, i]).reshape(3, 1)
+        R = np.copy(self.R[i])
+        v = np.copy(self.v[:, i]).reshape(3, 1)
+        om = np.copy(self.om[:, i]).reshape(3, 1)
+        acc = np.copy(self.acc[:, i]).reshape(3, 1)
+        alp = np.copy(self.alp[:, i]).reshape(3, 1)
 
         return [p, R, v, om, acc, alp]
 
