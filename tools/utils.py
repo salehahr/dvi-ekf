@@ -64,11 +64,11 @@ def get_ic(camera: Camera, imu: Imu, imudof_ic: np.ndarray) -> States:
     W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(cam_reference.vec0, notch0)
 
     return States(
-        W_p_BW_0,
-        WW_v_BW_0,
-        R_WB_0,
-        imudof_ic,
-        notch0,
-        cam_reference.p0,
-        cam_reference.q0,
+        p=W_p_BW_0,
+        v=WW_v_BW_0,
+        q=R_WB_0,
+        dofs=imudof_ic,
+        notch_dofs=notch0,
+        p_cam=cam_reference.p0,
+        q_cam=cam_reference.q0,
     )
