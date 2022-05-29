@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import os
 from copy import copy
+from typing import TYPE_CHECKING, Optional
 
 import casadi
 import numpy as np
 from tqdm import tqdm
 
+from tools.utils import get_upd_values
 from Visuals import FilterPlot
 
 from .context import eqns, syms
@@ -12,18 +16,24 @@ from .Quaternion import Quaternion, skew
 from .States import ErrorStates
 from .Trajectory import FilterTraj
 
-UPDATE_MSE_THRESHOLD = 1
-SAVE_STATES_FRAME = 10
+if TYPE_CHECKING:
+    from Filter.Simulator import Simulator
 
 
 class Filter(object):
-    def __init__(self, sim):
-        # simulation
-        self.sim = sim
-        self.config = sim.config
+    """
+    Error-State Kalman Filter for fusing camera and IMU measurements
+    using a sensor setup model (probe).
+    """
+
+    def __init__(self, sim: Simulator):
+        assert sim.config.dofs_updated
+
+        # simulation settings
+        self.run_id: Optional[int] = None
+        self._config = sim.config
+        self._dt = 0.0
         self.show_progress = True
-        self._run_id = None
-        self.dt = 0.0
 
         # initial states/covariance
         self.states = sim.x0
@@ -37,7 +47,7 @@ class Filter(object):
 
         assert self.P.shape == (self.num_error_states, self.num_error_states)
 
-        self.states.frozen_dofs = [bool(fr) for fr in self.config.frozen_dofs]
+        self.states.frozen_dofs = [bool(fr) for fr in self._config.frozen_dofs]
         self._x = []
         self._u = []
 
@@ -47,19 +57,19 @@ class Filter(object):
         self.imu = sim.imu
 
         # imu
-        self.imu.eval_init(self.config.gt_joint_dofs, sim.x0.ndofs)
+        self.imu.eval_init(self._config.gt_joint_dofs, sim.x0.ndofs)
         self.stdev_na = np.array(self.imu.stdev_na)
         self.stdev_nom = np.array(self.imu.stdev_nom)
 
         # noise: process
         Q = np.eye(self.num_noise)
-        Q[0:3, 0:3] = self.dt ** 2 * self.stdev_na ** 2 * np.eye(3)
-        Q[3:6, 3:6] = self.dt ** 2 * self.stdev_nom ** 2 * np.eye(3)
-        Q[6:13, 6:13] = np.diag(self.config.process_noise_rw_var)
+        Q[0:3, 0:3] = self._dt ** 2 * self.stdev_na ** 2 * np.eye(3)
+        Q[3:6, 3:6] = self._dt ** 2 * self.stdev_nom ** 2 * np.eye(3)
+        Q[6:13, 6:13] = np.diag(self._config.process_noise_rw_var)
         self.Q = Q
 
         # noise: measurement
-        self.R = np.diag(self.config.meas_noise_var)
+        self.R = np.diag(self._config.meas_noise_var)
 
         # buffer
         self._om_old = self.imu.om.squeeze()
@@ -73,7 +83,7 @@ class Filter(object):
 
         # plot
         self.traj = FilterTraj("kf")
-        self.traj.append_propagated_states(self.config.min_t, self.states)
+        self.traj.append_propagated_states(self._config.min_t, self.states)
 
         # metrics
         self.mse = 0
@@ -84,32 +94,24 @@ class Filter(object):
         self.P = np.copy(cov0)
         self._x = []
         self._u = []
-        self.dt = 0.0
+        self._dt = 0.0
 
         # imu / noise
         self.imu.reset()
-        self.imu.eval_init(self.config.gt_joint_dofs, notch0)
+        self.imu.eval_init(self._config.gt_joint_dofs, notch0)
 
         self.traj.reset()
-        self.traj.append_propagated_states(self.config.min_t, self.states)
+        self.traj.append_propagated_states(self._config.min_t, self.states)
         self.mse = 0
 
     def update_noise_matrices(self):
         Q = np.eye(self.num_noise)
-        Q[0:3, 0:3] = self.dt ** 2 * self.stdev_na ** 2 * np.eye(3)
-        Q[3:6, 3:6] = self.dt ** 2 * self.stdev_nom ** 2 * np.eye(3)
-        Q[6:13, 6:13] = np.diag(self.config.process_noise_rw_var)
+        Q[0:3, 0:3] = self._dt ** 2 * self.stdev_na ** 2 * np.eye(3)
+        Q[3:6, 3:6] = self._dt ** 2 * self.stdev_nom ** 2 * np.eye(3)
+        Q[6:13, 6:13] = np.diag(self._config.process_noise_rw_var)
         self.Q = Q
 
-        self.R = np.diag(self.config.meas_noise_var)
-
-    @property
-    def run_id(self):
-        return self._run_id
-
-    @run_id.setter
-    def run_id(self, val):
-        self._run_id = val
+        self.R = np.diag(self._config.meas_noise_var)
 
     @property
     def x(self):
@@ -131,7 +133,7 @@ class Filter(object):
 
     @property
     def Om_old(self):
-        return Quaternion(w=1.0, v=(0.5 * self.dt * self.om_old), do_normalise=True)
+        return Quaternion(w=1.0, v=(0.5 * self._dt * self.om_old), do_normalise=True)
 
     @property
     def acc_old(self):
@@ -141,12 +143,12 @@ class Filter(object):
     def acc_old(self, val):
         self._acc_old = val.squeeze()
 
-    def run(self, camera, k, run_desc_str, verbose=True):
+    def run(self, camera, k, run_desc_str):
         """Filter main loop (t>=1) over all camera frames,
         not counting IC.
         arg: k should already be adjusted to start at 1.
         """
-        old_t = self.config.min_t
+        old_t = self._config.min_t
         cam_timestamps = tqdm(
             enumerate(camera.t[1:]),
             total=camera.max_vals,
@@ -161,14 +163,6 @@ class Filter(object):
             i_cam = i + 1  # not counting IC
             self.run_one_epoch(old_t, t, i_cam, camera)
             self.calculate_update_mse(i_cam, camera)
-
-            if self.update_mse >= UPDATE_MSE_THRESHOLD:
-                print(f"update_mse = {self.update_mse:.3E}")
-            else:
-                # only save states every ten frames and only if below threshold
-                if (i_cam % SAVE_STATES_FRAME) == 0:
-                    print(f"Saving states at frame {i_cam}")
-                    self.save_states(i_cam, t)
 
             old_t = t
 
@@ -199,7 +193,7 @@ class Filter(object):
         """
         cam_queue = self.imu.cam.generate_queue(t0, tn)
 
-        real_probe_dofs = self.config.gt_joint_dofs
+        real_probe_dofs = self._config.gt_joint_dofs
 
         old_ti = t0
         for ii, ti in enumerate(cam_queue.t):
@@ -220,7 +214,7 @@ class Filter(object):
 
             self.imu.ref.append_value(ti, interp.vec, interp.notch_arr)
 
-            self.dt = ti - old_ti
+            self._dt = ti - old_ti
             self.propagate(ti, om, acc)
 
             old_ti = ti
@@ -243,7 +237,7 @@ class Filter(object):
 
         res = [
             casadi.DM(r).full()
-            for r in eqns.f_predict(self.dt, *self.x, *self.u, *est_probe, om, acc)
+            for r in eqns.f_predict(self._dt, *self.x, *self.u, *est_probe, om, acc)
         ]
 
         self.states.set(res)
@@ -252,11 +246,11 @@ class Filter(object):
         """Calculates jacobian of the error state kinematics w.r.t. error states and w.r.t. noise."""
 
         Fx = casadi.SX.eye(self.num_error_states)
-        Fx[0:3, 3:6] = self.dt * casadi.SX.eye(3)
-        Fx[3:6, 6:9] = -self.R_WB_old @ casadi.skew(self.acc_old) * self.dt
+        Fx[0:3, 3:6] = self._dt * casadi.SX.eye(3)
+        Fx[3:6, 6:9] = -self.R_WB_old @ casadi.skew(self.acc_old) * self._dt
         Fx[6:9, 6:9] = self.Om_old.rot.T
         # Fx[9:15, :] # dofs
-        Fx[15:17, 16:18] = Fx[15:17, 16:18] + self.dt * casadi.SX.eye(2)
+        Fx[15:17, 16:18] = Fx[15:17, 16:18] + self._dt * casadi.SX.eye(2)
 
         self.Fx = self._cam_error_jacobian(Fx, syms.err_x)
 
@@ -323,7 +317,7 @@ class Filter(object):
         )
         return casadi.DM(
             fun_jac(
-                dt=self.dt,
+                dt=self._dt,
                 dofs=self.states.dofs,
                 notchdofs=self.states.ndofs,
                 R_WB=self.R_WB_old,
@@ -331,8 +325,8 @@ class Filter(object):
                 B_acc_BW=self.acc_old,
                 n_a=self.stdev_na,
                 n_om=self.stdev_nom,
-                n_dofs=self.config.process_noise_rw_std[0:6],
-                n_notch_acc=self.config.process_noise_rw_std[6],
+                n_dofs=self._config.process_noise_rw_std[0:6],
+                n_notch_acc=self._config.process_noise_rw_std[6],
                 # error states have an expectation of zero
                 err_dofs=casadi.DM.zeros(
                     6,
@@ -393,28 +387,20 @@ class Filter(object):
 
         return K
 
-    def get_upd_values(self, obj, comp, indices):
-        """returns obj (e.g. self.traj or self.imu.ref) component
-        at update timestamps only."""
-        if indices == -1:
-            return obj.__dict__[comp][-1]
-        else:
-            return np.array([obj.__dict__[comp][i] for i in indices])
-
     def calculate_update_mse(self, i_cam, camera):
         cam_reference = camera.rotated if camera.rotated else camera
-        current_cam = cam_reference.at_index(i_cam)
+        # current_cam = cam_reference.at_index(i_cam)
 
         sum_res_cam = 0
         for compc in self.traj.labels_camera[0:6]:
             abs_err = np.array(
                 cam_reference.traj.__dict__[compc[:-1]][i_cam]
-            ) - self.get_upd_values(self.traj, compc, -1)
+            ) - get_upd_values(self.traj, compc, -1)
             sum_res_cam += np.square(abs_err)
 
         sum_res_imu = 0
         for comp in self.traj.labels_imu[3:9]:
-            abs_err = self.get_upd_values(self.traj, comp, -1) - self.get_upd_values(
+            abs_err = get_upd_values(self.traj, comp, -1) - get_upd_values(
                 self.imu.ref, comp, -1
             )
             sum_res_imu += np.square(abs_err)
@@ -427,7 +413,7 @@ class Filter(object):
     def calculate_metric(self, i_cam, camera):
         cam_reference = camera.rotated if camera.rotated else camera
 
-        indices_range = range(0, len(self.traj.t), self.config.interframe_vals)
+        indices_range = range(0, len(self.traj.t), self._config.interframe_vals)
         upd_indices = [x for x in indices_range]
 
         sum_res_cam = 0
@@ -436,14 +422,14 @@ class Filter(object):
             # i_cam + 1: include final value before breaking simulation
             abs_err = np.array(
                 cam_reference.traj.__dict__[compc[:-1]][: i_cam + 1]
-            ) - self.get_upd_values(self.traj, compc, upd_indices)
+            ) - get_upd_values(self.traj, compc, upd_indices)
             sum_res_cam += np.sum(np.square(abs_err))
 
         sum_res_imu = 0
         for comp in self.traj.labels_imu[3:9]:
-            abs_err = self.get_upd_values(
+            abs_err = get_upd_values(
                 self.traj, comp, upd_indices[:-1]
-            ) - self.get_upd_values(
+            ) - get_upd_values(
                 self.imu.ref, comp, upd_indices[:-1]
             )  # no imu ref calculated at end
             sum_res_imu += np.sum(np.square(abs_err))
@@ -458,37 +444,25 @@ class Filter(object):
 
     def calculate_dof_metric(self):
         """at end of run"""
-        res = self.states.dofs - self.config.gt_imu_dofs
+        res = self.states.dofs - self._config.gt_imu_dofs
         return np.dot(res, res) / 6
 
     def save(self):
-        self.config.mse = self.mse
+        self._config.mse = self.mse
         kf_filepath = os.path.join(
-            self.config.traj_path, f"kf_best_{self.config.traj_name}.txt"
+            self._config.traj_path, f"kf_best_{self._config.traj_name}.txt"
         )
         imuref_filepath = kf_filepath.replace("kf_best", "imu_ref")
 
         self.traj.write_to_file(kf_filepath)
         self.imu.ref.write_to_file(imuref_filepath)
 
-    def save_states(self, i_cam, t):
-        # will be the new initial states
-        self.old_states = deepcopy(self.states)
-        self.old_P = np.copy(self.P)
-
-        self.old_i_cam = i_cam
-        self.old_t = t
-
-        self.old_om_old = np.copy(self.om_old)
-        self.old_acc_old = np.copy(self.acc_old)
-        self.old_R_WB_old = np.copy(self.R_WB_old)
-
     def plot(self, camera, compact):
-        if not self.config.do_plot:
+        if not self._config.do_plot:
             return
 
         t_end = self.traj.t[-1]
-        plotter = FilterPlot(self, camera)
+        plotter = FilterPlot(self, self._config, camera)
         if compact:
             plotter.plot_compact(t_end)
         else:

@@ -1,4 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Union
+
 import numpy as np
+
+from Filter.States import States
+
+if TYPE_CHECKING:
+    from Models.Camera import Camera
+    from Models.Imu import Imu
 
 
 def generate_imudof_ic(gt_dofs: np.ndarray) -> np.ndarray:
@@ -29,3 +39,36 @@ def generate_imudof_ic(gt_dofs: np.ndarray) -> np.ndarray:
 
     # TODO: change this later; simulations currently use perfect initial conditions
     return gt_dofs
+
+
+def get_upd_values(obj: object, comp: str, indices: Union[int, list]):
+    """returns obj (e.g. self.traj or self.imu.ref) component
+    at update timestamps only."""
+    if indices == -1:
+        return obj.__dict__[comp][-1]
+    else:
+        return np.array([obj.__dict__[comp][i] for i in indices])
+
+
+def get_ic(camera: Camera, imu: Imu, imudof_ic: np.ndarray) -> States:
+    """
+    Returns the initial states given the camera and IMU states,
+    as well as the initial values of the IMU DOFS.
+    :param camera: camera object
+    :param imu: IMU object
+    :param imudof_ic: initial conditions of IMU degrees of freedom
+    :return:
+    """
+    cam_reference = camera.rotated if camera.rotated else camera
+    notch0 = cam_reference.get_notch_at(0)
+    W_p_BW_0, R_WB_0, WW_v_BW_0 = imu.ref_vals(cam_reference.vec0, notch0)
+
+    return States(
+        W_p_BW_0,
+        WW_v_BW_0,
+        R_WB_0,
+        imudof_ic,
+        notch0,
+        cam_reference.p0,
+        cam_reference.q0,
+    )

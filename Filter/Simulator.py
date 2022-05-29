@@ -11,6 +11,7 @@ from Models import create_camera
 from Models.Imu import Imu
 from Models.Probe import SimpleProbe, SymProbe
 from tools.files import save_tuned_params
+from tools.utils import get_ic
 
 from .Filter import Filter
 from .States import States
@@ -113,12 +114,12 @@ class Simulator(object):
         self.camera = create_camera(new_config)
         self.imu = Imu.create(new_config.imu, self.camera, self.probe, gen_ref=True)
 
-        self._x0 = States.get_ic(self.camera, self.imu, new_config.ic_imu_dofs)
+        self._x0 = get_ic(self.camera, self.imu, new_config.ic_imu_dofs)
         self.cov0 = new_config.cov0_matrix
 
     def run_once(self) -> None:
         """Only performs a single run of the filter."""
-        self.kf.run(self.camera, 0, "KF run", verbose=True)
+        self.kf.run(self.camera, 0, "KF run")
         self.mse_best = self.kf.mse
         print(f"\t MSE: {self.mse_best:.2E}")
 
@@ -143,7 +144,7 @@ class Simulator(object):
             run_id = k + 1
             run_desc_str = f"KF run {run_id}/{self.num_kf_runs}"
 
-            self.kf.run(self.camera, run_id, run_desc_str, verbose)
+            self.kf.run(self.camera, run_id, run_desc_str)
 
             # save run and mse
             self.mses.append(self.kf.mse)
