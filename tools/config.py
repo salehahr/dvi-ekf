@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import math
-import os
 from enum import Enum
+from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import numpy as np
@@ -37,9 +37,13 @@ class SimConfig(BaseModel):
     mode: SimMode
 
     # filepath configurations
-    data_folder: str
-    traj_name: str
-    notch_traj_name: str
+    img_path: Path
+    traj_path: Path
+    traj_name: Path
+    notch_traj_name: Path
+
+    traj_fp: Optional[Path]
+    notch_fp: Optional[Path]
 
     # number of times to run the simulation (e.g. for averaging across runs)
     num_kf_runs: int = 1
@@ -54,6 +58,20 @@ class SimConfig(BaseModel):
     @validator("mode")
     def set_mode(cls, v) -> SimMode:
         return SimMode(v)
+
+    @validator("img_path", "traj_path")
+    def paths_exist(cls, v: Path) -> Path:
+        assert v.exists()
+        return v
+
+    def __init__(self, **kwargs):
+        super(SimConfig, self).__init__(**kwargs)
+
+        self.traj_fp = self.traj_path.joinpath(f"{self.traj_name}.csv")
+        self.notch_fp = self.traj_path.joinpath(f"{self.notch_traj_name}.csv")
+
+        assert self.traj_fp.exists()
+        assert self.notch_fp.exists()
 
 
 class CameraNoise(BaseModel):
@@ -88,7 +106,7 @@ class CameraConfig(BaseModel):
     noise: CameraNoise
 
     @validator("total_frames")
-    def all_frames(cls, v) -> Optional[int]:
+    def set_total_frames(cls, v) -> Optional[int]:
         return None if v == "all" else v
 
 
@@ -112,9 +130,11 @@ class ImuConfig(BaseModel):
         return [np.deg2rad(self.noise_gyro)] * 3
 
     @property
-    def stdev_accel(self) -> List[float]:
+    def stdev_accel(self) -> np.ndarray:
         """in cm/s^2"""
-        return [400 * 1e-6 * self.gravity * math.sqrt(self.noise_sample_rate)] * 3
+        return np.array(
+            [400 * 1e-6 * self.gravity * math.sqrt(self.noise_sample_rate)] * 3
+        )
 
 
 class ModelConfig(BaseModel):
@@ -214,7 +234,7 @@ class Config(object):
     simulation, models, trajectories as well as initial conditions.
     """
 
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: Union[Path, str]):
         """
         :param filepath: yaml file
         """
@@ -257,11 +277,13 @@ class Config(object):
         self.meas_noise_std = self.camera.noise.vec
         self.meas_noise_var = np.square(self.meas_noise_std)
 
-        # save and plot
-        data_path = self.sim.data_folder
-        self.img_path = "./docs/img"
-        self.traj_path = os.path.join(data_path, "trajs")
-        self.traj_name: str = self.sim.traj_name
+        # filepaths
+        self.img_path = self.sim.img_path
+        self.traj_path = self.sim.traj_path
+        self.traj_name = self.sim.traj_name
+        self.notch_traj_name = self.sim.notch_traj_name
+        self.traj_fp = self.sim.traj_fp
+        self.notch_fp = self.sim.notch_fp
 
         self.mse: Optional[float] = None
         self.do_plot: bool = self.sim.do_plot
@@ -281,7 +303,7 @@ class Config(object):
         cov0 = self.filter.ic.cov0
         print(
             "Configuration:",
-            f"\t Trajectory          : {self.traj_name}",
+            f"\t Trajectory          : {self.sim.traj_name}",
             f"\t Mode                : {self.sim.mode.value}",
             "",
             f"\t Num. cam. frames    : {self.max_vals}",

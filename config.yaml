@@ -1,7 +1,8 @@
 simulation:
   mode: run # or tune
-  data_folder: data
-  traj_name: mandala0_mono # e.g. trans_x, rot_x, ...
+  img_path: docs/img  # for saving plots
+  traj_path: data/trajs
+  traj_name: mandala0_mono  # e.g. trans_x, rot_x, ...
   notch_traj_name: notch90
   num_kf_runs: 1
   frozen_dofs: [1, 1, 1, 1, 1, 1]
