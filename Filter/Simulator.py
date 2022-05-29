@@ -10,6 +10,7 @@ from tqdm import trange
 from Models import create_camera
 from Models.Imu import Imu
 from Models.Probe import SimpleProbe, SymProbe
+from tools.files import save_tuned_params
 
 from .Filter import Filter
 from .States import States
@@ -17,12 +18,6 @@ from .States import States
 if TYPE_CHECKING:
     from Models.Camera import Camera
     from tools.config import Config, SimMode
-
-
-def save_params(x, filename=None):
-    filename = "./opt-tune-params.txt" if not filename else filename
-    with open(filename, "w+") as f:
-        f.write(x)
 
 
 class Simulator(object):
@@ -44,7 +39,7 @@ class Simulator(object):
         self.camera: Optional[Camera] = None
         self.imu: Optional[Imu] = None
 
-        self.x0: Optional[States] = None
+        self._x0: Optional[States] = None
         self.cov0: Optional[np.ndarray] = None
 
         config.update_dofs(probe)
@@ -97,6 +92,16 @@ class Simulator(object):
     def best_run_id(self) -> int:
         return self._kf_best.run_id
 
+    @property
+    def x0(self) -> States:
+        """Returns a copy of the initial conditions."""
+        x0 = self._x0
+        return States(x0.p, x0.v, x0.q, x0.dofs, x0.ndofs, x0.p_cam, x0.q_cam)
+
+    @property
+    def num_states(self) -> int:
+        return self._x0.size
+
     def _update_config(self, new_config: Config) -> None:
         """
         Creates new camera and IMU objects from the new config.
@@ -108,7 +113,7 @@ class Simulator(object):
         self.camera = create_camera(new_config)
         self.imu = Imu.create(new_config.imu, self.camera, self.probe, gen_ref=True)
 
-        self.x0 = States.get_ic(self.camera, self.imu, new_config.ic_imu_dofs)
+        self._x0 = States.get_ic(self.camera, self.imu, new_config.ic_imu_dofs)
         self.cov0 = new_config.cov0_matrix
 
     def run_once(self) -> None:
@@ -238,7 +243,7 @@ class Simulator(object):
 
         # results
         print(f"\nglobal minimum using params: {ret.x},\nmse = {ret.fun:.3f}")
-        save_params(ret.x, filename="./opt-tune-params-de.txt")
+        save_tuned_params(ret.x, filename="./opt-tune-params-de.txt")
         self._dof_mse = ret.fun
 
         self._file.close()
