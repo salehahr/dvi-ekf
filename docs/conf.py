@@ -12,13 +12,23 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+
+REPO_PATH = os.path.abspath('../')
+BASE_MODULE_PATH = os.path.abspath('../dvi_ekf')
+FILTER_PATH = os.path.join(BASE_MODULE_PATH, 'filter')
+MODELS_PATH = os.path.join(BASE_MODULE_PATH, 'models')
+sys.path.insert(0, REPO_PATH)
+sys.path.insert(0, BASE_MODULE_PATH)
+sys.path.insert(0, FILTER_PATH)
+sys.path.insert(0, MODELS_PATH)
+print(FILTER_PATH)
+print(MODELS_PATH)
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'DVI-EKF'
-copyright = '2021, Salehah'
+copyright = '2023, Salehah'
 author = 'Salehah'
 
 
@@ -27,8 +37,7 @@ author = 'Salehah'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc'
-]
+extensions = ['sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

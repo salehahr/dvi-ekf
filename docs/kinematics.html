@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>kinematics package &mdash; DVI-EKF  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="models package" href="models.html" />
+    <link rel="prev" title="filter package" href="filter.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DVI-EKF
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">dvi-ekf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="filter.html">filter package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">kinematics package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-kinematics.equations">kinematics.equations module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.equations.B_acc_BW_exp"><code class="docutils literal notranslate"><span class="pre">B_acc_BW_exp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.equations.C_om_CW_exp"><code class="docutils literal notranslate"><span class="pre">C_om_CW_exp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.equations.R_acc_avg_exp"><code class="docutils literal notranslate"><span class="pre">R_acc_avg_exp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.equations.W_acc_BW_exp"><code class="docutils literal notranslate"><span class="pre">W_acc_BW_exp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.equations.f_imu"><code class="docutils literal notranslate"><span class="pre">f_imu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.equations.f_imu_meas"><code class="docutils literal notranslate"><span class="pre">f_imu_meas</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-kinematics.functions">kinematics.functions module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.functions.dummify_array"><code class="docutils literal notranslate"><span class="pre">dummify_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.functions.dummify_undefined_functions"><code class="docutils literal notranslate"><span class="pre">dummify_undefined_functions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.functions.sympy2casadi"><code class="docutils literal notranslate"><span class="pre">sympy2casadi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.functions.to_casadi"><code class="docutils literal notranslate"><span class="pre">to_casadi()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-kinematics.symbols">kinematics.symbols module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.symbols.get_err_pc_dot"><code class="docutils literal notranslate"><span class="pre">get_err_pc_dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.symbols.get_err_theta_c_dot"><code class="docutils literal notranslate"><span class="pre">get_err_theta_c_dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.symbols.quat_matrix"><code class="docutils literal notranslate"><span class="pre">quat_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.symbols.rvec_to_quat"><code class="docutils literal notranslate"><span class="pre">rvec_to_quat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-kinematics.transformations">kinematics.transformations module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#kinematics.transformations.to_world_coords"><code class="docutils literal notranslate"><span class="pre">to_world_coords()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-kinematics">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">models package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html">tools package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html">visuals package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DVI-EKF</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dvi-ekf</a></li>
+      <li class="breadcrumb-item active">kinematics package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/kinematics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="kinematics-package">
+<h1>kinematics package<a class="headerlink" href="#kinematics-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-kinematics.equations">
+<span id="kinematics-equations-module"></span><h2>kinematics.equations module<a class="headerlink" href="#module-kinematics.equations" title="Permalink to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="kinematics.equations.B_acc_BW_exp">
+<span class="sig-prename descclassname"><span class="pre">kinematics.equations.</span></span><span class="sig-name descname"><span class="pre">B_acc_BW_exp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">SX(&#64;1=(((R_WC_0*R_BC_0)+(R_WC_3*R_BC_3))+(R_WC_6*R_BC_6)),</span> <span class="pre">&#64;2=(((R_WC_0*R_BC_1)+(R_WC_3*R_BC_4))+(R_WC_6*R_BC_7)),</span> <span class="pre">&#64;3=(((R_WC_0*R_BC_2)+(R_WC_3*R_BC_5))+(R_WC_6*R_BC_8)),</span> <span class="pre">&#64;4=2,</span> <span class="pre">&#64;5=(((R_WC_1*R_BC_0)+(R_WC_4*R_BC_3))+(R_WC_7*R_BC_6)),</span> <span class="pre">&#64;6=(((R_WC_1*R_BC_1)+(R_WC_4*R_BC_4))+(R_WC_7*R_BC_7)),</span> <span class="pre">&#64;7=(((R_WC_1*R_BC_2)+(R_WC_4*R_BC_5))+(R_WC_7*R_BC_8)),</span> <span class="pre">&#64;8=(W_om_CW_1-(((&#64;5*B_om_CB_0)+(&#64;6*B_om_CB_1))+(&#64;7*B_om_CB_2))),</span> <span class="pre">&#64;9=(((R_WC_2*R_BC_0)+(R_WC_5*R_BC_3))+(R_WC_8*R_BC_6)),</span> <span class="pre">&#64;10=(((R_WC_2*R_BC_1)+(R_WC_5*R_BC_4))+(R_WC_8*R_BC_7)),</span> <span class="pre">&#64;11=(((R_WC_2*R_BC_2)+(R_WC_5*R_BC_5))+(R_WC_8*R_BC_8)),</span> <span class="pre">&#64;12=(((&#64;9*BB_v_CB_0)+(&#64;10*BB_v_CB_1))+(&#64;11*BB_v_CB_2)),</span> <span class="pre">&#64;13=(W_om_CW_2-(((&#64;9*B_om_CB_0)+(&#64;10*B_om_CB_1))+(&#64;11*B_om_CB_2))),</span> <span class="pre">&#64;14=(((&#64;5*BB_v_CB_0)+(&#64;6*BB_v_CB_1))+(&#64;7*BB_v_CB_2)),</span> <span class="pre">&#64;15=(((&#64;1*B_om_CB_0)+(&#64;2*B_om_CB_1))+(&#64;3*B_om_CB_2)),</span> <span class="pre">&#64;16=(W_om_CW_0-(((&#64;1*B_om_CB_0)+(&#64;2*B_om_CB_1))+(&#64;3*B_om_CB_2))),</span> <span class="pre">&#64;17=(((&#64;9*B_om_CB_0)+(&#64;10*B_om_CB_1))+(&#64;11*B_om_CB_2)),</span> <span class="pre">&#64;18=((W_alp_CW_1-(((&#64;5*B_alp_CB_0)+(&#64;6*B_alp_CB_1))+(&#64;7*B_alp_CB_2)))-((&#64;13*&#64;15)-(&#64;16*&#64;17))),</span> <span class="pre">&#64;19=(((&#64;9*B_p_CB_0)+(&#64;10*B_p_CB_1))+(&#64;11*B_p_CB_2)),</span> <span class="pre">&#64;20=(((&#64;5*B_om_CB_0)+(&#64;6*B_om_CB_1))+(&#64;7*B_om_CB_2)),</span> <span class="pre">&#64;21=((W_alp_CW_2-(((&#64;9*B_alp_CB_0)+(&#64;10*B_alp_CB_1))+(&#64;11*B_alp_CB_2)))-((&#64;16*&#64;20)-(&#64;8*&#64;15))),</span> <span class="pre">&#64;22=(((&#64;5*B_p_CB_0)+(&#64;6*B_p_CB_1))+(&#64;7*B_p_CB_2)),</span> <span class="pre">&#64;23=(((&#64;5*B_p_CB_0)+(&#64;6*B_p_CB_1))+(&#64;7*B_p_CB_2)),</span> <span class="pre">&#64;24=(((&#64;1*B_p_CB_0)+(&#64;2*B_p_CB_1))+(&#64;3*B_p_CB_2)),</span> <span class="pre">&#64;25=((&#64;16*&#64;23)-(&#64;8*&#64;24)),</span> <span class="pre">&#64;26=(((&#64;9*B_p_CB_0)+(&#64;10*B_p_CB_1))+(&#64;11*B_p_CB_2)),</span> <span class="pre">&#64;27=((&#64;13*&#64;24)-(&#64;16*&#64;26)),</span> <span class="pre">&#64;28=((((W_acc_CW_0-(((&#64;1*B_acc_CB_0)+(&#64;2*B_acc_CB_1))+(&#64;3*B_acc_CB_2)))-(&#64;4*((&#64;8*&#64;12)-(&#64;13*&#64;14))))-((&#64;18*&#64;19)-(&#64;21*&#64;22)))-((&#64;8*&#64;25)-(&#64;13*&#64;27))),</span> <span class="pre">&#64;29=(((&#64;1*BB_v_CB_0)+(&#64;2*BB_v_CB_1))+(&#64;3*BB_v_CB_2)),</span> <span class="pre">&#64;30=(((&#64;1*B_p_CB_0)+(&#64;2*B_p_CB_1))+(&#64;3*B_p_CB_2)),</span> <span class="pre">&#64;31=((W_alp_CW_0-(((&#64;1*B_alp_CB_0)+(&#64;2*B_alp_CB_1))+(&#64;3*B_alp_CB_2)))-((&#64;8*&#64;17)-(&#64;13*&#64;20))),</span> <span class="pre">&#64;32=((&#64;8*&#64;26)-(&#64;13*&#64;23)),</span> <span class="pre">&#64;33=((((W_acc_CW_1-(((&#64;5*B_acc_CB_0)+(&#64;6*B_acc_CB_1))+(&#64;7*B_acc_CB_2)))-(&#64;4*((&#64;13*&#64;29)-(&#64;16*&#64;12))))-((&#64;21*&#64;30)-(&#64;31*&#64;19)))-((&#64;13*&#64;32)-(&#64;16*&#64;25))),</span> <span class="pre">&#64;34=((((W_acc_CW_2-(((&#64;9*B_acc_CB_0)+(&#64;10*B_acc_CB_1))+(&#64;11*B_acc_CB_2)))-(&#64;4*((&#64;16*&#64;14)-(&#64;8*&#64;29))))-((&#64;31*&#64;22)-(&#64;18*&#64;30)))-((&#64;16*&#64;27)-(&#64;8*&#64;32))),</span> <span class="pre">[((((((R_BC_0*R_WC_0)+(R_BC_3*R_WC_3))+(R_BC_6*R_WC_6))*&#64;28)+((((R_BC_0*R_WC_1)+(R_BC_3*R_WC_4))+(R_BC_6*R_WC_7))*&#64;33))+((((R_BC_0*R_WC_2)+(R_BC_3*R_WC_5))+(R_BC_6*R_WC_8))*&#64;34)),</span> <span class="pre">((((((R_BC_1*R_WC_0)+(R_BC_4*R_WC_3))+(R_BC_7*R_WC_6))*&#64;28)+((((R_BC_1*R_WC_1)+(R_BC_4*R_WC_4))+(R_BC_7*R_WC_7))*&#64;33))+((((R_BC_1*R_WC_2)+(R_BC_4*R_WC_5))+(R_BC_7*R_WC_8))*&#64;34)),</span> <span class="pre">((((((R_BC_2*R_WC_0)+(R_BC_5*R_WC_3))+(R_BC_8*R_WC_6))*&#64;28)+((((R_BC_2*R_WC_1)+(R_BC_5*R_WC_4))+(R_BC_8*R_WC_7))*&#64;33))+((((R_BC_2*R_WC_2)+(R_BC_5*R_WC_5))+(R_BC_8*R_WC_8))*&#64;34))])</span></em><a class="headerlink" href="#kinematics.equations.B_acc_BW_exp" title="Permalink to this definition"></a></dt>
+<dd><p>Averaged IMU measurements</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="kinematics.equations.C_om_CW_exp">
+<span class="sig-prename descclassname"><span class="pre">kinematics.equations.</span></span><span class="sig-name descname"><span class="pre">C_om_CW_exp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">SX(&#64;1=(B_om_BW_0+B_om_CB_0),</span> <span class="pre">&#64;2=(B_om_BW_1+B_om_CB_1),</span> <span class="pre">&#64;3=(B_om_BW_2+B_om_CB_2),</span> <span class="pre">[(((R_BC_0*&#64;1)+(R_BC_1*&#64;2))+(R_BC_2*&#64;3)),</span> <span class="pre">(((R_BC_3*&#64;1)+(R_BC_4*&#64;2))+(R_BC_5*&#64;3)),</span> <span class="pre">(((R_BC_6*&#64;1)+(R_BC_7*&#64;2))+(R_BC_8*&#64;3))])</span></em><a class="headerlink" href="#kinematics.equations.C_om_CW_exp" title="Permalink to this definition"></a></dt>
+<dd><p>IMU reference trajectory (analytical)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="kinematics.equations.R_acc_avg_exp">
+<span class="sig-prename descclassname"><span class="pre">kinematics.equations.</span></span><span class="sig-name descname"><span class="pre">R_acc_avg_exp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">SX(&#64;1=2,</span> <span class="pre">&#64;2=(dt*((B_om_BW_2+B_om_BW_n_2)/&#64;1)),</span> <span class="pre">&#64;3=(dt*((B_om_BW_1+B_om_BW_n_1)/&#64;1)),</span> <span class="pre">&#64;4=(dt*((B_om_BW_0+B_om_BW_n_0)/&#64;1)),</span> <span class="pre">[(((((R_WB_0*B_acc_BW_0)+(R_WB_3*B_acc_BW_1))+(R_WB_6*B_acc_BW_2))+((((R_WB_0+((R_WB_3*&#64;2)-(R_WB_6*&#64;3)))*B_acc_BW_n_0)+((R_WB_3+((R_WB_6*&#64;4)-(R_WB_0*&#64;2)))*B_acc_BW_n_1))+((R_WB_6+((R_WB_0*&#64;3)-(R_WB_3*&#64;4)))*B_acc_BW_n_2)))/&#64;1),</span> <span class="pre">(((((R_WB_1*B_acc_BW_0)+(R_WB_4*B_acc_BW_1))+(R_WB_7*B_acc_BW_2))+((((R_WB_1+((R_WB_4*&#64;2)-(R_WB_7*&#64;3)))*B_acc_BW_n_0)+((R_WB_4+((R_WB_7*&#64;4)-(R_WB_1*&#64;2)))*B_acc_BW_n_1))+((R_WB_7+((R_WB_1*&#64;3)-(R_WB_4*&#64;4)))*B_acc_BW_n_2)))/&#64;1),</span> <span class="pre">(((((R_WB_2*B_acc_BW_0)+(R_WB_5*B_acc_BW_1))+(R_WB_8*B_acc_BW_2))+((((R_WB_2+((R_WB_5*&#64;2)-(R_WB_8*&#64;3)))*B_acc_BW_n_0)+((R_WB_5+((R_WB_8*&#64;4)-(R_WB_2*&#64;2)))*B_acc_BW_n_1))+((R_WB_8+((R_WB_2*&#64;3)-(R_WB_5*&#64;4)))*B_acc_BW_n_2)))/&#64;1)])</span></em><a class="headerlink" href="#kinematics.equations.R_acc_avg_exp" title="Permalink to this definition"></a></dt>
+<dd><p>Camera</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="kinematics.equations.W_acc_BW_exp">
+<span class="sig-prename descclassname"><span class="pre">kinematics.equations.</span></span><span class="sig-name descname"><span class="pre">W_acc_BW_exp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">SX(&#64;1=(((R_WC_0*R_BC_0)+(R_WC_3*R_BC_3))+(R_WC_6*R_BC_6)),</span> <span class="pre">&#64;2=(((R_WC_0*R_BC_1)+(R_WC_3*R_BC_4))+(R_WC_6*R_BC_7)),</span> <span class="pre">&#64;3=(((R_WC_0*R_BC_2)+(R_WC_3*R_BC_5))+(R_WC_6*R_BC_8)),</span> <span class="pre">&#64;4=2,</span> <span class="pre">&#64;5=(((R_WC_1*R_BC_0)+(R_WC_4*R_BC_3))+(R_WC_7*R_BC_6)),</span> <span class="pre">&#64;6=(((R_WC_1*R_BC_1)+(R_WC_4*R_BC_4))+(R_WC_7*R_BC_7)),</span> <span class="pre">&#64;7=(((R_WC_1*R_BC_2)+(R_WC_4*R_BC_5))+(R_WC_7*R_BC_8)),</span> <span class="pre">&#64;8=(W_om_CW_1-(((&#64;5*B_om_CB_0)+(&#64;6*B_om_CB_1))+(&#64;7*B_om_CB_2))),</span> <span class="pre">&#64;9=(((R_WC_2*R_BC_0)+(R_WC_5*R_BC_3))+(R_WC_8*R_BC_6)),</span> <span class="pre">&#64;10=(((R_WC_2*R_BC_1)+(R_WC_5*R_BC_4))+(R_WC_8*R_BC_7)),</span> <span class="pre">&#64;11=(((R_WC_2*R_BC_2)+(R_WC_5*R_BC_5))+(R_WC_8*R_BC_8)),</span> <span class="pre">&#64;12=(((&#64;9*BB_v_CB_0)+(&#64;10*BB_v_CB_1))+(&#64;11*BB_v_CB_2)),</span> <span class="pre">&#64;13=(W_om_CW_2-(((&#64;9*B_om_CB_0)+(&#64;10*B_om_CB_1))+(&#64;11*B_om_CB_2))),</span> <span class="pre">&#64;14=(((&#64;5*BB_v_CB_0)+(&#64;6*BB_v_CB_1))+(&#64;7*BB_v_CB_2)),</span> <span class="pre">&#64;15=(((&#64;1*B_om_CB_0)+(&#64;2*B_om_CB_1))+(&#64;3*B_om_CB_2)),</span> <span class="pre">&#64;16=(W_om_CW_0-(((&#64;1*B_om_CB_0)+(&#64;2*B_om_CB_1))+(&#64;3*B_om_CB_2))),</span> <span class="pre">&#64;17=(((&#64;9*B_om_CB_0)+(&#64;10*B_om_CB_1))+(&#64;11*B_om_CB_2)),</span> <span class="pre">&#64;18=((W_alp_CW_1-(((&#64;5*B_alp_CB_0)+(&#64;6*B_alp_CB_1))+(&#64;7*B_alp_CB_2)))-((&#64;13*&#64;15)-(&#64;16*&#64;17))),</span> <span class="pre">&#64;19=(((&#64;9*B_p_CB_0)+(&#64;10*B_p_CB_1))+(&#64;11*B_p_CB_2)),</span> <span class="pre">&#64;20=(((&#64;5*B_om_CB_0)+(&#64;6*B_om_CB_1))+(&#64;7*B_om_CB_2)),</span> <span class="pre">&#64;21=((W_alp_CW_2-(((&#64;9*B_alp_CB_0)+(&#64;10*B_alp_CB_1))+(&#64;11*B_alp_CB_2)))-((&#64;16*&#64;20)-(&#64;8*&#64;15))),</span> <span class="pre">&#64;22=(((&#64;5*B_p_CB_0)+(&#64;6*B_p_CB_1))+(&#64;7*B_p_CB_2)),</span> <span class="pre">&#64;23=(((&#64;5*B_p_CB_0)+(&#64;6*B_p_CB_1))+(&#64;7*B_p_CB_2)),</span> <span class="pre">&#64;24=(((&#64;1*B_p_CB_0)+(&#64;2*B_p_CB_1))+(&#64;3*B_p_CB_2)),</span> <span class="pre">&#64;25=((&#64;16*&#64;23)-(&#64;8*&#64;24)),</span> <span class="pre">&#64;26=(((&#64;9*B_p_CB_0)+(&#64;10*B_p_CB_1))+(&#64;11*B_p_CB_2)),</span> <span class="pre">&#64;27=((&#64;13*&#64;24)-(&#64;16*&#64;26)),</span> <span class="pre">&#64;28=(((&#64;1*BB_v_CB_0)+(&#64;2*BB_v_CB_1))+(&#64;3*BB_v_CB_2)),</span> <span class="pre">&#64;29=(((&#64;1*B_p_CB_0)+(&#64;2*B_p_CB_1))+(&#64;3*B_p_CB_2)),</span> <span class="pre">&#64;30=((W_alp_CW_0-(((&#64;1*B_alp_CB_0)+(&#64;2*B_alp_CB_1))+(&#64;3*B_alp_CB_2)))-((&#64;8*&#64;17)-(&#64;13*&#64;20))),</span> <span class="pre">&#64;31=((&#64;8*&#64;26)-(&#64;13*&#64;23)),</span> <span class="pre">[((((W_acc_CW_0-(((&#64;1*B_acc_CB_0)+(&#64;2*B_acc_CB_1))+(&#64;3*B_acc_CB_2)))-(&#64;4*((&#64;8*&#64;12)-(&#64;13*&#64;14))))-((&#64;18*&#64;19)-(&#64;21*&#64;22)))-((&#64;8*&#64;25)-(&#64;13*&#64;27))),</span> <span class="pre">((((W_acc_CW_1-(((&#64;5*B_acc_CB_0)+(&#64;6*B_acc_CB_1))+(&#64;7*B_acc_CB_2)))-(&#64;4*((&#64;13*&#64;28)-(&#64;16*&#64;12))))-((&#64;21*&#64;29)-(&#64;30*&#64;19)))-((&#64;13*&#64;31)-(&#64;16*&#64;25))),</span> <span class="pre">((((W_acc_CW_2-(((&#64;9*B_acc_CB_0)+(&#64;10*B_acc_CB_1))+(&#64;11*B_acc_CB_2)))-(&#64;4*((&#64;16*&#64;14)-(&#64;8*&#64;28))))-((&#64;30*&#64;22)-(&#64;18*&#64;29)))-((&#64;16*&#64;27)-(&#64;8*&#64;31)))])</span></em><a class="headerlink" href="#kinematics.equations.W_acc_BW_exp" title="Permalink to this definition"></a></dt>
+<dd><p>IMU meas   = fcn(cam, probe)  - in B frame</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="kinematics.equations.f_imu">
+<span class="sig-prename descclassname"><span class="pre">kinematics.equations.</span></span><span class="sig-name descname"><span class="pre">f_imu</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Function(f_imu:(W_p_CW[3],R_WC[3x3],WW_v_CW[3],W_om_CW[3],W_acc_CW[3],W_alp_CW[3],notchdofs[3],B_p_CB[3],R_BC[3x3],BB_v_CB[3],B_om_CB[3],B_acc_CB[3],B_alp_CB[3])-&gt;(W_p_BW[3],R_WB[3x3],WW_v_BW[3])</span> <span class="pre">SXFunction)</span></em><a class="headerlink" href="#kinematics.equations.f_imu" title="Permalink to this definition"></a></dt>
+<dd><p>IMU measurements u = func(cam, dofs)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="kinematics.equations.f_imu_meas">
+<span class="sig-prename descclassname"><span class="pre">kinematics.equations.</span></span><span class="sig-name descname"><span class="pre">f_imu_meas</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Function(f_imu_meas:(B_p_CB[3],R_BC[3x3],BB_v_CB[3],B_om_CB[3],B_acc_CB[3],B_alp_CB[3])-&gt;(B_om_BW[3],B_acc_BW[3])</span> <span class="pre">SXFunction)</span></em><a class="headerlink" href="#kinematics.equations.f_imu_meas" title="Permalink to this definition"></a></dt>
+<dd><p>Kalman filter stuff</p>
+</dd></dl>
+
+</section>
+<section id="module-kinematics.functions">
+<span id="kinematics-functions-module"></span><h2>kinematics.functions module<a class="headerlink" href="#module-kinematics.functions" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.functions.dummify_array">
+<span class="sig-prename descclassname"><span class="pre">kinematics.functions.</span></span><span class="sig-name descname"><span class="pre">dummify_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kinematics.functions.dummify_array" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.functions.dummify_undefined_functions">
+<span class="sig-prename descclassname"><span class="pre">kinematics.functions.</span></span><span class="sig-name descname"><span class="pre">dummify_undefined_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kinematics.functions.dummify_undefined_functions" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.functions.sympy2casadi">
+<span class="sig-prename descclassname"><span class="pre">kinematics.functions.</span></span><span class="sig-name descname"><span class="pre">sympy2casadi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sympy_expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sympy_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">casadi_var</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kinematics.functions.sympy2casadi" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.functions.to_casadi">
+<span class="sig-prename descclassname"><span class="pre">kinematics.functions.</span></span><span class="sig-name descname"><span class="pre">to_casadi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kinematics.functions.to_casadi" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-kinematics.symbols">
+<span id="kinematics-symbols-module"></span><h2>kinematics.symbols module<a class="headerlink" href="#module-kinematics.symbols" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.symbols.get_err_pc_dot">
+<span class="sig-prename descclassname"><span class="pre">kinematics.symbols.</span></span><span class="sig-name descname"><span class="pre">get_err_pc_dot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kinematics.symbols.get_err_pc_dot" title="Permalink to this definition"></a></dt>
+<dd><p>Example derivation of err_p_B:</p>
+<p>[In continuous time]
+p_B_tr_dot = p_B_dot + err_p_B_dot
+v_B_tr = v_B + err_v_B</p>
+<dl class="simple">
+<dt>err_p_B_dot = v_B_tr - v_B</dt><dd><p>= v_B + err_v_B - v_B
+= err_v_B</p>
+</dd>
+</dl>
+<p>[Discretised]
+err_p_B_next = err_p_B + dt * err_v_B</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.symbols.get_err_theta_c_dot">
+<span class="sig-prename descclassname"><span class="pre">kinematics.symbols.</span></span><span class="sig-name descname"><span class="pre">get_err_theta_c_dot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kinematics.symbols.get_err_theta_c_dot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.symbols.quat_matrix">
+<span class="sig-prename descclassname"><span class="pre">kinematics.symbols.</span></span><span class="sig-name descname"><span class="pre">quat_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wxyz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kinematics.symbols.quat_matrix" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.symbols.rvec_to_quat">
+<span class="sig-prename descclassname"><span class="pre">kinematics.symbols.</span></span><span class="sig-name descname"><span class="pre">rvec_to_quat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kinematics.symbols.rvec_to_quat" title="Permalink to this definition"></a></dt>
+<dd><p>returns wxyz</p>
+</dd></dl>
+
+</section>
+<section id="module-kinematics.transformations">
+<span id="kinematics-transformations-module"></span><h2>kinematics.transformations module<a class="headerlink" href="#module-kinematics.transformations" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="kinematics.transformations.to_world_coords">
+<span class="sig-prename descclassname"><span class="pre">kinematics.transformations.</span></span><span class="sig-name descname"><span class="pre">to_world_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">R_WB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#kinematics.transformations.to_world_coords" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-kinematics">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-kinematics" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="filter.html" class="btn btn-neutral float-left" title="filter package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="models.html" class="btn btn-neutral float-right" title="models package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Salehah.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

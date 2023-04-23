@@ -1,0 +1,45 @@
+dvi\_ekf.visuals package
+========================
+
+Submodules
+----------
+
+dvi\_ekf.visuals.MatrixPlotter module
+-------------------------------------
+
+.. automodule:: dvi_ekf.visuals.MatrixPlotter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.visuals.Plotter module
+-------------------------------
+
+.. automodule:: dvi_ekf.visuals.Plotter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.visuals.decorators module
+----------------------------------
+
+.. automodule:: dvi_ekf.visuals.decorators
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.visuals.line\_formats module
+-------------------------------------
+
+.. automodule:: dvi_ekf.visuals.line_formats
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: dvi_ekf.visuals
+   :members:
+   :undoc-members:
+   :show-inheritance:

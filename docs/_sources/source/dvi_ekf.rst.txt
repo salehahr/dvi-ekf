@@ -1,0 +1,22 @@
+dvi\_ekf package
+================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   dvi_ekf.filter
+   dvi_ekf.kinematics
+   dvi_ekf.models
+   dvi_ekf.tools
+   dvi_ekf.visuals
+
+Module contents
+---------------
+
+.. automodule:: dvi_ekf
+   :members:
+   :undoc-members:
+   :show-inheritance:

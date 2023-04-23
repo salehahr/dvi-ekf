@@ -10,14 +10,11 @@ DVI-EKF
    :maxdepth: 2
    :caption: Contents:
 
-    modules
-
 Implementation of a loosely-coupled VI-ESKF SLAM to estimate the
 calibration parameters in a cystoscopic camera-IMU sensor setup.
 
 .. figure:: ./_img/sensor-setup-real.png
 .. figure:: ./_img/sensor-setup-model.png
-
 
 
 Contents

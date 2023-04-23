@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>dvi-ekf &mdash; DVI-EKF  documentation</title>
@@ -14,10 +14,14 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="filter package" href="filter.html" />
+    <link rel="prev" title="DVI-EKF" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -25,21 +29,32 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> DVI-EKF
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DVI-EKF
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">dvi-ekf</a></li>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">dvi-ekf</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filter.html">filter package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kinematics.html">kinematics package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">models package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html">tools package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html">visuals package</a></li>
 </ul>
-</div>
+</li>
+</ul>
+
         </div>
       </div>
     </nav>
@@ -53,8 +68,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>dvi-ekf</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">dvi-ekf</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -65,45 +80,440 @@
            <div itemprop="articleBody">
              
   <section id="dvi-ekf">
-<h1>dvi-ekf<a class="headerlink" href="#dvi-ekf" title="Permalink to this headline"></a></h1>
+<h1>dvi-ekf<a class="headerlink" href="#dvi-ekf" title="Permalink to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="Filter.html">Filter package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#module-Filter.Filter">Filter.Filter module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#module-Filter.Measurement">Filter.Measurement module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#module-Filter.Quaternion">Filter.Quaternion module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#module-Filter.Simulator">Filter.Simulator module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#module-Filter.States">Filter.States module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#module-Filter.Trajectory">Filter.Trajectory module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#module-Filter.context">Filter.context module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Filter.html#module-Filter">Module contents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filter.html">filter package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filter.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filter.html#module-filter.Filter">filter.Filter module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="filter.html#filter.Filter.Filter"><code class="docutils literal notranslate"><span class="pre">Filter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.Om_old"><code class="docutils literal notranslate"><span class="pre">Filter.Om_old</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.acc_old"><code class="docutils literal notranslate"><span class="pre">Filter.acc_old</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.calculate_dof_metric"><code class="docutils literal notranslate"><span class="pre">Filter.calculate_dof_metric()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.calculate_metric"><code class="docutils literal notranslate"><span class="pre">Filter.calculate_metric()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.calculate_update_mse"><code class="docutils literal notranslate"><span class="pre">Filter.calculate_update_mse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.om_old"><code class="docutils literal notranslate"><span class="pre">Filter.om_old</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.plot"><code class="docutils literal notranslate"><span class="pre">Filter.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.propagate"><code class="docutils literal notranslate"><span class="pre">Filter.propagate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.propagate_imu"><code class="docutils literal notranslate"><span class="pre">Filter.propagate_imu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.reset"><code class="docutils literal notranslate"><span class="pre">Filter.reset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.run"><code class="docutils literal notranslate"><span class="pre">Filter.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.run_one_epoch"><code class="docutils literal notranslate"><span class="pre">Filter.run_one_epoch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.save"><code class="docutils literal notranslate"><span class="pre">Filter.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.u"><code class="docutils literal notranslate"><span class="pre">Filter.u</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.update"><code class="docutils literal notranslate"><span class="pre">Filter.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Filter.Filter.update_noise_matrices"><code class="docutils literal notranslate"><span class="pre">Filter.update_noise_matrices()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="Models.html">Models package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="Models.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Models.html#module-Models.Camera">Models.Camera module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Models.html#module-Models.Imu">Models.Imu module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Models.html#module-Models.Interpolator">Models.Interpolator module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Models.html#module-Models.Probe">Models.Probe module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Models.html#models-context-module">Models.context module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Models.html#module-Models">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="Visuals.html">Visuals package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="Visuals.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Visuals.html#module-Visuals.MatrixPlotter">Visuals.MatrixPlotter module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Visuals.html#module-Visuals.Plotter">Visuals.Plotter module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Visuals.html#module-Visuals.decorators">Visuals.decorators module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Visuals.html#module-Visuals.line_formats">Visuals.line_formats module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Visuals.html#module-Visuals">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filter.html#module-filter.Simulator">filter.Simulator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="filter.html#filter.Simulator.Simulator"><code class="docutils literal notranslate"><span class="pre">Simulator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.best_run_id"><code class="docutils literal notranslate"><span class="pre">Simulator.best_run_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.config"><code class="docutils literal notranslate"><span class="pre">Simulator.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.cov0"><code class="docutils literal notranslate"><span class="pre">Simulator.cov0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.optim_std"><code class="docutils literal notranslate"><span class="pre">Simulator.optim_std</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.optimise"><code class="docutils literal notranslate"><span class="pre">Simulator.optimise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.plot"><code class="docutils literal notranslate"><span class="pre">Simulator.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.reset_kf"><code class="docutils literal notranslate"><span class="pre">Simulator.reset_kf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.run"><code class="docutils literal notranslate"><span class="pre">Simulator.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.Simulator.Simulator.run_once"><code class="docutils literal notranslate"><span class="pre">Simulator.run_once()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="filter.html#module-filter.state">filter.state module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="filter.html#filter.state.ErrorState"><code class="docutils literal notranslate"><span class="pre">ErrorState</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.SIZE"><code class="docutils literal notranslate"><span class="pre">ErrorState.SIZE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.ddofs"><code class="docutils literal notranslate"><span class="pre">ErrorState.ddofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.dndofs"><code class="docutils literal notranslate"><span class="pre">ErrorState.dndofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.dp"><code class="docutils literal notranslate"><span class="pre">ErrorState.dp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.dpc"><code class="docutils literal notranslate"><span class="pre">ErrorState.dpc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.dq"><code class="docutils literal notranslate"><span class="pre">ErrorState.dq</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.dqc"><code class="docutils literal notranslate"><span class="pre">ErrorState.dqc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.dv"><code class="docutils literal notranslate"><span class="pre">ErrorState.dv</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.from_array"><code class="docutils literal notranslate"><span class="pre">ErrorState.from_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.theta"><code class="docutils literal notranslate"><span class="pre">ErrorState.theta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.ErrorState.theta_c"><code class="docutils literal notranslate"><span class="pre">ErrorState.theta_c</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="filter.html#filter.state.State"><code class="docutils literal notranslate"><span class="pre">State</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.SIZE"><code class="docutils literal notranslate"><span class="pre">State.SIZE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.array"><code class="docutils literal notranslate"><span class="pre">State.array</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.dofs"><code class="docutils literal notranslate"><span class="pre">State.dofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.from_array"><code class="docutils literal notranslate"><span class="pre">State.from_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.notch_dofs"><code class="docutils literal notranslate"><span class="pre">State.notch_dofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.p"><code class="docutils literal notranslate"><span class="pre">State.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.p_cam"><code class="docutils literal notranslate"><span class="pre">State.p_cam</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.q"><code class="docutils literal notranslate"><span class="pre">State.q</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.q_cam"><code class="docutils literal notranslate"><span class="pre">State.q_cam</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="filter.html#filter.state.State.v"><code class="docutils literal notranslate"><span class="pre">State.v</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="filter.html#module-filter">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kinematics.html">kinematics package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kinematics.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kinematics.html#module-kinematics.equations">kinematics.equations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.equations.B_acc_BW_exp"><code class="docutils literal notranslate"><span class="pre">B_acc_BW_exp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.equations.C_om_CW_exp"><code class="docutils literal notranslate"><span class="pre">C_om_CW_exp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.equations.R_acc_avg_exp"><code class="docutils literal notranslate"><span class="pre">R_acc_avg_exp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.equations.W_acc_BW_exp"><code class="docutils literal notranslate"><span class="pre">W_acc_BW_exp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.equations.f_imu"><code class="docutils literal notranslate"><span class="pre">f_imu</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.equations.f_imu_meas"><code class="docutils literal notranslate"><span class="pre">f_imu_meas</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kinematics.html#module-kinematics.functions">kinematics.functions module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.functions.dummify_array"><code class="docutils literal notranslate"><span class="pre">dummify_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.functions.dummify_undefined_functions"><code class="docutils literal notranslate"><span class="pre">dummify_undefined_functions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.functions.sympy2casadi"><code class="docutils literal notranslate"><span class="pre">sympy2casadi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.functions.to_casadi"><code class="docutils literal notranslate"><span class="pre">to_casadi()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kinematics.html#module-kinematics.symbols">kinematics.symbols module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.symbols.get_err_pc_dot"><code class="docutils literal notranslate"><span class="pre">get_err_pc_dot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.symbols.get_err_theta_c_dot"><code class="docutils literal notranslate"><span class="pre">get_err_theta_c_dot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.symbols.quat_matrix"><code class="docutils literal notranslate"><span class="pre">quat_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.symbols.rvec_to_quat"><code class="docutils literal notranslate"><span class="pre">rvec_to_quat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kinematics.html#module-kinematics.transformations">kinematics.transformations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="kinematics.html#kinematics.transformations.to_world_coords"><code class="docutils literal notranslate"><span class="pre">to_world_coords()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kinematics.html#module-kinematics">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">models package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="models.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.measurement_point.html">models.measurement_point package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#module-models.measurement_point.CameraMeasurementPoint">models.measurement_point.CameraMeasurementPoint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#module-models.measurement_point.VisualMeasurementPoint">models.measurement_point.VisualMeasurementPoint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#module-models.measurement_point">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.trajectory.html">models.trajectory package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.FilterTraj">models.trajectory.FilterTraj module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.ImuRefTraj">models.trajectory.ImuRefTraj module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.ImuTrajectory">models.trajectory.ImuTrajectory module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.Interpolator">models.trajectory.Interpolator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.TrajectoryBase">models.trajectory.TrajectoryBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.VisualTrajectory">models.trajectory.VisualTrajectory module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#module-models.trajectory">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#module-models.Camera">models.Camera module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Camera.Camera"><code class="docutils literal notranslate"><span class="pre">Camera</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.Camera.flag_interpolated"><code class="docutils literal notranslate"><span class="pre">Camera.flag_interpolated</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.Camera.gen_rotated"><code class="docutils literal notranslate"><span class="pre">Camera.gen_rotated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.Camera.get_notch_vec_at"><code class="docutils literal notranslate"><span class="pre">Camera.get_notch_vec_at()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.Camera.interpolate"><code class="docutils literal notranslate"><span class="pre">Camera.interpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.Camera.plot"><code class="docutils literal notranslate"><span class="pre">Camera.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.Camera.plot_notch"><code class="docutils literal notranslate"><span class="pre">Camera.plot_notch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.Camera.update_sim_params"><code class="docutils literal notranslate"><span class="pre">Camera.update_sim_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.Camera.vec_at"><code class="docutils literal notranslate"><span class="pre">Camera.vec_at()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Camera.CameraInterpolated"><code class="docutils literal notranslate"><span class="pre">CameraInterpolated</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraInterpolated.interframe_vals"><code class="docutils literal notranslate"><span class="pre">CameraInterpolated.interframe_vals</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.R"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.R</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.acc"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.acc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.alp"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.alp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.at_index"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.at_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.from_camera"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.from_camera()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.notch"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.notch</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.notch_d"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.notch_d</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.notch_dd"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.notch_dd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.om"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.om</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.p"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.t"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Camera.CameraMeasurementArray.v"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray.v</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Camera.create_camera"><code class="docutils literal notranslate"><span class="pre">create_camera()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#module-models.Imu">models.Imu module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Imu.Imu"><code class="docutils literal notranslate"><span class="pre">Imu</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.acc"><code class="docutils literal notranslate"><span class="pre">Imu.acc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.append_to_file"><code class="docutils literal notranslate"><span class="pre">Imu.append_to_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.clear"><code class="docutils literal notranslate"><span class="pre">Imu.clear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.create"><code class="docutils literal notranslate"><span class="pre">Imu.create()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.eval_expr_single"><code class="docutils literal notranslate"><span class="pre">Imu.eval_expr_single()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.eval_init"><code class="docutils literal notranslate"><span class="pre">Imu.eval_init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.flag_interpolated"><code class="docutils literal notranslate"><span class="pre">Imu.flag_interpolated</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.generate_traj"><code class="docutils literal notranslate"><span class="pre">Imu.generate_traj()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.num_imu_between_frames"><code class="docutils literal notranslate"><span class="pre">Imu.num_imu_between_frames</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.nvals"><code class="docutils literal notranslate"><span class="pre">Imu.nvals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.om"><code class="docutils literal notranslate"><span class="pre">Imu.om</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.reconstruct"><code class="docutils literal notranslate"><span class="pre">Imu.reconstruct()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.ref_vals"><code class="docutils literal notranslate"><span class="pre">Imu.ref_vals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.reset"><code class="docutils literal notranslate"><span class="pre">Imu.reset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Imu.Imu.write_array_to_file"><code class="docutils literal notranslate"><span class="pre">Imu.write_array_to_file()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#module-models.Probe">models.Probe module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Probe.Probe"><code class="docutils literal notranslate"><span class="pre">Probe</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.R"><code class="docutils literal notranslate"><span class="pre">Probe.R</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.T"><code class="docutils literal notranslate"><span class="pre">Probe.T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.acc"><code class="docutils literal notranslate"><span class="pre">Probe.acc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.alp"><code class="docutils literal notranslate"><span class="pre">Probe.alp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.fwkin"><code class="docutils literal notranslate"><span class="pre">Probe.fwkin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.get_sym"><code class="docutils literal notranslate"><span class="pre">Probe.get_sym()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.hessian_symbolic"><code class="docutils literal notranslate"><span class="pre">Probe.hessian_symbolic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.imu_dofs"><code class="docutils literal notranslate"><span class="pre">Probe.imu_dofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.joint_dofs"><code class="docutils literal notranslate"><span class="pre">Probe.joint_dofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.om"><code class="docutils literal notranslate"><span class="pre">Probe.om</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.p"><code class="docutils literal notranslate"><span class="pre">Probe.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.plot"><code class="docutils literal notranslate"><span class="pre">Probe.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.q_cas"><code class="docutils literal notranslate"><span class="pre">Probe.q_cas</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.qd_cas"><code class="docutils literal notranslate"><span class="pre">Probe.qd_cas</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.qd_s_arr"><code class="docutils literal notranslate"><span class="pre">Probe.qd_s_arr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.qdd_cas"><code class="docutils literal notranslate"><span class="pre">Probe.qdd_cas</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.Probe.v"><code class="docutils literal notranslate"><span class="pre">Probe.v</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Probe.RigidSimpleProbe"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.RigidSimpleProbe.ROT1"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe.ROT1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.RigidSimpleProbe.ROT2"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe.ROT2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.RigidSimpleProbe.ROT3"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe.ROT3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.RigidSimpleProbe.TRANS4"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe.TRANS4</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.RigidSimpleProbe.TRANS5"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe.TRANS5</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.RigidSimpleProbe.TRANS6"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe.TRANS6</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.RigidSimpleProbe.constraints"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe.constraints</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Probe.SimpleProbe"><code class="docutils literal notranslate"><span class="pre">SimpleProbe</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.SimpleProbe.ROT1"><code class="docutils literal notranslate"><span class="pre">SimpleProbe.ROT1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.SimpleProbe.ROT2"><code class="docutils literal notranslate"><span class="pre">SimpleProbe.ROT2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.SimpleProbe.ROT3"><code class="docutils literal notranslate"><span class="pre">SimpleProbe.ROT3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.SimpleProbe.TRANS4"><code class="docutils literal notranslate"><span class="pre">SimpleProbe.TRANS4</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.SimpleProbe.TRANS5"><code class="docutils literal notranslate"><span class="pre">SimpleProbe.TRANS5</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.SimpleProbe.TRANS6"><code class="docutils literal notranslate"><span class="pre">SimpleProbe.TRANS6</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.SimpleProbe.constraints"><code class="docutils literal notranslate"><span class="pre">SimpleProbe.constraints</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Probe.SymProbe"><code class="docutils literal notranslate"><span class="pre">SymProbe</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.SymProbe.get_est_fwkin"><code class="docutils literal notranslate"><span class="pre">SymProbe.get_est_fwkin()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#models.Probe.TestProbe"><code class="docutils literal notranslate"><span class="pre">TestProbe</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.TestProbe.T"><code class="docutils literal notranslate"><span class="pre">TestProbe.T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.TestProbe.conf_q"><code class="docutils literal notranslate"><span class="pre">TestProbe.conf_q</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.html#models.Probe.TestProbe.plot"><code class="docutils literal notranslate"><span class="pre">TestProbe.plot()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#module-models">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">tools package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tools.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.config">tools.config module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.utils">tools.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.Quaternion">tools.Quaternion module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion"><code class="docutils literal notranslate"><span class="pre">Quaternion</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.about_axis"><code class="docutils literal notranslate"><span class="pre">Quaternion.about_axis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.angle"><code class="docutils literal notranslate"><span class="pre">Quaternion.angle</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.axis"><code class="docutils literal notranslate"><span class="pre">Quaternion.axis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.conjugate"><code class="docutils literal notranslate"><span class="pre">Quaternion.conjugate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.euler_xyz_deg"><code class="docutils literal notranslate"><span class="pre">Quaternion.euler_xyz_deg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.euler_xyz_rad"><code class="docutils literal notranslate"><span class="pre">Quaternion.euler_xyz_rad</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.euler_zyx_deg"><code class="docutils literal notranslate"><span class="pre">Quaternion.euler_zyx_deg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.euler_zyx_rad"><code class="docutils literal notranslate"><span class="pre">Quaternion.euler_zyx_rad</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.normalise"><code class="docutils literal notranslate"><span class="pre">Quaternion.normalise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.rot"><code class="docutils literal notranslate"><span class="pre">Quaternion.rot</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.sp_rot"><code class="docutils literal notranslate"><span class="pre">Quaternion.sp_rot</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.v"><code class="docutils literal notranslate"><span class="pre">Quaternion.v</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.wxyz"><code class="docutils literal notranslate"><span class="pre">Quaternion.wxyz</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.Quaternion.Quaternion.xyzw"><code class="docutils literal notranslate"><span class="pre">Quaternion.xyzw</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.config">tools.config module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.CameraConfig"><code class="docutils literal notranslate"><span class="pre">CameraConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraConfig.noise"><code class="docutils literal notranslate"><span class="pre">CameraConfig.noise</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraConfig.scale"><code class="docutils literal notranslate"><span class="pre">CameraConfig.scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraConfig.set_total_frames"><code class="docutils literal notranslate"><span class="pre">CameraConfig.set_total_frames()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraConfig.start_frame"><code class="docutils literal notranslate"><span class="pre">CameraConfig.start_frame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraConfig.total_frames"><code class="docutils literal notranslate"><span class="pre">CameraConfig.total_frames</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraConfig.with_notch"><code class="docutils literal notranslate"><span class="pre">CameraConfig.with_notch</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.CameraNoise"><code class="docutils literal notranslate"><span class="pre">CameraNoise</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraNoise.notch"><code class="docutils literal notranslate"><span class="pre">CameraNoise.notch</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraNoise.position"><code class="docutils literal notranslate"><span class="pre">CameraNoise.position</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraNoise.theta"><code class="docutils literal notranslate"><span class="pre">CameraNoise.theta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraNoise.to_radians"><code class="docutils literal notranslate"><span class="pre">CameraNoise.to_radians()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.CameraNoise.vec"><code class="docutils literal notranslate"><span class="pre">CameraNoise.vec</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.Config.dofs_updated"><code class="docutils literal notranslate"><span class="pre">Config.dofs_updated</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.Config.print"><code class="docutils literal notranslate"><span class="pre">Config.print()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.Config.update_dofs"><code class="docutils literal notranslate"><span class="pre">Config.update_dofs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.DofsNoise"><code class="docutils literal notranslate"><span class="pre">DofsNoise</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.DofsNoise.notch_accel"><code class="docutils literal notranslate"><span class="pre">DofsNoise.notch_accel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.DofsNoise.rotation"><code class="docutils literal notranslate"><span class="pre">DofsNoise.rotation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.DofsNoise.to_radians"><code class="docutils literal notranslate"><span class="pre">DofsNoise.to_radians()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.DofsNoise.translation"><code class="docutils literal notranslate"><span class="pre">DofsNoise.translation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.DofsNoise.vec"><code class="docutils literal notranslate"><span class="pre">DofsNoise.vec</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.FilterConfig"><code class="docutils literal notranslate"><span class="pre">FilterConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.FilterConfig.ic"><code class="docutils literal notranslate"><span class="pre">FilterConfig.ic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.FilterConfig.noise_dofs"><code class="docutils literal notranslate"><span class="pre">FilterConfig.noise_dofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.FilterConfig.process_noise"><code class="docutils literal notranslate"><span class="pre">FilterConfig.process_noise</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.ImuConfig"><code class="docutils literal notranslate"><span class="pre">ImuConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ImuConfig.gravity"><code class="docutils literal notranslate"><span class="pre">ImuConfig.gravity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ImuConfig.interframe_vals"><code class="docutils literal notranslate"><span class="pre">ImuConfig.interframe_vals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ImuConfig.noise_gyro"><code class="docutils literal notranslate"><span class="pre">ImuConfig.noise_gyro</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ImuConfig.noise_sample_rate"><code class="docutils literal notranslate"><span class="pre">ImuConfig.noise_sample_rate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ImuConfig.stdev_accel"><code class="docutils literal notranslate"><span class="pre">ImuConfig.stdev_accel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ImuConfig.stdev_omega"><code class="docutils literal notranslate"><span class="pre">ImuConfig.stdev_omega</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.InitialConditions"><code class="docutils literal notranslate"><span class="pre">InitialConditions</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.InitialConditions.cov0"><code class="docutils literal notranslate"><span class="pre">InitialConditions.cov0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.InitialConditions.cov0_matrix"><code class="docutils literal notranslate"><span class="pre">InitialConditions.cov0_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.InitialConditions.x0"><code class="docutils literal notranslate"><span class="pre">InitialConditions.x0</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ModelConfig.angle"><code class="docutils literal notranslate"><span class="pre">ModelConfig.angle</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ModelConfig.length"><code class="docutils literal notranslate"><span class="pre">ModelConfig.length</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.ModelConfig.to_radians"><code class="docutils literal notranslate"><span class="pre">ModelConfig.to_radians()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.SimConfig"><code class="docutils literal notranslate"><span class="pre">SimConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.do_fast_sim"><code class="docutils literal notranslate"><span class="pre">SimConfig.do_fast_sim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.do_plot"><code class="docutils literal notranslate"><span class="pre">SimConfig.do_plot</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.frozen_dofs"><code class="docutils literal notranslate"><span class="pre">SimConfig.frozen_dofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.img_path"><code class="docutils literal notranslate"><span class="pre">SimConfig.img_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.mode"><code class="docutils literal notranslate"><span class="pre">SimConfig.mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.notch_fp"><code class="docutils literal notranslate"><span class="pre">SimConfig.notch_fp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.notch_traj_name"><code class="docutils literal notranslate"><span class="pre">SimConfig.notch_traj_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.num_kf_runs"><code class="docutils literal notranslate"><span class="pre">SimConfig.num_kf_runs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.paths_exist"><code class="docutils literal notranslate"><span class="pre">SimConfig.paths_exist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.set_mode"><code class="docutils literal notranslate"><span class="pre">SimConfig.set_mode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.traj_fp"><code class="docutils literal notranslate"><span class="pre">SimConfig.traj_fp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.traj_name"><code class="docutils literal notranslate"><span class="pre">SimConfig.traj_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.SimConfig.traj_path"><code class="docutils literal notranslate"><span class="pre">SimConfig.traj_path</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config.States"><code class="docutils literal notranslate"><span class="pre">States</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.camera_pos"><code class="docutils literal notranslate"><span class="pre">States.camera_pos</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.camera_theta"><code class="docutils literal notranslate"><span class="pre">States.camera_theta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.dofs_rot"><code class="docutils literal notranslate"><span class="pre">States.dofs_rot</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.dofs_trans"><code class="docutils literal notranslate"><span class="pre">States.dofs_trans</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.imu_pos"><code class="docutils literal notranslate"><span class="pre">States.imu_pos</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.imu_theta"><code class="docutils literal notranslate"><span class="pre">States.imu_theta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.imu_vel"><code class="docutils literal notranslate"><span class="pre">States.imu_vel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.notch"><code class="docutils literal notranslate"><span class="pre">States.notch</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.to_radians"><code class="docutils literal notranslate"><span class="pre">States.to_radians()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config.States.vec"><code class="docutils literal notranslate"><span class="pre">States.vec</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.config_enums">tools.config_enums module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.config_enums.SimMode"><code class="docutils literal notranslate"><span class="pre">SimMode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config_enums.SimMode.RUN"><code class="docutils literal notranslate"><span class="pre">SimMode.RUN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html#tools.config_enums.SimMode.TUNE"><code class="docutils literal notranslate"><span class="pre">SimMode.TUNE</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.files">tools.files module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.files.get_dataframe"><code class="docutils literal notranslate"><span class="pre">get_dataframe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.files.handle_not_exist"><code class="docutils literal notranslate"><span class="pre">handle_not_exist()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.files.save_trajectory"><code class="docutils literal notranslate"><span class="pre">save_trajectory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.files.save_tuned_params"><code class="docutils literal notranslate"><span class="pre">save_tuned_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.files.write_angvel_data"><code class="docutils literal notranslate"><span class="pre">write_angvel_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.math">tools.math module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.math.euler_error_checking"><code class="docutils literal notranslate"><span class="pre">euler_error_checking()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.math.skew"><code class="docutils literal notranslate"><span class="pre">skew()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.plots">tools.plots module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.plots.plot_imu"><code class="docutils literal notranslate"><span class="pre">plot_imu()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.printing">tools.printing module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.printing.np_string"><code class="docutils literal notranslate"><span class="pre">np_string()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.spatial">tools.spatial module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.spatial.get_omega_local"><code class="docutils literal notranslate"><span class="pre">get_omega_local()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.spatial.interpolate"><code class="docutils literal notranslate"><span class="pre">interpolate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.spatial.solve_for_omega"><code class="docutils literal notranslate"><span class="pre">solve_for_omega()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools.utils">tools.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.utils.generate_imudof_ic"><code class="docutils literal notranslate"><span class="pre">generate_imudof_ic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.utils.get_ic"><code class="docutils literal notranslate"><span class="pre">get_ic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html#tools.utils.get_upd_values"><code class="docutils literal notranslate"><span class="pre">get_upd_values()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html#module-tools">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="visuals.html">visuals package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html#module-visuals.MatrixPlotter">visuals.MatrixPlotter module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="visuals.html#visuals.MatrixPlotter.MatrixPlotter"><code class="docutils literal notranslate"><span class="pre">MatrixPlotter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.MatrixPlotter.MatrixPlotter.append"><code class="docutils literal notranslate"><span class="pre">MatrixPlotter.append()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.MatrixPlotter.MatrixPlotter.plot"><code class="docutils literal notranslate"><span class="pre">MatrixPlotter.plot()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html#module-visuals.Plotter">visuals.Plotter module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="visuals.html#visuals.Plotter.CameraPlot"><code class="docutils literal notranslate"><span class="pre">CameraPlot</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.Plotter.CameraPlot.plot"><code class="docutils literal notranslate"><span class="pre">CameraPlot.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.Plotter.CameraPlot.plot_notch"><code class="docutils literal notranslate"><span class="pre">CameraPlot.plot_notch()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="visuals.html#visuals.Plotter.DofRef"><code class="docutils literal notranslate"><span class="pre">DofRef</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="visuals.html#visuals.Plotter.FilterPlot"><code class="docutils literal notranslate"><span class="pre">FilterPlot</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.Plotter.FilterPlot.img_filepath_cam"><code class="docutils literal notranslate"><span class="pre">FilterPlot.img_filepath_cam</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.Plotter.FilterPlot.plot"><code class="docutils literal notranslate"><span class="pre">FilterPlot.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.Plotter.FilterPlot.plot_compact"><code class="docutils literal notranslate"><span class="pre">FilterPlot.plot_compact()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="visuals.html#visuals.Plotter.Plotter"><code class="docutils literal notranslate"><span class="pre">Plotter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.Plotter.Plotter.plot"><code class="docutils literal notranslate"><span class="pre">Plotter.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visuals.html#visuals.Plotter.Plotter.save"><code class="docutils literal notranslate"><span class="pre">Plotter.save()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html#module-visuals.decorators">visuals.decorators module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="visuals.html#visuals.decorators.plot_loop"><code class="docutils literal notranslate"><span class="pre">plot_loop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="visuals.html#visuals.decorators.show_plot"><code class="docutils literal notranslate"><span class="pre">show_plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html#module-visuals.line_formats">visuals.line_formats module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html#module-visuals">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -113,12 +523,15 @@
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="DVI-EKF" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="filter.html" class="btn btn-neutral float-right" title="filter package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, Salehah.</p>
+    <p>&#169; Copyright 2023, Salehah.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

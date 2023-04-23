@@ -1,0 +1,45 @@
+dvi\_ekf.kinematics package
+===========================
+
+Submodules
+----------
+
+dvi\_ekf.kinematics.equations module
+------------------------------------
+
+.. automodule:: dvi_ekf.kinematics.equations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.kinematics.functions module
+------------------------------------
+
+.. automodule:: dvi_ekf.kinematics.functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.kinematics.symbols module
+----------------------------------
+
+.. automodule:: dvi_ekf.kinematics.symbols
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.kinematics.transformations module
+------------------------------------------
+
+.. automodule:: dvi_ekf.kinematics.transformations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: dvi_ekf.kinematics
+   :members:
+   :undoc-members:
+   :show-inheritance:

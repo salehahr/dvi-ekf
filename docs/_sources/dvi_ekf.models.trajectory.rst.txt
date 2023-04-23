@@ -1,0 +1,61 @@
+dvi\_ekf.models.trajectory package
+==================================
+
+Submodules
+----------
+
+dvi\_ekf.models.trajectory.FilterTraj module
+--------------------------------------------
+
+.. automodule:: dvi_ekf.models.trajectory.FilterTraj
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.models.trajectory.ImuRefTraj module
+--------------------------------------------
+
+.. automodule:: dvi_ekf.models.trajectory.ImuRefTraj
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.models.trajectory.ImuTrajectory module
+-----------------------------------------------
+
+.. automodule:: dvi_ekf.models.trajectory.ImuTrajectory
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.models.trajectory.Interpolator module
+----------------------------------------------
+
+.. automodule:: dvi_ekf.models.trajectory.Interpolator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.models.trajectory.TrajectoryBase module
+------------------------------------------------
+
+.. automodule:: dvi_ekf.models.trajectory.TrajectoryBase
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dvi\_ekf.models.trajectory.VisualTrajectory module
+--------------------------------------------------
+
+.. automodule:: dvi_ekf.models.trajectory.VisualTrajectory
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: dvi_ekf.models.trajectory
+   :members:
+   :undoc-members:
+   :show-inheritance:

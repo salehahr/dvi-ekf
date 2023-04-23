@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>models package &mdash; DVI-EKF  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="models.measurement_point package" href="models.measurement_point.html" />
+    <link rel="prev" title="kinematics package" href="kinematics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DVI-EKF
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">dvi-ekf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="filter.html">filter package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kinematics.html">kinematics package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">models package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html">models.measurement_point package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html">models.trajectory package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-models.Camera">models.Camera module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.Camera.Camera"><code class="docutils literal notranslate"><span class="pre">Camera</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.Camera.CameraInterpolated"><code class="docutils literal notranslate"><span class="pre">CameraInterpolated</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.Camera.CameraMeasurementArray"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementArray</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.Camera.create_camera"><code class="docutils literal notranslate"><span class="pre">create_camera()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-models.Imu">models.Imu module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.Imu.Imu"><code class="docutils literal notranslate"><span class="pre">Imu</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-models.Probe">models.Probe module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#models.Probe.Probe"><code class="docutils literal notranslate"><span class="pre">Probe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.Probe.RigidSimpleProbe"><code class="docutils literal notranslate"><span class="pre">RigidSimpleProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.Probe.SimpleProbe"><code class="docutils literal notranslate"><span class="pre">SimpleProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.Probe.SymProbe"><code class="docutils literal notranslate"><span class="pre">SymProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#models.Probe.TestProbe"><code class="docutils literal notranslate"><span class="pre">TestProbe</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html">tools package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visuals.html">visuals package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DVI-EKF</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dvi-ekf</a></li>
+      <li class="breadcrumb-item active">models package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="models-package">
+<h1>models package<a class="headerlink" href="#models-package" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="models.measurement_point.html">models.measurement_point package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="models.measurement_point.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.measurement_point.html#module-models.measurement_point.CameraMeasurementPoint">models.measurement_point.CameraMeasurementPoint module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.R"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.R</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.acc"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.acc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.alp"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.alp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.notch"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.notch</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.notch_arr"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.notch_arr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.notch_d"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.notch_d</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.notch_dd"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.notch_dd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.om"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.om</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.p"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.t"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.v"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.v</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.CameraMeasurementPoint.CameraMeasurementPoint.vec"><code class="docutils literal notranslate"><span class="pre">CameraMeasurementPoint.vec</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.measurement_point.html#module-models.measurement_point.VisualMeasurementPoint">models.measurement_point.VisualMeasurementPoint module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.VisualMeasurementPoint.VisualMeasurementPoint"><code class="docutils literal notranslate"><span class="pre">VisualMeasurementPoint</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.VisualMeasurementPoint.VisualMeasurementPoint.pos"><code class="docutils literal notranslate"><span class="pre">VisualMeasurementPoint.pos</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.VisualMeasurementPoint.VisualMeasurementPoint.q"><code class="docutils literal notranslate"><span class="pre">VisualMeasurementPoint.q</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.VisualMeasurementPoint.VisualMeasurementPoint.t"><code class="docutils literal notranslate"><span class="pre">VisualMeasurementPoint.t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.VisualMeasurementPoint.VisualMeasurementPoint.vec"><code class="docutils literal notranslate"><span class="pre">VisualMeasurementPoint.vec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.VisualMeasurementPoint.VisualMeasurementPoint.x"><code class="docutils literal notranslate"><span class="pre">VisualMeasurementPoint.x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.VisualMeasurementPoint.VisualMeasurementPoint.y"><code class="docutils literal notranslate"><span class="pre">VisualMeasurementPoint.y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.measurement_point.html#models.measurement_point.VisualMeasurementPoint.VisualMeasurementPoint.z"><code class="docutils literal notranslate"><span class="pre">VisualMeasurementPoint.z</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.measurement_point.html#module-models.measurement_point">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.trajectory.html">models.trajectory package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="models.trajectory.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.FilterTraj">models.trajectory.FilterTraj module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj"><code class="docutils literal notranslate"><span class="pre">FilterTraj</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.append_propagated_states"><code class="docutils literal notranslate"><span class="pre">FilterTraj.append_propagated_states()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.append_updated_states"><code class="docutils literal notranslate"><span class="pre">FilterTraj.append_updated_states()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.labels"><code class="docutils literal notranslate"><span class="pre">FilterTraj.labels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.labels_camera"><code class="docutils literal notranslate"><span class="pre">FilterTraj.labels_camera</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.labels_imu"><code class="docutils literal notranslate"><span class="pre">FilterTraj.labels_imu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.labels_imu_dofs"><code class="docutils literal notranslate"><span class="pre">FilterTraj.labels_imu_dofs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.rx_degc_unwrapped"><code class="docutils literal notranslate"><span class="pre">FilterTraj.rx_degc_unwrapped</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.rx_unwrapped"><code class="docutils literal notranslate"><span class="pre">FilterTraj.rx_unwrapped</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.ry_degc_unwrapped"><code class="docutils literal notranslate"><span class="pre">FilterTraj.ry_degc_unwrapped</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.ry_unwrapped"><code class="docutils literal notranslate"><span class="pre">FilterTraj.ry_unwrapped</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.rz_degc_unwrapped"><code class="docutils literal notranslate"><span class="pre">FilterTraj.rz_degc_unwrapped</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.FilterTraj.FilterTraj.rz_unwrapped"><code class="docutils literal notranslate"><span class="pre">FilterTraj.rz_unwrapped</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.ImuRefTraj">models.trajectory.ImuRefTraj module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.trajectory.html#models.trajectory.ImuRefTraj.ImuRefTraj"><code class="docutils literal notranslate"><span class="pre">ImuRefTraj</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.ImuRefTraj.ImuRefTraj.append_value"><code class="docutils literal notranslate"><span class="pre">ImuRefTraj.append_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.ImuRefTraj.ImuRefTraj.labels"><code class="docutils literal notranslate"><span class="pre">ImuRefTraj.labels</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.ImuTrajectory">models.trajectory.ImuTrajectory module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.trajectory.html#models.trajectory.ImuTrajectory.ImuTraj"><code class="docutils literal notranslate"><span class="pre">ImuTraj</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.ImuTrajectory.ImuTraj.labels"><code class="docutils literal notranslate"><span class="pre">ImuTraj.labels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.ImuTrajectory.ImuTraj.reconstruct"><code class="docutils literal notranslate"><span class="pre">ImuTraj.reconstruct()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.ImuTrajectory.ImuTraj.reconstruct_vis_traj"><code class="docutils literal notranslate"><span class="pre">ImuTraj.reconstruct_vis_traj()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.Interpolator">models.trajectory.Interpolator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.trajectory.html#models.trajectory.Interpolator.Interpolator"><code class="docutils literal notranslate"><span class="pre">Interpolator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.Interpolator.Interpolator.flag_done"><code class="docutils literal notranslate"><span class="pre">Interpolator.flag_done</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.Interpolator.Interpolator.interpolate"><code class="docutils literal notranslate"><span class="pre">Interpolator.interpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.Interpolator.Interpolator.interpolated"><code class="docutils literal notranslate"><span class="pre">Interpolator.interpolated</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.TrajectoryBase">models.trajectory.TrajectoryBase module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.trajectory.html#models.trajectory.TrajectoryBase.TrajectoryBase"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.TrajectoryBase.TrajectoryBase.labels"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.labels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.TrajectoryBase.TrajectoryBase.num_values"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.num_values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.TrajectoryBase.TrajectoryBase.reset"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.reset()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.trajectory.html#module-models.trajectory.VisualTrajectory">models.trajectory.VisualTrajectory module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj"><code class="docutils literal notranslate"><span class="pre">VisualTraj</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.at_index"><code class="docutils literal notranslate"><span class="pre">VisualTraj.at_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.gen_angle_arrays"><code class="docutils literal notranslate"><span class="pre">VisualTraj.gen_angle_arrays()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.labels"><code class="docutils literal notranslate"><span class="pre">VisualTraj.labels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.lims"><code class="docutils literal notranslate"><span class="pre">VisualTraj.lims</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.read_notch_from_file"><code class="docutils literal notranslate"><span class="pre">VisualTraj.read_notch_from_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.t"><code class="docutils literal notranslate"><span class="pre">VisualTraj.t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.x_lims"><code class="docutils literal notranslate"><span class="pre">VisualTraj.x_lims</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.y_lims"><code class="docutils literal notranslate"><span class="pre">VisualTraj.y_lims</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.trajectory.html#models.trajectory.VisualTrajectory.VisualTraj.z_lims"><code class="docutils literal notranslate"><span class="pre">VisualTraj.z_lims</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.trajectory.html#module-models.trajectory">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-models.Camera">
+<span id="models-camera-module"></span><h2>models.Camera module<a class="headerlink" href="#module-models.Camera" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Camera.Camera">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Camera.</span></span><span class="sig-name descname"><span class="pre">Camera</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notch_filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">VisualTraj</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_vals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_notch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_at</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Camera.Camera" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for the camera sensor which reads data from a text file.</p>
+<p>Provides trajectory data (positions p and rotations R or q)
+as well as the derivatives of the above
+(velocities: v and om,
+accelerations: acc and alp).</p>
+<p>Also provides the initial conditions.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Camera.Camera.flag_interpolated">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">flag_interpolated</span></span><a class="headerlink" href="#models.Camera.Camera.flag_interpolated" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.Camera.gen_rotated">
+<span class="sig-name descname"><span class="pre">gen_rotated</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#models.Camera.Camera.gen_rotated" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.Camera.get_notch_vec_at">
+<span class="sig-name descname"><span class="pre">get_notch_vec_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#models.Camera.Camera.get_notch_vec_at" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.Camera.interpolate">
+<span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interframe_vals</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Camera.Camera.interpolate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.Camera.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Camera.Camera.plot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.Camera.plot_notch">
+<span class="sig-name descname"><span class="pre">plot_notch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Camera.Camera.plot_notch" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.Camera.update_sim_params">
+<span class="sig-name descname"><span class="pre">update_sim_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Camera.Camera.update_sim_params" title="Permalink to this definition"></a></dt>
+<dd><p>Updates time-related info in the config, from camera data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.Camera.vec_at">
+<span class="sig-name descname"><span class="pre">vec_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#models.Camera.Camera.vec_at" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Camera.CameraInterpolated">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Camera.</span></span><span class="sig-name descname"><span class="pre">CameraInterpolated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VisualTraj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Camera.CameraInterpolated" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#models.Camera.Camera" title="models.Camera.Camera"><code class="xref py py-class docutils literal notranslate"><span class="pre">Camera</span></code></a></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Camera.CameraInterpolated.interframe_vals">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">interframe_vals</span></span><a class="headerlink" href="#models.Camera.CameraInterpolated.interframe_vals" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Camera.</span></span><span class="sig-name descname"><span class="pre">CameraMeasurementArray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'List[np.ndarray]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">om</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notch_d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notch_dd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Camera.CameraMeasurementArray" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.R">
+<span class="sig-name descname"><span class="pre">R</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.R" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.acc">
+<span class="sig-name descname"><span class="pre">acc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.acc" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.alp">
+<span class="sig-name descname"><span class="pre">alp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.alp" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.at_index">
+<span class="sig-name descname"><span class="pre">at_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CameraMeasurementPoint</span></span></span><a class="headerlink" href="#models.Camera.CameraMeasurementArray.at_index" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.from_camera">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_camera</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">camera</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#models.Camera.Camera" title="models.Camera.Camera"><span class="pre">Camera</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#models.Camera.CameraMeasurementArray" title="models.Camera.CameraMeasurementArray"><span class="pre">CameraMeasurementArray</span></a></span></span><a class="headerlink" href="#models.Camera.CameraMeasurementArray.from_camera" title="Permalink to this definition"></a></dt>
+<dd><p>After old_t, up till new_t.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.notch">
+<span class="sig-name descname"><span class="pre">notch</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.notch" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.notch_d">
+<span class="sig-name descname"><span class="pre">notch_d</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.notch_d" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.notch_dd">
+<span class="sig-name descname"><span class="pre">notch_dd</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.notch_dd" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.om">
+<span class="sig-name descname"><span class="pre">om</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.om" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.p">
+<span class="sig-name descname"><span class="pre">p</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.p" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.t">
+<span class="sig-name descname"><span class="pre">t</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.t" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Camera.CameraMeasurementArray.v">
+<span class="sig-name descname"><span class="pre">v</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#models.Camera.CameraMeasurementArray.v" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="models.Camera.create_camera">
+<span class="sig-prename descclassname"><span class="pre">models.Camera.</span></span><span class="sig-name descname"><span class="pre">create_camera</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="tools.html#tools.config.Config" title="tools.config.Config"><span class="pre">Config</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#models.Camera.Camera" title="models.Camera.Camera"><span class="pre">Camera</span></a></span></span><a class="headerlink" href="#models.Camera.create_camera" title="Permalink to this definition"></a></dt>
+<dd><p>Creates new camera object from the config object.</p>
+</dd></dl>
+
+</section>
+<section id="module-models.Imu">
+<span id="models-imu-module"></span><h2>models.Imu module<a class="headerlink" href="#module-models.Imu" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Imu.Imu">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Imu.</span></span><span class="sig-name descname"><span class="pre">Imu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdev_na</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdev_nom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Imu.Imu.acc">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">acc</span></span><a class="headerlink" href="#models.Imu.Imu.acc" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.append_to_file">
+<span class="sig-name descname"><span class="pre">append_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.append_to_file" title="Permalink to this definition"></a></dt>
+<dd><p>Appends IMU trajectory to file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.clear" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.create">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#models.Imu.Imu" title="models.Imu.Imu"><span class="pre">Imu</span></a></span></span><a class="headerlink" href="#models.Imu.Imu.create" title="Permalink to this definition"></a></dt>
+<dd><p>Creates synthetic IMU data from interpolated camera data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.eval_expr_single">
+<span class="sig-name descname"><span class="pre">eval_expr_single</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qdd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W_acc_C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R_WC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W_om_C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W_alp_C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_array</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.eval_expr_single" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluates the symbolic expression for ‘om’ and ‘acc’ using camera values and DOFs of the probe.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>append_array    : if True, appends the resulting data point (om, acc) to _om and _acc
+filepath        : if given, appends the resulting data point to the file</p>
+</dd>
+<dt>Returns:</dt><dd><p>res_om  : angular velocity in B coordinates
+res_acc : acceleration in B coordinates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.eval_init">
+<span class="sig-name descname"><span class="pre">eval_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe_joint_dofs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notch_dofs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.eval_init" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluates initial IMU values using the probe’s and DOFs and the notch DOFS.
+:param probe_joint_dofs: initial degrees of freedom of the sensor setup model
+:param notch_dofs: initial degrees of freedom of the notch measurement
+:param overwrite: whether to overwrite current ‘om’ and ‘acc’ values
+:return:</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Imu.Imu.flag_interpolated">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">flag_interpolated</span></span><a class="headerlink" href="#models.Imu.Imu.flag_interpolated" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.generate_traj">
+<span class="sig-name descname"><span class="pre">generate_traj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_regenerate</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.generate_traj" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Imu.Imu.num_imu_between_frames">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_imu_between_frames</span></span><a class="headerlink" href="#models.Imu.Imu.num_imu_between_frames" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Imu.Imu.nvals">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nvals</span></span><a class="headerlink" href="#models.Imu.Imu.nvals" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Imu.Imu.om">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">om</span></span><a class="headerlink" href="#models.Imu.Imu.om" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.reconstruct">
+<span class="sig-name descname"><span class="pre">reconstruct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.reconstruct" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.ref_vals">
+<span class="sig-name descname"><span class="pre">ref_vals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cam_meas_vec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">np.ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_notch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.ref_vals" title="Permalink to this definition"></a></dt>
+<dd><p>For troubleshooting.
+Obtains the desired IMU position based on current camera values
+the relative kinematics relations C to B.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.reset" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Imu.Imu.write_array_to_file">
+<span class="sig-name descname"><span class="pre">write_array_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Imu.Imu.write_array_to_file" title="Permalink to this definition"></a></dt>
+<dd><p>Writes IMU trajectory, stored in the _om and _acc arrays,
+to a text file.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-models.Probe">
+<span id="models-probe-module"></span><h2>models.Probe module<a class="headerlink" href="#module-models.Probe" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Probe.Probe">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Probe.</span></span><span class="sig-name descname"><span class="pre">Probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_cam</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.Probe" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DHRobot</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.R">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">R</span></span><a class="headerlink" href="#models.Probe.Probe.R" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.T">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">T</span></span><a class="headerlink" href="#models.Probe.Probe.T" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.acc">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">acc</span></span><a class="headerlink" href="#models.Probe.Probe.acc" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.alp">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">alp</span></span><a class="headerlink" href="#models.Probe.Probe.alp" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.fwkin">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fwkin</span></span><a class="headerlink" href="#models.Probe.Probe.fwkin" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Probe.Probe.get_sym">
+<span class="sig-name descname"><span class="pre">get_sym</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.Probe.get_sym" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Probe.Probe.hessian_symbolic">
+<span class="sig-name descname"><span class="pre">hessian_symbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">J0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.Probe.hessian_symbolic" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.imu_dofs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">imu_dofs</span></span><a class="headerlink" href="#models.Probe.Probe.imu_dofs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.joint_dofs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">joint_dofs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#models.Probe.Probe.joint_dofs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.om">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">om</span></span><a class="headerlink" href="#models.Probe.Probe.om" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.p">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">p</span></span><a class="headerlink" href="#models.Probe.Probe.p" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Probe.Probe.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">movie</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_static</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.Probe.plot" title="Permalink to this definition"></a></dt>
+<dd><p>Modified to allow ‘hold’ of figure.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.q_cas">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">q_cas</span></span><a class="headerlink" href="#models.Probe.Probe.q_cas" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.qd_cas">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">qd_cas</span></span><a class="headerlink" href="#models.Probe.Probe.qd_cas" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.qd_s_arr">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">qd_s_arr</span></span><a class="headerlink" href="#models.Probe.Probe.qd_s_arr" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.qdd_cas">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">qdd_cas</span></span><a class="headerlink" href="#models.Probe.Probe.qdd_cas" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.Probe.v">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">v</span></span><a class="headerlink" href="#models.Probe.Probe.v" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Probe.RigidSimpleProbe">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Probe.</span></span><span class="sig-name descname"><span class="pre">RigidSimpleProbe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_cam</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.RigidSimpleProbe" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#models.Probe.SimpleProbe" title="models.Probe.SimpleProbe"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleProbe</span></code></a></p>
+<p>Simple probe with non-rotating, non-translating parts.
+Uses the BC configuration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.RigidSimpleProbe.ROT1">
+<span class="sig-name descname"><span class="pre">ROT1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.RigidSimpleProbe.ROT1" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.RigidSimpleProbe.ROT2">
+<span class="sig-name descname"><span class="pre">ROT2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.RigidSimpleProbe.ROT2" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.RigidSimpleProbe.ROT3">
+<span class="sig-name descname"><span class="pre">ROT3</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.RigidSimpleProbe.ROT3" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.RigidSimpleProbe.TRANS4">
+<span class="sig-name descname"><span class="pre">TRANS4</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.RigidSimpleProbe.TRANS4" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.RigidSimpleProbe.TRANS5">
+<span class="sig-name descname"><span class="pre">TRANS5</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.RigidSimpleProbe.TRANS5" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.RigidSimpleProbe.TRANS6">
+<span class="sig-name descname"><span class="pre">TRANS6</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></em><a class="headerlink" href="#models.Probe.RigidSimpleProbe.TRANS6" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.RigidSimpleProbe.constraints">
+<span class="sig-name descname"><span class="pre">constraints</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">20,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></em><a class="headerlink" href="#models.Probe.RigidSimpleProbe.constraints" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Probe.SimpleProbe">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Probe.</span></span><span class="sig-name descname"><span class="pre">SimpleProbe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_cam</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.SimpleProbe" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#models.Probe.Probe" title="models.Probe.Probe"><code class="xref py py-class docutils literal notranslate"><span class="pre">Probe</span></code></a></p>
+<p>Simple probe with ROT9 as the only degree of freedom.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.SimpleProbe.ROT1">
+<span class="sig-name descname"><span class="pre">ROT1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.SimpleProbe.ROT1" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.SimpleProbe.ROT2">
+<span class="sig-name descname"><span class="pre">ROT2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.SimpleProbe.ROT2" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.SimpleProbe.ROT3">
+<span class="sig-name descname"><span class="pre">ROT3</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.SimpleProbe.ROT3" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.SimpleProbe.TRANS4">
+<span class="sig-name descname"><span class="pre">TRANS4</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.SimpleProbe.TRANS4" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.SimpleProbe.TRANS5">
+<span class="sig-name descname"><span class="pre">TRANS5</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#models.Probe.SimpleProbe.TRANS5" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.SimpleProbe.TRANS6">
+<span class="sig-name descname"><span class="pre">TRANS6</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></em><a class="headerlink" href="#models.Probe.SimpleProbe.TRANS6" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="models.Probe.SimpleProbe.constraints">
+<span class="sig-name descname"><span class="pre">constraints</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">20,</span> <span class="pre">None,</span> <span class="pre">0.0]</span></em><a class="headerlink" href="#models.Probe.SimpleProbe.constraints" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Probe.SymProbe">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Probe.</span></span><span class="sig-name descname"><span class="pre">SymProbe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const_dofs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.SymProbe" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container class for probe that only stores the
+symbolic forward kinematics relations.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Probe.SymProbe.get_est_fwkin">
+<span class="sig-name descname"><span class="pre">get_est_fwkin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dofs_est</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notchdofs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.SymProbe.get_est_fwkin" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the estimated relative kinematics
+using the estimated dofs.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="models.Probe.TestProbe">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">models.Probe.</span></span><span class="sig-name descname"><span class="pre">TestProbe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_cam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SE3(array([[1.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0],</span> <span class="pre">[0.0,</span> <span class="pre">1.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0],</span> <span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">1.0,</span> <span class="pre">0.0],</span> <span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">1.0]]))</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.TestProbe" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DHRobot</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.TestProbe.T">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">T</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">SE3</span></em><a class="headerlink" href="#models.Probe.TestProbe.T" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="models.Probe.TestProbe.conf_q">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">conf_q</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#models.Probe.TestProbe.conf_q" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="models.Probe.TestProbe.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_frames</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imu_frames</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">animate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#models.Probe.TestProbe.plot" title="Permalink to this definition"></a></dt>
+<dd><p>To implement.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-models" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="kinematics.html" class="btn btn-neutral float-left" title="kinematics package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="models.measurement_point.html" class="btn btn-neutral float-right" title="models.measurement_point package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Salehah.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

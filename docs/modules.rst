@@ -4,7 +4,8 @@ dvi-ekf
 .. toctree::
    :maxdepth: 4
 
-   Filter
-   Models
-   Visuals
+   filter
+   kinematics
+   models
    tools
+   visuals
