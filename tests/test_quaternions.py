@@ -1,6 +1,6 @@
 import unittest
 
-from context import Quaternion
+from dvi_ekf.tools import Quaternion
 
 
 class TestQuaternions(unittest.TestCase):

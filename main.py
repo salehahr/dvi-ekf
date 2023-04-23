@@ -1,5 +1,4 @@
-from Filter.Simulator import Simulator
-from tools import Config
+from dvi_ekf import Config, Simulator
 
 config = Config("config.yaml")
 sim = Simulator(config)

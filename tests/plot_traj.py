@@ -1,7 +1,6 @@
-import context
 import matplotlib.pyplot as plt
 
-from Filter import VisualTraj
+from dvi_ekf.filter import VisualTraj
 
 traj_data = {
     "stereoGT": "./trajs/offline_mandala0_gt.txt",

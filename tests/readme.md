@@ -138,7 +138,7 @@ Zoomed in:
 * Possible sources of error in the update stage
     * implementation of quaternions?
     * the generation of the cov matrix P
-      * (s. `Filter.propagate_covariance()` [`Filter.py`](/Filter/Filter.py))
+      * (s. `Filter.propagate_covariance()` [`Filter.py`](/dvi_ekf/filter/Filter.py))
       * overview:  
         ![](/img/cov_eqn_overview.png)  
       * detailed definition of the matrices, s.

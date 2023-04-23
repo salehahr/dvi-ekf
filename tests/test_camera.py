@@ -2,7 +2,7 @@ import unittest
 
 from context import Camera
 
-from tools import Config
+from dvi_ekf.tools import Config
 
 config = Config()
 
